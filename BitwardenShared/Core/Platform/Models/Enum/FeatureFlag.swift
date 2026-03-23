@@ -17,6 +17,9 @@ extension FeatureFlag: @retroactive CaseIterable {
     /// Flag to enable/disable individual cipher encryption configured remotely.
     static let cipherKeyEncryption = FeatureFlag(rawValue: "cipher-key-encryption")
 
+    /// Flag to enable/disable Device Auth Key flows.
+    static let deviceAuthKey = FeatureFlag(rawValue: "pm-27581-device-auth-key")
+
     /// An SDK flag that enables individual cipher encryption.
     static let enableCipherKeyEncryption = FeatureFlag(rawValue: "enableCipherKeyEncryption")
 
@@ -29,6 +32,9 @@ extension FeatureFlag: @retroactive CaseIterable {
     /// Flag to enable/disable not logging out when a user's KDF settings are changed.
     static let noLogoutOnKdfChange = FeatureFlag(rawValue: "pm-23995-no-logout-on-kdf-change")
 
+    /// Flag to enable/disable premium upgrade path.
+    static let premiumUpgradePath = FeatureFlag(rawValue: "pm-31697-premium-upgrade-path")
+
     /// Flag to enable/disable sends email verification feature.
     static let sendEmailVerification = FeatureFlag(rawValue: "pm-19051-send-email-verification")
 
@@ -38,10 +44,12 @@ extension FeatureFlag: @retroactive CaseIterable {
             .cxpExportMobile,
             .cxpImportMobile,
             .cipherKeyEncryption,
+            .deviceAuthKey,
             .enableCipherKeyEncryption,
             .forceUpdateKdfSettings,
             .migrateMyVaultToMyItems,
             .noLogoutOnKdfChange,
+            .premiumUpgradePath,
             .sendEmailVerification,
         ]
     }

@@ -850,6 +850,18 @@ class StateServiceTests: BitwardenTestCase { // swiftlint:disable:this type_body
         XCTAssertEqual(learnNewLoginActionCardStatus, .complete)
     }
 
+    /// `getLastRequestToTurnOnCredentialProvider()` returns the date of the last request
+    /// to turn on the credential provider.
+    func test_getLastRequestToTurnOnCredentialProvider() async {
+        var result = await subject.getLastRequestToTurnOnCredentialProvider()
+        XCTAssertNil(result)
+
+        let date = Date(year: 2024, month: 6, day: 15)
+        appSettingsStore.lastRequestToTurnOnCredentialProviderDate = date
+        result = await subject.getLastRequestToTurnOnCredentialProvider()
+        XCTAssertEqual(result, date)
+    }
+
     /// `getLastSyncTime(userId:)` gets the user's last sync time.
     func test_getLastSyncTime() async throws {
         await subject.addAccount(.fixture(profile: .fixture(userId: "1")))
@@ -997,6 +1009,7 @@ class StateServiceTests: BitwardenTestCase { // swiftlint:disable:this type_body
         let config = ServerConfig(
             date: Date(year: 2024, month: 2, day: 14, hour: 7, minute: 50, second: 0),
             responseModel: ConfigResponseModel(
+                communication: nil,
                 environment: nil,
                 featureStates: [:],
                 gitHash: "75238192",
@@ -1022,6 +1035,7 @@ class StateServiceTests: BitwardenTestCase { // swiftlint:disable:this type_body
         let model = ServerConfig(
             date: Date(timeIntervalSince1970: 100),
             responseModel: ConfigResponseModel(
+                communication: nil,
                 environment: nil,
                 featureStates: [:],
                 gitHash: "1234",
@@ -1268,6 +1282,32 @@ class StateServiceTests: BitwardenTestCase { // swiftlint:disable:this type_body
                 ConnectToWatchValue(userId: "1", shouldConnect: true),
             ],
         )
+    }
+
+    /// After switching accounts, `connectToWatchPublisher()` should only emit for the new
+    /// active account and not the previous one.
+    func test_connectToWatchPublisher_accountSwitch_onlyEmitsForActiveAccount() async throws {
+        await subject.addAccount(.fixture(profile: .fixture(userId: "1")))
+
+        var publishedValues = [ConnectToWatchValue]()
+        let publisher = await subject.connectToWatchPublisher()
+            .sink(receiveValue: { userId, shouldConnect in
+                publishedValues.append(ConnectToWatchValue(userId: userId, shouldConnect: shouldConnect))
+            })
+        defer { publisher.cancel() }
+
+        // Switch to account "2".
+        await subject.addAccount(.fixture(profile: .fixture(userId: "2")))
+        try await subject.setActiveAccount(userId: "2")
+
+        // Clear emissions from the switch so we isolate post-switch behavior.
+        publishedValues.removeAll()
+
+        // Toggle the setting for the now-active account "2".
+        try await subject.setConnectToWatch(true)
+
+        // Only account "2" should appear; account "1" must not re-emit.
+        XCTAssertEqual(publishedValues, [ConnectToWatchValue(userId: "2", shouldConnect: true)])
     }
 
     /// `connectToWatchPublisher()` gets the initial stored value if a cached value doesn't exist.
@@ -1940,6 +1980,16 @@ class StateServiceTests: BitwardenTestCase { // swiftlint:disable:this type_body
         XCTAssertEqual(appSettingsStore.lastSyncTimeByUserId["1"], date2)
     }
 
+    /// `setLastRequestToTurnOnCredentialProvider(_:)` stores the date in the app settings store.
+    func test_setLastRequestToTurnOnCredentialProvider() async {
+        let date = Date(year: 2024, month: 6, day: 15)
+        await subject.setLastRequestToTurnOnCredentialProvider(date)
+        XCTAssertEqual(appSettingsStore.lastRequestToTurnOnCredentialProviderDate, date)
+
+        await subject.setLastRequestToTurnOnCredentialProvider(nil)
+        XCTAssertNil(appSettingsStore.lastRequestToTurnOnCredentialProviderDate)
+    }
+
     /// `setDefaultUriMatchType(_:userId:)` sets the default URI match type value for a user.
     func test_setDefaultUriMatchType() async throws {
         await subject.addAccount(.fixture(profile: .fixture(userId: "1")))
@@ -2034,18 +2084,16 @@ class StateServiceTests: BitwardenTestCase { // swiftlint:disable:this type_body
     /// `setAccountMasterPasswordUnlock(_:)` sets the master password unlock data for the user account.
     func test_setAccountMasterPasswordUnlock() async throws {
         await subject.addAccount(.fixture(profile: .fixture(userId: "1")))
-        await subject.addAccount(
-            .fixture(
-                profile: .fixture(
-                    userDecryptionOptions: UserDecryptionOptions(
-                        hasMasterPassword: true,
-                        keyConnectorOption: KeyConnectorUserDecryptionOption(keyConnectorUrl: "https://example.com"),
-                        trustedDeviceOption: nil,
-                    ),
-                    userId: "2",
+        await subject.addAccount(.fixture(
+            profile: .fixture(
+                userDecryptionOptions: UserDecryptionOptions(
+                    hasMasterPassword: true,
+                    keyConnectorOption: KeyConnectorUserDecryptionOption(keyConnectorUrl: "https://example.com"),
+                    trustedDeviceOption: nil,
                 ),
+                userId: "2",
             ),
-        )
+        ))
 
         let masterPasswordUnlockUser1 = MasterPasswordUnlockResponseModel(
             kdf: KdfConfig(kdfType: .pbkdf2sha256, iterations: 600_000),
@@ -2068,9 +2116,17 @@ class StateServiceTests: BitwardenTestCase { // swiftlint:disable:this type_body
 
         let user1 = appSettingsStore.state?.accounts["1"]
         XCTAssertEqual(user1?.profile.userDecryptionOptions?.masterPasswordUnlock, masterPasswordUnlockUser1)
+        XCTAssertEqual(user1?.profile.kdfType, .pbkdf2sha256)
+        XCTAssertEqual(user1?.profile.kdfIterations, 600_000)
+        XCTAssertNil(user1?.profile.kdfMemory)
+        XCTAssertNil(user1?.profile.kdfParallelism)
 
         let user2 = appSettingsStore.state?.accounts["2"]
         XCTAssertEqual(user2?.profile.userDecryptionOptions?.masterPasswordUnlock, masterPasswordUnlockUser2)
+        XCTAssertEqual(user2?.profile.kdfType, .argon2id)
+        XCTAssertEqual(user2?.profile.kdfIterations, 3)
+        XCTAssertEqual(user2?.profile.kdfMemory, 64)
+        XCTAssertEqual(user2?.profile.kdfParallelism, 4)
         // Ensure any existing other decryption options aren't affected.
         XCTAssertEqual(
             user2?.profile.userDecryptionOptions,
@@ -2327,6 +2383,7 @@ class StateServiceTests: BitwardenTestCase { // swiftlint:disable:this type_body
         let config = ServerConfig(
             date: Date(timeIntervalSince1970: 100),
             responseModel: ConfigResponseModel(
+                communication: nil,
                 environment: nil,
                 featureStates: [:],
                 gitHash: "1234",
@@ -2361,6 +2418,7 @@ class StateServiceTests: BitwardenTestCase { // swiftlint:disable:this type_body
         let model = ServerConfig(
             date: Date(timeIntervalSince1970: 100),
             responseModel: ConfigResponseModel(
+                communication: nil,
                 environment: nil,
                 featureStates: [:],
                 gitHash: "1234",

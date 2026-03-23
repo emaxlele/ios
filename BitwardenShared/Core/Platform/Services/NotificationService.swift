@@ -99,6 +99,9 @@ class DefaultNotificationService: NotificationService {
     /// The service used by the application to report non-fatal errors.
     private let errorReporter: ErrorReporter
 
+    /// The service used by the application for recording temporary debug logs.
+    private let flightRecorder: FlightRecorder
+
     /// The API service used to make notification requests.
     private let notificationAPIService: NotificationAPIService
 
@@ -121,6 +124,7 @@ class DefaultNotificationService: NotificationService {
     ///   - authService: The service used by the application to handle authentication tasks.
     ///   - configService: The service to get server-specified configuration.
     ///   - errorReporter: The service used by the application to report non-fatal errors.
+    ///   - flightRecorder: The service used by the application for recording temporary debug logs.
     ///   - notificationAPIService: The API service used to make notification requests.
     ///   - refreshableApiService: The API service used to refresh tokens.
     ///   - stateService: The service used by the application to manage account state.
@@ -131,6 +135,7 @@ class DefaultNotificationService: NotificationService {
         authService: AuthService,
         configService: ConfigService,
         errorReporter: ErrorReporter,
+        flightRecorder: FlightRecorder,
         notificationAPIService: NotificationAPIService,
         refreshableApiService: RefreshableAPIService,
         stateService: StateService,
@@ -141,6 +146,7 @@ class DefaultNotificationService: NotificationService {
         self.authService = authService
         self.configService = configService
         self.errorReporter = errorReporter
+        self.flightRecorder = flightRecorder
         self.notificationAPIService = notificationAPIService
         self.refreshableApiService = refreshableApiService
         self.stateService = stateService
@@ -192,27 +198,32 @@ class DefaultNotificationService: NotificationService {
             else { return }
             let userId = try await stateService.getActiveAccountId()
 
-            Logger.application.debug("Notification received: \(message)")
+            Logger.application.debug("Notification received: \(message, privacy: .public)")
+            await flightRecorder.log("[Notification] Received push notification, type: \(type)")
 
             // Handle the notification according to the type of data.
             switch type {
             case .syncCipherCreate,
                  .syncCipherUpdate:
-                if let data: SyncCipherNotification = notificationData.data(), data.userId == userId {
+                let data: SyncCipherNotification = try notificationData.data()
+                if await checkActiveUser(notification: data, type: type, userId: userId) {
                     try await syncService.fetchUpsertSyncCipher(data: data)
                 }
             case .syncFolderCreate,
                  .syncFolderUpdate:
-                if let data: SyncFolderNotification = notificationData.data(), data.userId == userId {
+                let data: SyncFolderNotification = try notificationData.data()
+                if await checkActiveUser(notification: data, type: type, userId: userId) {
                     try await syncService.fetchUpsertSyncFolder(data: data)
                 }
             case .syncCipherDelete,
                  .syncLoginDelete:
-                if let data: SyncCipherNotification = notificationData.data(), data.userId == userId {
+                let data: SyncCipherNotification = try notificationData.data()
+                if await checkActiveUser(notification: data, type: type, userId: userId) {
                     try await syncService.deleteCipher(data: data)
                 }
             case .syncFolderDelete:
-                if let data: SyncFolderNotification = notificationData.data(), data.userId == userId {
+                let data: SyncFolderNotification = try notificationData.data()
+                if await checkActiveUser(notification: data, type: type, userId: userId) {
                     try await syncService.deleteFolder(data: data)
                 }
             case .syncCiphers,
@@ -223,7 +234,7 @@ class DefaultNotificationService: NotificationService {
                 try await refreshableApiService.refreshAccessToken()
                 try await syncService.fetchSync(forceSync: true)
             case .logOut:
-                guard let data: LogoutNotification = notificationData.data() else { return }
+                let data: LogoutNotification = try notificationData.data()
 
                 if data.reason == .kdfChange,
                    // TODO: PM-26960 Remove user ID check with noLogoutOnKdfChange feature flag.
@@ -240,11 +251,13 @@ class DefaultNotificationService: NotificationService {
                 }
             case .syncSendCreate,
                  .syncSendUpdate:
-                if let data: SyncSendNotification = notificationData.data(), data.userId == userId {
+                let data: SyncSendNotification = try notificationData.data()
+                if await checkActiveUser(notification: data, type: type, userId: userId) {
                     try await syncService.fetchUpsertSyncSend(data: data)
                 }
             case .syncSendDelete:
-                if let data: SyncSendNotification = notificationData.data(), data.userId == userId {
+                let data: SyncSendNotification = try notificationData.data()
+                if await checkActiveUser(notification: data, type: type, userId: userId) {
                     try await syncService.deleteSend(data: data)
                 }
             case .authRequest:
@@ -253,6 +266,8 @@ class DefaultNotificationService: NotificationService {
                 // No action necessary, since the LoginWithDeviceProcessor already checks for updates
                 // every few seconds.
                 break
+            case .policyChanged:
+                try await syncService.fetchSync(forceSync: false)
             }
         } catch {
             errorReporter.log(error: error)
@@ -268,6 +283,27 @@ class DefaultNotificationService: NotificationService {
     }
 
     // MARK: Private Methods
+
+    /// Checks whether a notification belongs to the active user, logging a skip message if not.
+    ///
+    /// - Parameters:
+    ///   - notification: The notification payload containing a user ID to check.
+    ///   - type: The notification type, used in the skip log message.
+    ///   - userId: The active user's ID.
+    ///
+    /// - Returns: `true` if the notification belongs to the active user, `false` otherwise.
+    ///
+    private func checkActiveUser(
+        notification: NotificationWithUser,
+        type: NotificationType,
+        userId: String,
+    ) async -> Bool {
+        guard notification.userId == userId else {
+            await flightRecorder.log("[Notification] Skipping \(type): userId does not match active user")
+            return false
+        }
+        return true
+    }
 
     /// A helper function to decode the push notification payload.
     ///
@@ -297,14 +333,22 @@ class DefaultNotificationService: NotificationService {
     ///   - userId: The user's id.
     ///
     private func handleLoginRequest(_ notificationData: PushNotificationData, userId: String) async throws {
-        guard let data: LoginRequestNotification = notificationData.data() else { return }
+        let data: LoginRequestNotification = try notificationData.data()
+
+        // Get the email of the account that the login request is coming from.
+        let loginSourceAccount: Account
+        do {
+            loginSourceAccount = try await stateService.getAccount(userId: data.userId)
+        } catch StateServiceError.noAccounts {
+            await flightRecorder.log(
+                "[Notification] Received login request notification but account (\(data.userId)) not found",
+            )
+            return
+        }
+        let loginSourceEmail = loginSourceAccount.profile.email
 
         // Save the notification data.
         await stateService.setLoginRequest(data)
-
-        // Get the email of the account that the login request is coming from.
-        let loginSourceAccount = try await stateService.getAccount(userId: data.userId)
-        let loginSourceEmail = loginSourceAccount.profile.email
 
         // Assemble the data to add to the in-app banner notification.
         let loginRequestData = try? JSONEncoder().encode(LoginRequestPushNotification(
@@ -315,7 +359,7 @@ class DefaultNotificationService: NotificationService {
         // Create an in-app banner notification to tell the user about the login request.
         let content = UNMutableNotificationContent()
         content.title = Localizations.logInRequested
-        content.body = Localizations.confimLogInAttempForX(loginSourceEmail)
+        content.body = Localizations.confirmLogInAttemptForX(loginSourceEmail)
         content.categoryIdentifier = "dismissableCategory"
         if let loginRequestData,
            let loginRequestEncoded = String(data: loginRequestData, encoding: .utf8) {
@@ -386,14 +430,19 @@ class DefaultNotificationService: NotificationService {
             // Get the user id of the source of the login request.
             let loginSourceAccount = try await stateService.getAccount(userId: loginRequestData.userId)
 
-            // Get the active account for comparison.
-            let activeAccount = try await stateService.getActiveAccount()
+            // Get the active account ID for comparison.
+            let activeAccountId = try await stateService.getActiveAccountId()
 
             // If the notification banner was tapped but it's for a different account, switch
             // to that account automatically.
-            if activeAccount.profile.userId != loginSourceAccount.profile.userId {
+            if activeAccountId != loginSourceAccount.profile.userId {
                 await delegate?.switchAccountsForLoginRequest(to: loginSourceAccount, showAlert: false)
             }
+        } catch StateServiceError.noAccounts {
+            let userId = loginRequestData.userId
+            await flightRecorder.log(
+                "[Notification] Notification tapped for login request but account (\(userId)) not found",
+            )
         } catch {
             errorReporter.log(error: error)
         }

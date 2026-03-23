@@ -609,6 +609,14 @@ protocol StateService: AnyObject {
     ///
     func setIntroCarouselShown(_ shown: Bool) async
 
+    /// Sets the time of the last sync for a user ID.
+    ///
+    /// - Parameters:
+    ///   - date: The time of the last sync.
+    ///   - userId: The user ID associated with the last sync time.
+    ///
+    func setLastSyncTime(_ date: Date?, userId: String?) async throws
+
     /// Sets the status of Learn generator Action Card.
     ///
     /// - Parameter status: The status of Learn generator Action Card.
@@ -620,14 +628,6 @@ protocol StateService: AnyObject {
     /// - Parameter status: The status of Learn New Login Action Card.
     ///
     func setLearnNewLoginActionCardStatus(_ status: AccountSetupProgress) async
-
-    /// Sets the time of the last sync for a user ID.
-    ///
-    /// - Parameters:
-    ///   - date: The time of the last sync.
-    ///   - userId: The user ID associated with the last sync time.
-    ///
-    func setLastSyncTime(_ date: Date?, userId: String?) async throws
 
     /// Set pending login request data from a push notification.
     ///
@@ -1005,7 +1005,6 @@ extension StateService {
 
     /// Gets the time of the last sync for a user.
     ///
-    /// - Parameter userId: The user ID associated with the last sync time.
     /// - Returns: The user's last sync time.
     ///
     func getLastSyncTime() async throws -> Date? {
@@ -1417,7 +1416,7 @@ actor DefaultStateService: StateService, ActiveAccountStateProvider, ConfigState
     private var lastSyncTimeByUserIdSubject = CurrentValueSubject<[String: Date], Never>([:])
 
     /// A service used to access data in the keychain.
-    private let keychainRepository: KeychainRepository
+    let keychainRepository: KeychainRepository
 
     /// A service used to access user session data in the keychain.
     private let userSessionKeychainRepository: UserSessionKeychainRepository
@@ -1902,6 +1901,12 @@ actor DefaultStateService: StateService, ActiveAccountStateProvider, ConfigState
                 trustedDeviceOption: nil,
             )
         userDecryptionOptions.masterPasswordUnlock = masterPasswordUnlock
+
+        profile.kdfIterations = masterPasswordUnlock.kdf.iterations
+        profile.kdfType = masterPasswordUnlock.kdf.kdfType
+        profile.kdfMemory = masterPasswordUnlock.kdf.memory
+        profile.kdfParallelism = masterPasswordUnlock.kdf.parallelism
+
         profile.userDecryptionOptions = userDecryptionOptions
         state.accounts[userId]?.profile = profile
         appSettingsStore.state = state
@@ -2192,8 +2197,9 @@ actor DefaultStateService: StateService, ActiveAccountStateProvider, ConfigState
     }
 
     func connectToWatchPublisher() async -> AnyPublisher<(String?, Bool), Never> {
-        activeAccountIdPublisher().flatMap { userId in
-            self.connectToWatchByUserIdSubject.map { values in
+        activeAccountIdPublisher()
+            .combineLatest(connectToWatchByUserIdSubject)
+            .map { userId, values in
                 let userValue = if let userId {
                     // Get the user's setting, if they're logged in.
                     values[userId] ?? self.appSettingsStore.connectToWatch(userId: userId)
@@ -2203,8 +2209,7 @@ actor DefaultStateService: StateService, ActiveAccountStateProvider, ConfigState
                 }
                 return (userId, userValue)
             }
-        }
-        .eraseToAnyPublisher()
+            .eraseToAnyPublisher()
     }
 
     func lastSyncTimePublisher() async throws -> AnyPublisher<Date?, Never> {
@@ -2309,7 +2314,7 @@ struct AccountVolatileData {
     var hasBeenUnlockedInteractively = false
 }
 
-// MARK: Biometrics
+// MARK: BiometricsStateService
 
 extension DefaultStateService: BiometricsStateService {
     func getBiometricAuthenticationEnabled(userId: String?) async throws -> Bool {
@@ -2377,5 +2382,17 @@ extension DefaultStateService: UserSessionStateService {
             minutes: value.rawValue,
             userId: userId,
         )
+    }
+}
+
+// MARK: Autofill
+
+extension DefaultStateService: AutofillStateService {
+    func getLastRequestToTurnOnCredentialProvider() async -> Date? {
+        appSettingsStore.lastRequestToTurnOnCredentialProvider()
+    }
+
+    func setLastRequestToTurnOnCredentialProvider(_ date: Date?) async {
+        appSettingsStore.setLastRequestToTurnOnCredentialProvider(date)
     }
 }

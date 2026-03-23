@@ -205,6 +205,12 @@ protocol AppSettingsStore: AnyObject {
     ///
     func isBiometricAuthenticationEnabled(userId: String) -> Bool
 
+    /// Gets the time of the last request to turn on credential provider.
+    ///
+    /// - Returns: The time of the last request to turn on credential provider.
+    ///
+    func lastRequestToTurnOnCredentialProvider() -> Date?
+
     /// Gets the time of the last sync for the user ID.
     ///
     /// - Parameter userId: The user ID associated with the last sync time.
@@ -420,6 +426,12 @@ protocol AppSettingsStore: AnyObject {
     ///   - hasBeenPerformed: Whether a sync has been performed after login.
     ///   - userId: The user ID associated with the sync after login.
     func setHasPerformedSyncAfterLogin(_ hasBeenPerformed: Bool?, userId: String)
+
+    /// Sets the time of the last request to turn on credential provider for the user ID.
+    ///
+    /// - Parameter date: The time of the last request to turn on credential provider.
+    ///
+    func setLastRequestToTurnOnCredentialProvider(_ date: Date?)
 
     /// Sets the time of the last sync for the user ID.
     ///
@@ -756,6 +768,7 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
         case hasPerformedSyncAfterLogin(userId: String)
         case introCarouselShown
         case learnNewLoginActionCardStatus
+        case lastRequestToTurnOnCredentialProvider
         case lastSync(userId: String)
         case lastUserShouldConnectToWatch
         case learnGeneratorActionCardStatus
@@ -844,6 +857,8 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
                 "introCarouselShown"
             case .learnNewLoginActionCardStatus:
                 "learnNewLoginActionCardStatus"
+            case .lastRequestToTurnOnCredentialProvider:
+                "lastRequestToTurnOnCredentialProvider"
             case let .lastSync(userId):
                 "lastSync_\(userId)"
             case .learnGeneratorActionCardStatus:
@@ -1092,6 +1107,10 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
         fetch(for: .biometricAuthEnabled(userId: userId))
     }
 
+    func lastRequestToTurnOnCredentialProvider() -> Date? {
+        fetch(for: .lastRequestToTurnOnCredentialProvider).map { Date(timeIntervalSince1970: $0) }
+    }
+
     func lastSyncTime(userId: String) -> Date? {
         fetch(for: .lastSync(userId: userId)).map { Date(timeIntervalSince1970: $0) }
     }
@@ -1208,6 +1227,10 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
 
     func setHasPerformedSyncAfterLogin(_ hasBeenPerformed: Bool?, userId: String) {
         store(hasBeenPerformed, for: .hasPerformedSyncAfterLogin(userId: userId))
+    }
+
+    func setLastRequestToTurnOnCredentialProvider(_ date: Date?) {
+        store(date?.timeIntervalSince1970, for: .lastRequestToTurnOnCredentialProvider)
     }
 
     func setLastSyncTime(_ date: Date?, userId: String) {

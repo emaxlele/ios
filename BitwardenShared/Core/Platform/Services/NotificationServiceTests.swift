@@ -5,6 +5,7 @@ import XCTest
 @testable import BitwardenShared
 @testable import BitwardenSharedMocks
 
+@MainActor
 class NotificationServiceTests: BitwardenTestCase { // swiftlint:disable:this type_body_length
     // MARK: Properties
 
@@ -16,6 +17,7 @@ class NotificationServiceTests: BitwardenTestCase { // swiftlint:disable:this ty
     var configService: MockConfigService!
     var delegate: MockNotificationServiceDelegate!
     var errorReporter: MockErrorReporter!
+    var flightRecorder: MockFlightRecorder!
     var notificationAPIService: NotificationAPIService!
     var stateService: MockStateService!
     var subject: DefaultNotificationService!
@@ -33,6 +35,7 @@ class NotificationServiceTests: BitwardenTestCase { // swiftlint:disable:this ty
         configService = MockConfigService()
         delegate = MockNotificationServiceDelegate()
         errorReporter = MockErrorReporter()
+        flightRecorder = MockFlightRecorder()
         notificationAPIService = APIService(client: client)
         refreshableApiService = MockRefreshableAPIService()
         stateService = MockStateService()
@@ -44,6 +47,7 @@ class NotificationServiceTests: BitwardenTestCase { // swiftlint:disable:this ty
             authService: authService,
             configService: configService,
             errorReporter: errorReporter,
+            flightRecorder: flightRecorder,
             notificationAPIService: notificationAPIService,
             refreshableApiService: refreshableApiService,
             stateService: stateService,
@@ -52,8 +56,8 @@ class NotificationServiceTests: BitwardenTestCase { // swiftlint:disable:this ty
         subject.setDelegate(delegate)
     }
 
-    override func tearDown() {
-        super.tearDown()
+    override func tearDown() async throws {
+        try await super.tearDown()
 
         appSettingsStore = nil
         authService = nil
@@ -61,6 +65,7 @@ class NotificationServiceTests: BitwardenTestCase { // swiftlint:disable:this ty
         configService = nil
         delegate = nil
         errorReporter = nil
+        flightRecorder = nil
         notificationAPIService = nil
         refreshableApiService = nil
         stateService = nil
@@ -404,6 +409,50 @@ class NotificationServiceTests: BitwardenTestCase { // swiftlint:disable:this ty
         XCTAssertTrue(syncService.didFetchSync)
     }
 
+    /// `messageReceived(_:notificationDismissed:notificationTapped:)` triggers a sync when a
+    /// policy changed notification is received.
+    func test_messageReceived_policyChanged() async throws {
+        stateService.setIsAuthenticated()
+        appSettingsStore.appId = "10"
+        let message: [AnyHashable: Any] = [
+            "data": [
+                "type": NotificationType.policyChanged.rawValue,
+                "payload": "anything",
+            ],
+        ]
+
+        await subject.messageReceived(message, notificationDismissed: nil, notificationTapped: nil)
+
+        XCTAssertTrue(syncService.didFetchSync)
+    }
+
+    /// `messageReceived(_:notificationDismissed:notificationTapped:)` logs to the flight recorder
+    /// when a login request push notification is received for an account that doesn't exist.
+    @MainActor
+    func test_messageReceived_loginRequest_accountNotFound() async throws {
+        stateService.setIsAuthenticated()
+        appSettingsStore.appId = "10"
+        let loginRequestNotification = LoginRequestNotification(id: "requestId", userId: "unknownUser")
+        let notificationData = try JSONEncoder().encode(loginRequestNotification)
+        nonisolated(unsafe) let message: [AnyHashable: Any] = [
+            "data": [
+                "type": NotificationType.authRequest.rawValue,
+                "payload": String(data: notificationData, encoding: .utf8) ?? "",
+            ],
+        ]
+
+        await subject.messageReceived(message, notificationDismissed: nil, notificationTapped: nil)
+
+        XCTAssertTrue(errorReporter.errors.isEmpty)
+        XCTAssertEqual(
+            flightRecorder.logMessages,
+            [
+                "[Notification] Received push notification, type: authRequest",
+                "[Notification] Received login request notification but account (unknownUser) not found",
+            ],
+        )
+    }
+
     /// `messageReceived(_:notificationDismissed:notificationTapped:)` tells
     /// the delegate to show the switch account alert if it's a login request for a non-active account.
     @MainActor
@@ -557,6 +606,74 @@ class NotificationServiceTests: BitwardenTestCase { // swiftlint:disable:this ty
         XCTAssertTrue(delegate.routeToLandingCalled)
     }
 
+    /// `messageReceived(_:notificationDismissed:notificationTapped:)` logs the notification type
+    /// to the flight recorder when a notification is received.
+    @MainActor
+    func test_messageReceived_logsTypeToFlightRecorder() async throws {
+        stateService.setIsAuthenticated()
+        appSettingsStore.appId = "10"
+        let message: [AnyHashable: Any] = [
+            "data": [
+                "type": NotificationType.syncCipherUpdate.rawValue,
+                "payload": "{\"Id\":\"CIPHER ID\",\"UserId\":\"1\"}",
+            ],
+        ]
+
+        await subject.messageReceived(message, notificationDismissed: nil, notificationTapped: nil)
+
+        XCTAssertEqual(
+            flightRecorder.logMessages,
+            ["[Notification] Received push notification, type: syncCipherUpdate"],
+        )
+    }
+
+    /// `messageReceived(_:notificationDismissed:notificationTapped:)` logs a userId mismatch
+    /// to the flight recorder when the notification's userId does not match the active user.
+    @MainActor
+    func test_messageReceived_logsUserIdMismatchToFlightRecorder() async throws {
+        stateService.setIsAuthenticated()
+        appSettingsStore.appId = "10"
+        let message: [AnyHashable: Any] = [
+            "data": [
+                "type": NotificationType.syncCipherUpdate.rawValue,
+                "payload": "{\"Id\":\"CIPHER ID\",\"UserId\":\"different-user\"}",
+            ],
+        ]
+
+        await subject.messageReceived(message, notificationDismissed: nil, notificationTapped: nil)
+
+        XCTAssertNil(syncService.fetchUpsertSyncCipherData)
+        XCTAssertEqual(
+            flightRecorder.logMessages,
+            [
+                "[Notification] Received push notification, type: syncCipherUpdate",
+                "[Notification] Skipping syncCipherUpdate: userId does not match active user",
+            ],
+        )
+    }
+
+    /// `messageReceived(_:notificationDismissed:notificationTapped:)` logs a `PushNotificationDataError`
+    /// to the error reporter when the notification payload is malformed.
+    func test_messageReceived_malformedPayload_reportsPushNotificationDataError() async throws {
+        stateService.setIsAuthenticated()
+        appSettingsStore.appId = "10"
+        let message: [AnyHashable: Any] = [
+            "data": [
+                "type": NotificationType.syncCipherUpdate.rawValue,
+                "payload": "not-valid-json",
+            ],
+        ]
+
+        await subject.messageReceived(message, notificationDismissed: nil, notificationTapped: nil)
+
+        let error = try XCTUnwrap(errorReporter.errors.last as? PushNotificationDataError)
+        guard case let .payloadDecodingFailed(type, _) = error else {
+            XCTFail("Expected PushNotificationDataError.payloadDecodingFailed, got \(error)")
+            return
+        }
+        XCTAssertEqual(type, .syncCipherUpdate)
+    }
+
     /// `messageReceived(_:notificationDismissed:notificationTapped:)` handles notifications being dismissed.
     @MainActor
     func test_messageReceived_notificationDismissed() async throws {
@@ -606,7 +723,8 @@ class NotificationServiceTests: BitwardenTestCase { // swiftlint:disable:this ty
     /// `messageReceived(_:notificationDismissed:notificationTapped:)` handles errors.
     @MainActor
     func test_messageReceived_notificationTapped_error() async throws {
-        // Set up the mock data.
+        stateService.accounts = [.fixture()]
+        stateService.getActiveAccountIdError = BitwardenTestError.example
         let loginRequest = LoginRequestPushNotification(
             timeoutInMinutes: 15,
             userId: Account.fixture().profile.userId,
@@ -616,11 +734,32 @@ class NotificationServiceTests: BitwardenTestCase { // swiftlint:disable:this ty
             "notificationData": String(data: testData, encoding: .utf8) ?? "",
         ]
 
-        // Test.
         await subject.messageReceived(message, notificationDismissed: nil, notificationTapped: true)
 
-        // Confirm the results.
-        XCTAssertEqual(errorReporter.errors.last as? StateServiceError, .noAccounts)
+        XCTAssertEqual(errorReporter.errors.last as? BitwardenTestError, .example)
+    }
+
+    /// `messageReceived(_:notificationDismissed:notificationTapped:)` logs the account not found
+    /// error to the flight recorder when a tapped notification references an unknown account.
+    @MainActor
+    func test_messageReceived_notificationTapped_error_accountNotFound() async throws {
+        let loginRequest = LoginRequestPushNotification(
+            timeoutInMinutes: 15,
+            userId: Account.fixture().profile.userId,
+        )
+        let testData = try JSONEncoder().encode(loginRequest)
+        nonisolated(unsafe) let message: [AnyHashable: Any] = [
+            "notificationData": String(data: testData, encoding: .utf8) ?? "",
+        ]
+
+        await subject.messageReceived(message, notificationDismissed: nil, notificationTapped: true)
+
+        let userId = Account.fixture().profile.userId
+        XCTAssertTrue(errorReporter.errors.isEmpty)
+        XCTAssertEqual(
+            flightRecorder.logMessages,
+            ["[Notification] Notification tapped for login request but account (\(userId)) not found"],
+        )
     }
 }
 
