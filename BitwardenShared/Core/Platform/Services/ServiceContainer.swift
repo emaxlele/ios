@@ -538,16 +538,6 @@ public class ServiceContainer: Services { // swiftlint:disable:this type_body_le
             )
         }
 
-        // Create holder for breaking circular dependency.
-        // This is set later in this initializer, after serverCommConfigClientSingletonHolder is created.
-        var serverCommConfigClientSingletonHolder: ServerCommunicationConfigClientSingleton?
-        defer {
-            precondition(
-                serverCommConfigClientSingletonHolder != nil,
-                "`serverCommConfigClientSingletonHolder` needs to be set prior to this defer block.",
-            )
-        }
-
         let apiService = APIService(
             client: certificateHttpClient,
             environmentService: environmentService,
