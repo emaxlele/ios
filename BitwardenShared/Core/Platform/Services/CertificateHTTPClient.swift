@@ -44,13 +44,24 @@ final class CertificateHTTPClient: NSObject, HTTPClient, @unchecked Sendable {
     }
 }
 
-// MARK: - URLSessionDelegate
+// MARK: - URLSessionDelegate & URLSessionTaskDelegate
 
-extension CertificateHTTPClient: URLSessionDelegate {
+extension CertificateHTTPClient: URLSessionDelegate, URLSessionTaskDelegate {
+    func urlSession(
+        _ session: URLSession,
+        task: URLSessionTask,
+        willPerformHTTPRedirection response: HTTPURLResponse,
+        newRequest request: URLRequest,
+        completionHandler: @escaping (URLRequest?) -> Void
+    ) {
+        // Reject all redirects, mimicking NoRedirectSessionDelegate
+        completionHandler(nil)
+    }
+
     func urlSession(
         _ session: URLSession,
         didReceive challenge: URLAuthenticationChallenge,
-        completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void,
+        completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
     ) {
         // Handle client certificate authentication challenges
         guard challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodClientCertificate else {

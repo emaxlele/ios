@@ -479,7 +479,6 @@ public class ServiceContainer: Services { // swiftlint:disable:this type_body_le
             keychainRepository: keychainRepository,
             stateService: stateService,
         )
-
         let clientCertificateService = DefaultClientCertificateService(
             keychainRepository: keychainRepository,
             stateService: stateService,
@@ -487,10 +486,22 @@ public class ServiceContainer: Services { // swiftlint:disable:this type_body_le
 
         // Create certificate-aware HTTP client
         let certificateHttpClient = CertificateHTTPClient(certificateService: clientCertificateService)
+
+        // Create holder for breaking circular dependency.
+        // This is set later in this initializer, after serverCommConfigClientSingletonHolder is created.
+        var serverCommConfigClientSingletonHolder: ServerCommunicationConfigClientSingleton?
+        defer {
+            precondition(
+                serverCommConfigClientSingletonHolder != nil,
+                "`serverCommConfigClientSingletonHolder` needs to be set prior to this defer block.",
+            )
+        }
+
         let apiService = APIService(
             client: certificateHttpClient,
             environmentService: environmentService,
             flightRecorder: flightRecorder,
+            serverCommunicationConfigClientSingleton: { serverCommConfigClientSingletonHolder },
             stateService: stateService,
             tokenService: tokenService,
         )
