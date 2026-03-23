@@ -819,4 +819,17 @@ extension MockStateService {
         try setBiometricAuthenticationEnabledResult.get()
         biometricsEnabled[userId] = isEnabled
     }
+}
+
+// MARK: Client Certificate
+
+extension MockStateService {
+    func getClientCertificateConfiguration(userId: String?) async throws -> ClientCertificateConfiguration? {
+        nil
+    }
+
+    func setClientCertificateConfiguration(
+        _ configuration: ClientCertificateConfiguration,
+        userId: String?,
+    ) async throws {}
 } // swiftlint:disable:this file_length

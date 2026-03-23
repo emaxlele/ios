@@ -417,3 +417,13 @@ extension MockAppSettingsStore {
         biometricAuthenticationEnabled[userId] = isEnabled
     }
 }
+
+// MARK: Client Certificate
+
+extension MockAppSettingsStore {
+    func clientCertificateConfiguration(userId: String) -> ClientCertificateConfiguration? {
+        nil
+    }
+
+    func setClientCertificateConfiguration(_ configuration: ClientCertificateConfiguration, userId: String) {}
+}

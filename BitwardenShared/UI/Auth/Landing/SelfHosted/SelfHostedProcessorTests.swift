@@ -22,6 +22,7 @@ class SelfHostedProcessorTests: BitwardenTestCase {
         subject = SelfHostedProcessor(
             coordinator: coordinator.asAnyCoordinator(),
             delegate: delegate,
+            services: services,
             state: SelfHostedState(),
         )
 
@@ -164,23 +165,64 @@ class SelfHostedProcessorTests: BitwardenTestCase {
         XCTAssertFalse(subject.state.showingCertificateImporter)
     }
 
-    /// Receiving `.certificatePasswordChanged` updates the password state.
+    /// Receiving `.certificateInfoSubmitted` with empty password shows error dialog.
     @MainActor
-    func test_receive_certificatePasswordChanged() {
-        subject.receive(.certificatePasswordChanged("test123"))
+    func test_receive_certificateInfoSubmitted_emptyPassword() {
+        subject.state.pendingCertificateData = Data([0x01])
 
-        XCTAssertEqual(subject.state.certificatePassword, "test123")
+        subject.receive(.certificateInfoSubmitted(alias: "test", password: ""))
+
+        XCTAssertEqual(subject.state.dialog, .error(message: Localizations.validationFieldRequired(Localizations.password)))
     }
 
-    /// Receiving `.removeCertificate` performs the remove certificate effect.
+    /// Receiving `.certificateInfoSubmitted` with empty alias shows error dialog.
     @MainActor
-    func test_receive_removeCertificate() async {
-        // This test verifies that the action triggers the async effect
-        // The actual removal logic is tested in the effect test
-        subject.receive(.removeCertificate)
+    func test_receive_certificateInfoSubmitted_emptyAlias() {
+        subject.state.pendingCertificateData = Data([0x01])
 
-        // Since the effect is performed asynchronously, we just verify the action was received
-        // without error. The actual removal would be tested by mocking the certificate service.
+        subject.receive(.certificateInfoSubmitted(alias: "", password: "pass123"))
+
+        XCTAssertEqual(subject.state.dialog, .error(message: Localizations.validationFieldRequired(Localizations.alias)))
+    }
+
+    /// Receiving `.certificateInfoSubmitted` when alias already exists shows overwrite confirmation dialog.
+    @MainActor
+    func test_receive_certificateInfoSubmitted_aliasConflict() {
+        let data = Data([0x01])
+        subject.state.pendingCertificateData = data
+        subject.state.keyAlias = "existing"
+
+        subject.receive(.certificateInfoSubmitted(alias: "existing", password: "pass123"))
+
+        if case let .confirmOverwriteAlias(alias, _, _) = subject.state.dialog {
+            XCTAssertEqual(alias, "existing")
+        } else {
+            XCTFail("Expected confirmOverwriteAlias dialog")
+        }
+    }
+
+    /// Receiving `.dialogDismiss` clears the dialog state.
+    @MainActor
+    func test_receive_dialogDismiss() {
+        subject.state.dialog = .error(message: "test error")
+
+        subject.receive(.dialogDismiss)
+
+        XCTAssertNil(subject.state.dialog)
+    }
+
+    /// Receiving `.certificateFileSelected` with a failure shows an error dialog.
+    @MainActor
+    func test_receive_certificateFileSelected_failure() {
+        let error = NSError(domain: "test", code: 1, userInfo: [NSLocalizedDescriptionKey: "File error"])
+
+        subject.receive(.certificateFileSelected(.failure(error)))
+
+        if case let .error(message) = subject.state.dialog {
+            XCTAssertTrue(message.contains("File error"))
+        } else {
+            XCTFail("Expected error dialog")
+        }
     }
 }
 

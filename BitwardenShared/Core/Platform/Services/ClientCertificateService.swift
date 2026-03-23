@@ -1,3 +1,4 @@
+import BitwardenResources
 import Foundation
 import Security
 
@@ -11,28 +12,46 @@ protocol ClientCertificateService: AnyObject {
     /// - Parameters:
     ///   - data: The PKCS#12 certificate data.
     ///   - password: The password for the certificate.
+    ///   - userId: The user ID to associate with the certificate.
     /// - Returns: The imported certificate configuration.
     /// - Throws: An error if the certificate cannot be imported.
     ///
-    func importCertificate(data: Data, password: String) async throws -> ClientCertificateConfiguration
+    func importCertificate(data: Data, password: String, alias: String, userId: String) async throws -> ClientCertificateConfiguration
 
-    /// Get the current client certificate configuration.
+    /// Get the current client certificate configuration for a user.
     ///
+    /// - Parameter userId: The user ID to retrieve configuration for.
     /// - Returns: The current certificate configuration, or `.disabled` if none is configured.
     ///
-    func getCurrentConfiguration() async -> ClientCertificateConfiguration
+    func getCurrentConfiguration(userId: String) async -> ClientCertificateConfiguration
 
-    /// Remove the current client certificate.
+    /// Remove the client certificate for a user.
     ///
-    func removeCertificate() async throws
+    /// - Parameter userId: The user ID associated with the certificate to remove.
+    ///
+    func removeCertificate(userId: String) async throws
 
-    /// Get the client certificate data and password for mTLS.
+    /// Get the client certificate identity for mTLS authentication for a user.
     ///
-    /// - Returns: A tuple containing the certificate data and password, or nil if no certificate is configured.
+    /// - Parameter userId: The user ID associated with the certificate.
+    /// - Returns: A SecIdentity for the certificate, or nil if no certificate is configured.
     ///
-    func getClientCertificateForTLS() async -> (data: Data, password: String)?
+    func getClientCertificateIdentity(userId: String) async -> SecIdentity?
 
-    /// Checks if client certificates are currently enabled and configured.
+    /// Get the client certificate identity for mTLS authentication for the active, or pre-login, user.
+    ///
+    /// - Returns: A SecIdentity for the certificate, or nil if no certificate is configured.
+    ///
+    func getClientCertificateIdentity() async -> SecIdentity?
+
+    /// Checks if client certificates are currently enabled and configured for a user.
+    ///
+    /// - Parameter userId: The user ID to check configuration for.
+    /// - Returns: `true` if client certificates should be used for authentication.
+    ///
+    func shouldUseCertificates(userId: String) async -> Bool
+
+    /// Checks if client certificates are currently enabled and configured for the active, or pre-login, user.
     ///
     /// - Returns: `true` if client certificates should be used for authentication.
     ///
@@ -46,7 +65,10 @@ protocol ClientCertificateService: AnyObject {
 final class DefaultClientCertificateService: ClientCertificateService {
     // MARK: Private Properties
 
-    /// The service for storing application state.
+    /// The repository used to store certificate data in the keychain.
+    private let keychainRepository: KeychainRepository
+
+    /// The service used to manage application state.
     private let stateService: StateService
 
     // MARK: Initialization
@@ -54,16 +76,22 @@ final class DefaultClientCertificateService: ClientCertificateService {
     /// Initialize a `DefaultClientCertificateService`.
     ///
     /// - Parameters:
+    ///   - keychainRepository: The repository used to store sensitive certificate data in the Keychain.
     ///   - stateService: The service used to manage application state.
     ///
-    init(stateService: StateService) {
+    init(
+        keychainRepository: KeychainRepository,
+        stateService: StateService,
+    ) {
+        self.keychainRepository = keychainRepository
         self.stateService = stateService
     }
 
     // MARK: Methods
 
-    func importCertificate(data: Data, password: String) async throws -> ClientCertificateConfiguration {
-        // Parse PKCS#12 data
+    static let preLoginUserId = "pre_login_client_cert"
+
+    func importCertificate(data: Data, password: String, alias: String, userId: String) async throws -> ClientCertificateConfiguration {
         let importOptions: [String: Any] = [
             kSecImportExportPassphrase as String: password,
         ]
@@ -71,79 +99,92 @@ final class DefaultClientCertificateService: ClientCertificateService {
         var importResult: CFArray?
         let status = SecPKCS12Import(data as CFData, importOptions as CFDictionary, &importResult)
 
+        if status == errSecAuthFailed {
+            throw ClientCertificateError.invalidPassword
+        }
+
         guard status == errSecSuccess,
               let importArray = importResult as? [[String: Any]],
               let firstItem = importArray.first,
-              let certificate = firstItem[kSecImportItemCertChain as String] as? [SecCertificate],
-              let cert = certificate.first else {
+              let identityRef = firstItem[kSecImportItemIdentity as String] else {
             throw ClientCertificateError.invalidCertificate
         }
 
-        // Extract certificate information
-        let subject = getCertificateSubject(cert)
-        let issuer = getCertificateIssuer(cert)
-        let expirationDate = getCertificateExpirationDate(cert)
+        // SecIdentity is a CoreFoundation type; use CFTypeRef bridge instead of conditional cast.
+        let identity = identityRef as! SecIdentity // swiftlint:disable:this force_cast
 
-        // Store certificate securely in keychain
-        let configuration = ClientCertificateConfiguration.enabled(
-            certificateData: data,
-            password: password,
-            subject: subject,
-            issuer: issuer,
-            expirationDate: expirationDate
+        try await keychainRepository.setClientCertificateIdentity(identity, userId: userId)
+
+        let config = ClientCertificateConfiguration.enabled(alias: alias)
+        try await stateService.setClientCertificateConfiguration(
+            config,
+            userId: userId
         )
 
-        await stateService.setGlobalClientCertificateConfiguration(configuration)
-
-        return configuration
+        return config
     }
 
-    func getCurrentConfiguration() async -> ClientCertificateConfiguration {
-        await stateService.getGlobalClientCertificateConfiguration() ?? .disabled
+    func getCurrentConfiguration(userId: String) async -> ClientCertificateConfiguration {
+        do {
+            guard let config = try await stateService.getClientCertificateConfiguration(userId: userId),
+                  config.isEnabled else {
+                return .disabled
+            }
+
+            // We check if the identity actually exists in Keychain to be sure
+            let identity = try await keychainRepository.getClientCertificateIdentity(userId: userId)
+            if identity == nil {
+                // Config says enabled, but keychain is missing it. Revert to disabled?
+                // For now, return disabled state effectively, or just return the config but runtime will fail.
+                // Safest is to return disabled if missing.
+                return .disabled
+            }
+
+            return config
+        } catch {
+            return .disabled
+        }
     }
 
-    func removeCertificate() async throws {
-        await stateService.setGlobalClientCertificateConfiguration(.disabled)
+    func removeCertificate(userId: String) async throws {
+        try await keychainRepository.deleteClientCertificateIdentity(userId: userId)
+        try await stateService.setClientCertificateConfiguration(.disabled, userId: userId)
     }
 
-    func getClientCertificateForTLS() async -> (data: Data, password: String)? {
-        let configuration = await getCurrentConfiguration()
-
-        guard configuration.isEnabled,
-              let certificateData = configuration.certificateData,
-              let password = configuration.password else {
+    func getClientCertificateIdentity(userId: String) async -> SecIdentity? {
+        do {
+             // We could check stateService here, but checking keychain directly is also valid
+             // and potentially faster if we just need the identity.
+             // However, strictly complying with "enabled" flag is good practice.
+             guard let config = try await stateService.getClientCertificateConfiguration(userId: userId),
+                   config.isEnabled else {
+                 return nil
+             }
+            return try await keychainRepository.getClientCertificateIdentity(userId: userId)
+        } catch {
             return nil
         }
+    }
 
-        return (data: certificateData, password: password)
+    func getClientCertificateIdentity() async -> SecIdentity? {
+        // Try active user first
+        if let activeUserId = try? await stateService.getActiveAccountId(),
+           let identity = await getClientCertificateIdentity(userId: activeUserId) {
+            return identity
+        }
+
+        // Fallback to pre-login user (for self-hosted config functionality before login)
+        return await getClientCertificateIdentity(userId: DefaultClientCertificateService.preLoginUserId)
+    }
+
+    func shouldUseCertificates(userId: String) async -> Bool {
+        let identity = await getClientCertificateIdentity(userId: userId)
+        return identity != nil
     }
 
     func shouldUseCertificates() async -> Bool {
-        let configuration = await getCurrentConfiguration()
-        return configuration.isEnabled && configuration.certificateData != nil
-    }
-
-    // MARK: Private Methods
-
-    private func getCertificateSubject(_ certificate: SecCertificate) -> String {
-        var commonName: CFString?
-        let status = SecCertificateCopyCommonName(certificate, &commonName)
-
-        if status == errSecSuccess, let name = commonName as String? {
-            return name
-        }
-
-        return "Unknown Subject"
-    }
-
-    private func getCertificateIssuer(_ certificate: SecCertificate) -> String {
-        // For iOS, we'll use a simplified approach since detailed issuer info requires more complex parsing
-        "Certificate Authority"
-    }
-
-    private func getCertificateExpirationDate(_ certificate: SecCertificate) -> Date {
-        // For iOS, we'll use a default expiration date since extracting the actual date requires complex parsing
-        Date().addingTimeInterval(365 * 24 * 60 * 60) // 1 year from now
+        let identity = await getClientCertificateIdentity()
+        return identity != nil
     }
 }
 
@@ -164,11 +205,11 @@ enum ClientCertificateError: Error, LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidCertificate:
-            return "The certificate file is invalid or corrupted."
+            Localizations.certificateFileInvalidOrCorrupted
         case .invalidPassword:
-            return "The certificate password is incorrect."
+            Localizations.certificatePasswordIncorrect
         case .certificateExpired:
-            return "The certificate has expired."
+            Localizations.certificateExpired
         }
     }
 }

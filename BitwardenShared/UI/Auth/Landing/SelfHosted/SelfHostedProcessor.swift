@@ -19,7 +19,7 @@ protocol SelfHostedProcessorDelegate: AnyObject {
 class SelfHostedProcessor: StateProcessor<SelfHostedState, SelfHostedAction, SelfHostedEffect> {
     // MARK: Types
 
-    typealias Services = HasClientCertificateService
+    typealias Services = HasClientCertificateService & HasStateService
 
     // MARK: Private Properties
 
@@ -59,12 +59,12 @@ class SelfHostedProcessor: StateProcessor<SelfHostedState, SelfHostedAction, Sel
 
     override func perform(_ effect: SelfHostedEffect) async {
         switch effect {
+        case .appeared:
+            await loadCertificateState()
         case .saveEnvironment:
             await saveEnvironment()
-        case let .importClientCertificate(data, password):
-            await importClientCertificate(data: data, password: password)
-        case .importClientCertificateWithPassword:
-            await importClientCertificateWithStoredPassword()
+        case let .importClientCertificate(data, alias, password):
+            await importClientCertificate(data: data, alias: alias, password: password)
         case .removeClientCertificate:
             await removeClientCertificate()
         }
@@ -72,6 +72,7 @@ class SelfHostedProcessor: StateProcessor<SelfHostedState, SelfHostedAction, Sel
 
     override func receive(_ action: SelfHostedAction) {
         switch action {
+        // URL actions
         case let .apiUrlChanged(url):
             state.apiServerUrl = url
         case .dismiss:
@@ -84,27 +85,22 @@ class SelfHostedProcessor: StateProcessor<SelfHostedState, SelfHostedAction, Sel
             state.serverUrl = url
         case let .webVaultUrlChanged(url):
             state.webVaultServerUrl = url
-        case .clientCertificateConfigureTapped:
-            state.isClientCertificateSheetPresented = true
+        // Certificate actions
         case .importCertificateTapped:
             state.showingCertificateImporter = true
         case let .certificateFileSelected(result):
             state.showingCertificateImporter = false
             handleCertificateFileSelection(result)
-        case let .certificatePasswordChanged(password):
-            state.certificatePassword = password
+        case let .certificateInfoSubmitted(alias, password):
+            handleCertificateInfoSubmitted(alias: alias, password: password)
+        case .confirmOverwriteCertificate:
+            handleConfirmOverwriteCertificate()
+        case .removeCertificateTapped:
+            Task { await perform(.removeClientCertificate) }
         case .dismissCertificateImporter:
             state.showingCertificateImporter = false
-        case .dismissPasswordPrompt:
-            state.showingPasswordPrompt = false
-            state.certificatePassword = ""
-            state.pendingCertificateData = nil
-        case .confirmCertificatePassword:
-            Task { await perform(.importClientCertificateWithPassword) }
-        case .removeCertificate:
-            Task { await perform(.removeClientCertificate) }
-        case .clientCertificateSheetDismissed:
-            state.isClientCertificateSheetPresented = false
+        case .dialogDismiss:
+            state.dialog = nil
         }
     }
 
@@ -149,63 +145,45 @@ class SelfHostedProcessor: StateProcessor<SelfHostedState, SelfHostedAction, Sel
         coordinator.navigate(to: .dismissPresented)
     }
 
-    /// Imports a client certificate from the provided data and password.
+    /// Loads the saved client certificate state when the view appears.
+    ///
+    private func loadCertificateState() async {
+        let userId = (try? await services.stateService.getActiveAccountId())
+            ?? DefaultClientCertificateService.preLoginUserId
+        let config = await services.clientCertificateService.getCurrentConfiguration(userId: userId)
+        state.clientCertificateConfiguration = config
+        state.keyAlias = config.alias ?? ""
+        state.keyHost = config.isEnabled ? .keychain : nil
+    }
+
+    /// Imports a client certificate from the provided data, alias, and password.
     ///
     /// - Parameters:
     ///   - data: The certificate data in PKCS#12 format.
-    ///   - password: The password for the certificate.
+    ///   - alias: The alias to associate with the certificate.
+    ///   - password: The password used to decrypt the PKCS#12 data.
     ///
-    private func importClientCertificate(data: Data, password: String) async {
+    private func importClientCertificate(data: Data, alias: String, password: String) async {
         do {
+            let userId = (try? await services.stateService.getActiveAccountId())
+                ?? DefaultClientCertificateService.preLoginUserId
             let configuration = try await services.clientCertificateService.importCertificate(
                 data: data,
-                password: password
+                password: password,
+                alias: alias,
+                userId: userId
             )
             state.clientCertificateConfiguration = configuration
-            coordinator.showAlert(Alert.defaultAlert(
-                title: "Success",
-                message: "Client certificate imported successfully."
-            ))
-        } catch {
-            coordinator.showAlert(Alert.defaultAlert(
-                title: Localizations.anErrorHasOccurred,
-                message: error.localizedDescription
-            ))
-        }
-    }
-
-    /// Imports the certificate using the stored certificate data and user-entered password.
-    ///
-    private func importClientCertificateWithStoredPassword() async {
-        guard let data = state.pendingCertificateData else {
-            coordinator.showAlert(Alert.defaultAlert(
-                title: Localizations.anErrorHasOccurred,
-                message: "No certificate data available."
-            ))
-            return
-        }
-
-        do {
-            let configuration = try await services.clientCertificateService.importCertificate(
-                data: data,
-                password: state.certificatePassword
-            )
-
-            // Success - update state and clean up
-            state.clientCertificateConfiguration = configuration
-            state.showingPasswordPrompt = false
-            state.certificatePassword = ""
+            state.keyAlias = alias
+            state.keyHost = .keychain
+            state.dialog = nil
             state.pendingCertificateData = nil
-
-            coordinator.showAlert(Alert.defaultAlert(
-                title: "Success",
-                message: "Client certificate imported successfully."
-            ))
+        } catch ClientCertificateError.invalidPassword {
+            state.dialog = .error(message: Localizations.certificatePasswordIncorrect)
+        } catch ClientCertificateError.invalidCertificate {
+            state.dialog = .error(message: Localizations.certificateFileInvalidOrCorrupted)
         } catch {
-            coordinator.showAlert(Alert.defaultAlert(
-                title: Localizations.anErrorHasOccurred,
-                message: "Failed to import certificate: \(error.localizedDescription)"
-            ))
+            state.dialog = .error(message: Localizations.certificateCouldNotBeInstalled)
         }
     }
 
@@ -213,61 +191,95 @@ class SelfHostedProcessor: StateProcessor<SelfHostedState, SelfHostedAction, Sel
     ///
     private func removeClientCertificate() async {
         do {
-            try await services.clientCertificateService.removeCertificate()
+            let userId = (try? await services.stateService.getActiveAccountId())
+                ?? DefaultClientCertificateService.preLoginUserId
+            try await services.clientCertificateService.removeCertificate(userId: userId)
             state.clientCertificateConfiguration = .disabled
-            coordinator.showAlert(Alert.defaultAlert(
-                title: "Success",
-                message: "Client certificate removed successfully."
-            ))
+            state.keyAlias = ""
+            state.keyHost = nil
         } catch {
             coordinator.showAlert(Alert.defaultAlert(
                 title: Localizations.anErrorHasOccurred,
-                message: error.localizedDescription
+                message: error.localizedDescription,
             ))
         }
     }
 
-    /// Handles the certificate file selection result.
+    /// Handles the result of the certificate file picker.
     ///
-    /// - Parameter result: The result of file selection.
+    /// On success, reads the file data and presents the alias and password input dialog.
+    /// On failure, presents an error dialog.
+    ///
+    /// - Parameter result: The result of the file selection.
     ///
     private func handleCertificateFileSelection(_ result: Result<URL, Error>) {
         switch result {
         case let .success(url):
-            // Try to read the file and prompt for password if needed
             do {
                 _ = url.startAccessingSecurityScopedResource()
                 defer { url.stopAccessingSecurityScopedResource() }
                 let data = try Data(contentsOf: url)
-                // Try importing with empty password first
-                Task {
-                    do {
-                        let configuration = try await services.clientCertificateService.importCertificate(
-                            data: data,
-                            password: ""
-                        )
-                        state.clientCertificateConfiguration = configuration
-                        coordinator.showAlert(Alert.defaultAlert(
-                            title: "Success",
-                            message: "Client certificate imported successfully."
-                        ))
-                    } catch {
-                        // If it fails, we likely need a password
-                        state.pendingCertificateData = data
-                        state.showingPasswordPrompt = true
-                    }
-                }
+                state.pendingCertificateData = data
+                state.dialog = .setCertificateData(certificateData: data)
             } catch {
-                coordinator.showAlert(Alert.defaultAlert(
-                    title: Localizations.anErrorHasOccurred,
-                    message: "Failed to read certificate file: \(error.localizedDescription)"
-                ))
+                state.dialog = .error(message: Localizations.unableToReadCertificateFile)
             }
         case let .failure(error):
-            coordinator.showAlert(Alert.defaultAlert(
-                title: Localizations.anErrorHasOccurred,
-                message: "Failed to select certificate: \(error.localizedDescription)"
-            ))
+            state.dialog = .error(message: error.localizedDescription)
+        }
+    }
+
+    /// Handles the user submitting the alias and password from the certificate import dialog.
+    ///
+    /// Validates that both fields are non-empty, checks for an alias conflict with any existing
+    /// certificate, and then proceeds with the import.
+    ///
+    /// - Parameters:
+    ///   - alias: The alias entered by the user.
+    ///   - password: The password entered by the user.
+    ///
+    private func handleCertificateInfoSubmitted(alias: String, password: String) {
+        guard !password.trimmingCharacters(in: .whitespaces).isEmpty else {
+            state.dialog = .error(message: Localizations.validationFieldRequired(Localizations.password))
+            return
+        }
+
+        guard !alias.trimmingCharacters(in: .whitespaces).isEmpty else {
+            state.dialog = .error(message: Localizations.validationFieldRequired(Localizations.alias))
+            return
+        }
+
+        guard let data = state.pendingCertificateData else {
+            state.dialog = .error(message: Localizations.noCertificateDataAvailable)
+            return
+        }
+
+        if !state.keyAlias.isEmpty, state.keyAlias == alias {
+            state.dialog = .confirmOverwriteAlias(
+                alias: alias,
+                certificateData: data,
+                password: password,
+            )
+            return
+        }
+
+        state.dialog = nil
+        Task {
+            await perform(.importClientCertificate(data: data, alias: alias, password: password))
+        }
+    }
+
+    /// Handles the user confirming they want to overwrite an existing certificate alias.
+    ///
+    private func handleConfirmOverwriteCertificate() {
+        guard case let .confirmOverwriteAlias(alias, certificateData, password) = state.dialog else {
+            return
+        }
+
+        state.dialog = nil
+        Task {
+            await perform(.importClientCertificate(data: certificateData, alias: alias, password: password))
         }
     }
 }
+

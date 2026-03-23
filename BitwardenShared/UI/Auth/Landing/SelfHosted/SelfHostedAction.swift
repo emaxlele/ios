@@ -5,6 +5,8 @@ import Foundation
 /// Actions handled by the `SelfHostedProcessor`.
 ///
 enum SelfHostedAction: Equatable {
+    // MARK: URL Actions
+
     /// The API server URL has changed.
     case apiUrlChanged(String)
 
@@ -23,8 +25,7 @@ enum SelfHostedAction: Equatable {
     /// The web vault server URL has changed.
     case webVaultUrlChanged(String)
 
-    /// The user tapped to configure client certificate.
-    case clientCertificateConfigureTapped
+    // MARK: Certificate Actions
 
     /// The user tapped to import a client certificate.
     case importCertificateTapped
@@ -32,68 +33,62 @@ enum SelfHostedAction: Equatable {
     /// A certificate file was selected.
     case certificateFileSelected(Result<URL, Error>)
 
-    /// The certificate password changed.
-    case certificatePasswordChanged(String)
 
-    /// The certificate importer was dismissed.
+    /// The user submitted a certificate alias and password.
+    case certificateInfoSubmitted(alias: String, password: String)
+
+    /// The user confirmed overwriting an existing certificate alias.
+    case confirmOverwriteCertificate
+
+    /// The user tapped to remove the current certificate.
+    case removeCertificateTapped
+
+    /// The user dismissed the certificate file importer.
     case dismissCertificateImporter
 
-    /// The password prompt was dismissed.
-    case dismissPasswordPrompt
-
-    /// The user confirmed the password for certificate import.
-    case confirmCertificatePassword
-
-    /// The user tapped to remove the client certificate.
-    case removeCertificate
-
-    /// The client certificate import sheet was dismissed.
-    case clientCertificateSheetDismissed
+    /// A dialog was dismissed.
+    case dialogDismiss
 
     // MARK: Equatable
 
     static func == (lhs: SelfHostedAction, rhs: SelfHostedAction) -> Bool {
         switch (lhs, rhs) {
         case let (.apiUrlChanged(lhsUrl), .apiUrlChanged(rhsUrl)):
-            return lhsUrl == rhsUrl
+            lhsUrl == rhsUrl
         case (.dismiss, .dismiss):
-            return true
+            true
         case let (.iconsUrlChanged(lhsUrl), .iconsUrlChanged(rhsUrl)):
-            return lhsUrl == rhsUrl
+            lhsUrl == rhsUrl
         case let (.identityUrlChanged(lhsUrl), .identityUrlChanged(rhsUrl)):
-            return lhsUrl == rhsUrl
+            lhsUrl == rhsUrl
         case let (.serverUrlChanged(lhsUrl), .serverUrlChanged(rhsUrl)):
-            return lhsUrl == rhsUrl
+            lhsUrl == rhsUrl
         case let (.webVaultUrlChanged(lhsUrl), .webVaultUrlChanged(rhsUrl)):
-            return lhsUrl == rhsUrl
-        case (.clientCertificateConfigureTapped, .clientCertificateConfigureTapped):
-            return true
+            lhsUrl == rhsUrl
         case (.importCertificateTapped, .importCertificateTapped):
-            return true
+            true
         case let (.certificateFileSelected(lhsResult), .certificateFileSelected(rhsResult)):
-            // Compare Results by comparing success URLs or failure error descriptions
             switch (lhsResult, rhsResult) {
             case let (.success(lhsUrl), .success(rhsUrl)):
-                return lhsUrl == rhsUrl
+                lhsUrl == rhsUrl
             case let (.failure(lhsError), .failure(rhsError)):
-                return lhsError.localizedDescription == rhsError.localizedDescription
+                lhsError.localizedDescription == rhsError.localizedDescription
             default:
-                return false
+                false
             }
-        case let (.certificatePasswordChanged(lhsPassword), .certificatePasswordChanged(rhsPassword)):
-            return lhsPassword == rhsPassword
+
+        case let (.certificateInfoSubmitted(lhsAlias, lhsPassword), .certificateInfoSubmitted(rhsAlias, rhsPassword)):
+            lhsAlias == rhsAlias && lhsPassword == rhsPassword
+        case (.confirmOverwriteCertificate, .confirmOverwriteCertificate):
+            true
+        case (.removeCertificateTapped, .removeCertificateTapped):
+            true
         case (.dismissCertificateImporter, .dismissCertificateImporter):
-            return true
-        case (.dismissPasswordPrompt, .dismissPasswordPrompt):
-            return true
-        case (.confirmCertificatePassword, .confirmCertificatePassword):
-            return true
-        case (.removeCertificate, .removeCertificate):
-            return true
-        case (.clientCertificateSheetDismissed, .clientCertificateSheetDismissed):
-            return true
+            true
+        case (.dialogDismiss, .dialogDismiss):
+            true
         default:
-            return false
+            false
         }
     }
 }

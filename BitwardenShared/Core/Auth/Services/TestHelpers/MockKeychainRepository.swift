@@ -29,9 +29,17 @@ class MockKeychainRepository: KeychainRepository {
     var setPendingAdminLoginRequestResult: Result<Void, Error> = .success(())
     var setRefreshTokenResult: Result<Void, Error> = .success(())
 
+    // MARK: Client Certificate Properties
+
+    var getClientCertificateIdentityResult: Result<SecIdentity?, Error> = .success(nil)
+    var setClientCertificateIdentityResult: Result<Void, Error> = .success(())
+    var deleteClientCertificateIdentityResult: Result<Void, Error> = .success(())
+    var storedIdentities = [String: SecIdentity]()
+
     func deleteAllItems() async throws {
         deleteAllItemsCalled = true
         mockStorage.removeAll()
+        storedIdentities.removeAll()
         try deleteAllItemsResult.get()
     }
 
@@ -138,5 +146,22 @@ class MockKeychainRepository: KeychainRepository {
         securityType = item.accessControlFlags
         try setResult.get()
         mockStorage[formattedKey] = value
+    }
+
+    // MARK: Client Certificate Methods
+
+    func getClientCertificateIdentity(userId: String) async throws -> SecIdentity? {
+        _ = try getClientCertificateIdentityResult.get()
+        return storedIdentities[userId]
+    }
+
+    func setClientCertificateIdentity(_ identity: SecIdentity, userId: String) async throws {
+        try setClientCertificateIdentityResult.get()
+        storedIdentities[userId] = identity
+    }
+
+    func deleteClientCertificateIdentity(userId: String) async throws {
+        try deleteClientCertificateIdentityResult.get()
+        storedIdentities.removeValue(forKey: userId)
     }
 }

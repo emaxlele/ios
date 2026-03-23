@@ -213,20 +213,8 @@ protocol StateService: AnyObject {
     ///
     func setClientCertificateConfiguration(
         _ configuration: ClientCertificateConfiguration,
-        userId: String?
+        userId: String?,
     ) async throws
-
-    /// Gets the global client certificate configuration (not user-specific).
-    ///
-    /// - Returns: The global client certificate configuration, or `nil` if none is configured.
-    ///
-    func getGlobalClientCertificateConfiguration() async -> ClientCertificateConfiguration?
-
-    /// Sets the global client certificate configuration (not user-specific).
-    ///
-    /// - Parameter configuration: The client certificate configuration to set.
-    ///
-    func setGlobalClientCertificateConfiguration(_ configuration: ClientCertificateConfiguration) async
 
     /// Gets the events stored to disk to be uploaded in the future.
     ///
@@ -1659,18 +1647,10 @@ actor DefaultStateService: StateService, ActiveAccountStateProvider, ConfigState
 
     func setClientCertificateConfiguration(
         _ configuration: ClientCertificateConfiguration,
-        userId: String?
+        userId: String?,
     ) async throws {
         let userId = try userId ?? getActiveAccountUserId()
         appSettingsStore.setClientCertificateConfiguration(configuration, userId: userId)
-    }
-
-    func getGlobalClientCertificateConfiguration() async -> ClientCertificateConfiguration? {
-        appSettingsStore.globalClientCertificateConfiguration()
-    }
-
-    func setGlobalClientCertificateConfiguration(_ configuration: ClientCertificateConfiguration) async {
-        appSettingsStore.setGlobalClientCertificateConfiguration(configuration)
     }
 
     func getEvents(userId: String?) async throws -> [EventData] {

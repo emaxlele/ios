@@ -36,6 +36,9 @@ enum KeychainItem: Equatable, KeychainStorageKeyPossessing {
     /// The keychain item for a user's vault timeout.
     case vaultTimeout(userId: String)
 
+    /// The keychain item for a user's client certificate identity (SecIdentity).
+    case clientCertificateIdentity(userId: String)
+
     /// The `SecAccessControlCreateFlags` level for this keychain item.
     ///     If `nil`, no extra protection is applied.
     ///
@@ -44,6 +47,7 @@ enum KeychainItem: Equatable, KeychainStorageKeyPossessing {
         case .accessToken,
              .authenticatorVaultKey,
              .deviceKey,
+             .clientCertificateIdentity,
              .lastActiveTime,
              .neverLock,
              .pendingAdminLoginRequest,
@@ -61,6 +65,7 @@ enum KeychainItem: Equatable, KeychainStorageKeyPossessing {
         switch self {
         case .biometrics,
              .deviceKey,
+             .clientCertificateIdentity,
              .lastActiveTime,
              .neverLock,
              .pendingAdminLoginRequest,
@@ -86,6 +91,8 @@ enum KeychainItem: Equatable, KeychainStorageKeyPossessing {
             "userKeyBiometricUnlock_" + id
         case let .deviceKey(userId: id):
             "deviceKey_" + id
+        case let .clientCertificateIdentity(userId):
+            "clientCertificateIdentity_\(userId)"
         case let .lastActiveTime(userId):
             "lastActiveTime_\(userId)"
         case let .neverLock(userId: id):
@@ -228,6 +235,30 @@ protocol KeychainRepository: AnyObject {
     ///    - value: A `String` representing the user auth key.
     ///
     func setUserAuthKey(for item: KeychainItem, value: String) async throws
+
+    // MARK: Client Certificate Methods
+
+    /// Gets the client certificate identity for a user from the keychain.
+    ///
+    /// - Parameter userId: The user ID associated with the identity.
+    /// - Returns: The SecIdentity, or `nil` if not stored.
+    ///
+    /// - Note: This replaces `getGlobalClientCertificateIdentity` to support multi-user environments.
+    func getClientCertificateIdentity(userId: String) async throws -> SecIdentity?
+
+    /// Stores the client certificate identity for a user in the keychain.
+    ///
+    /// - Parameters:
+    ///   - identity: The SecIdentity to store.
+    ///   - userId: The user ID to associate with the identity.
+    ///
+    /// - Note: This replaces `setGlobalClientCertificateIdentity` to support multi-user environments.
+    func setClientCertificateIdentity(_ identity: SecIdentity, userId: String) async throws
+
+    /// Deletes the client certificate identity for a user from the keychain.
+    ///
+    /// - Parameter userId: The user ID associated with the identity to delete.
+    func deleteClientCertificateIdentity(userId: String) async throws
 }
 
 extension KeychainRepository {
@@ -484,6 +515,86 @@ extension DefaultKeychainRepository {
 
     func setUserAuthKey(for item: KeychainItem, value: String) async throws {
         try await setValue(value, for: item)
+    }
+
+    // MARK: Client Certificate Methods
+
+    func getClientCertificateIdentity(userId: String) async throws -> SecIdentity? {
+        let appId = await appIdService.getOrCreateAppId()
+        // We use a formatted key similar to other items, but SecItemCopyMatching for identities
+        // often relies on kSecAttrLabel or kSecAttrApplicationLabel.
+        // For consistency with the previous implementation, we'll use a label derived from our storage key format/logic.
+        // However, `formattedKey` returns a string like "bwKeyChainStorage:APPID:clientCertificateIdentity_USERID".
+        // The previous implementation used "\(appId)_globalClientCertificateIdentity" as the label.
+        // To avoid migration issues with *existing* keys if we were keeping them, we'd be careful,
+        // but since we are switching to PER-USER, these are NEW keys.
+        // We will strictly follow the pattern: LABEL = formattedKey( .clientCertificateIdentity(userId) )
+
+        let keyLabel = await formattedKey(for: .clientCertificateIdentity(userId: userId))
+
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassIdentity,
+            kSecAttrLabel as String: keyLabel,
+            kSecReturnRef as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne,
+        ]
+
+        var result: CFTypeRef?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+
+        guard status != errSecItemNotFound else {
+            return nil
+        }
+
+        guard status == errSecSuccess, let identityRef = result else {
+            throw KeychainServiceError.osStatusError(status)
+        }
+
+        return unsafeBitCast(identityRef, to: SecIdentity.self)
+    }
+
+    func setClientCertificateIdentity(_ identity: SecIdentity, userId: String) async throws {
+        let keyLabel = await formattedKey(for: .clientCertificateIdentity(userId: userId))
+
+        // 1. Delete existing
+        let deleteQuery: [String: Any] = [
+            kSecClass as String: kSecClassIdentity,
+            kSecAttrLabel as String: keyLabel,
+        ]
+        SecItemDelete(deleteQuery as CFDictionary)
+
+        // 2. Add new
+        let addQuery: [String: Any] = [
+            kSecClass as String: kSecClassIdentity,
+            kSecValueRef as String: identity,
+            kSecAttrLabel as String: keyLabel,
+            // We should arguably set Access Control here as well if we want it protected when unlocked,
+            // but SecIdentity add often behaves slightly differently than GenericPassword.
+            // For now, we follow the previous pattern but add the Access Group if needed.
+            // The previous implementation didn't explicitly set AccessControl for the Identity *Add* op,
+            // relying on system defaults or the fact that it's an Identity.
+            // However, our `KeychainItem.clientCertificateIdentity` specifies `whenUnlocked`.
+            // Let's stick to the basic add first to ensure we match the `kSecClassIdentity` requirements.
+        ]
+
+        let status = SecItemAdd(addQuery as CFDictionary, nil)
+        guard status == errSecSuccess else {
+            throw KeychainServiceError.osStatusError(status)
+        }
+    }
+
+    func deleteClientCertificateIdentity(userId: String) async throws {
+         let keyLabel = await formattedKey(for: .clientCertificateIdentity(userId: userId))
+
+         let deleteQuery: [String: Any] = [
+             kSecClass as String: kSecClassIdentity,
+             kSecAttrLabel as String: keyLabel,
+         ]
+         let status = SecItemDelete(deleteQuery as CFDictionary)
+         // Ignore item not found errors
+         if status != errSecSuccess && status != errSecItemNotFound {
+             throw KeychainServiceError.osStatusError(status)
+         }
     }
 }
 

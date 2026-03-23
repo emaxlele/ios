@@ -53,7 +53,6 @@ final class AuthCoordinator: NSObject, // swiftlint:disable:this type_body_lengt
         & HasAuthService
         & HasAutofillCredentialService
         & HasBiometricsRepository
-        & HasCaptchaService
         & HasClientCertificateService
         & HasClientService
         & HasConfigService
