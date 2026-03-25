@@ -893,6 +893,7 @@
 "Notice" = "Notice";
 "AppInfo" = "App info";
 "Browse" = "Browse";
+"SelectCardholderName" = "Select cardholder name";
 "SelectLanguage" = "Select language";
 "ContinueToCompleteWebAuthnVerification" = "Continue to complete WebAuthn verification.";
 "ThereWasAnErrorStartingWebAuthnTwoFactorAuthentication" = "There was an error starting WebAuthn two factor authentication";
@@ -1235,6 +1236,8 @@
 "SaveHere" = "Save here";
 "SaveThisAuthenticatorKeyHereOrAddItToALoginInYourBitwardenApp" = "Save this authenticator key here, or add it to a login in your Bitwarden app.";
 "SaveToBitwarden" = "Save to Bitwarden";
+"ScanCard" = "Scan Card";
+"PositionYourCardInTheFrameToScanIt" = "Position your card in the frame to scan it";
 "ScanComplete" = "Scan complete";
 "ScanTheQRCodeInYourSettings" = "Scan the QR code in your 2-step verification settings for any account.";
 "SecureYourAssetsWithBitwardenAuthenticator" = "Secure your accounts with Bitwarden Authenticator";

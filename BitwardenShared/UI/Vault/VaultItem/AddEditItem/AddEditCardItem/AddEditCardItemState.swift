@@ -26,4 +26,13 @@ protocol AddEditCardItemState: Equatable, Sendable {
 
     /// The visibility of the card number.
     var isNumberVisible: Bool { get set }
+
+    /// Whether the card scanner sheet is currently presented.
+    var isCardScannerPresented: Bool { get set }
+
+    /// Cardholder name candidates when the scanner found more than one possible name.
+    var cardholderNameCandidates: [String] { get set }
+
+    /// Whether the cardholder name picker sheet is currently presented.
+    var isCardholderNamePickerPresented: Bool { get set }
 }
