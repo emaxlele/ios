@@ -172,7 +172,10 @@ class SelfHostedProcessorTests: BitwardenTestCase {
 
         subject.receive(.certificateInfoSubmitted(alias: "test", password: ""))
 
-        XCTAssertEqual(subject.state.dialog, .error(message: Localizations.validationFieldRequired(Localizations.password)))
+        XCTAssertEqual(
+            subject.state.dialog,
+            .error(message: Localizations.validationFieldRequired(Localizations.password)),
+        )
     }
 
     /// Receiving `.certificateInfoSubmitted` with empty alias shows error dialog.
@@ -182,7 +185,10 @@ class SelfHostedProcessorTests: BitwardenTestCase {
 
         subject.receive(.certificateInfoSubmitted(alias: "", password: "pass123"))
 
-        XCTAssertEqual(subject.state.dialog, .error(message: Localizations.validationFieldRequired(Localizations.alias)))
+        XCTAssertEqual(
+            subject.state.dialog,
+            .error(message: Localizations.validationFieldRequired(Localizations.alias)),
+        )
     }
 
     /// Receiving `.certificateInfoSubmitted` when alias already exists shows overwrite confirmation dialog.

@@ -148,8 +148,8 @@ class SelfHostedProcessor: StateProcessor<SelfHostedState, SelfHostedAction, Sel
     /// Loads the saved client certificate state when the view appears.
     ///
     private func loadCertificateState() async {
-        let userId = (try? await services.stateService.getActiveAccountId())
-            ?? DefaultClientCertificateService.preLoginUserId
+        let activeAccountId = try? await services.stateService.getActiveAccountId()
+        let userId = activeAccountId ?? DefaultClientCertificateService.preLoginUserId
         let config = await services.clientCertificateService.getCurrentConfiguration(userId: userId)
         state.clientCertificateConfiguration = config
         state.keyAlias = config.alias ?? ""
@@ -165,13 +165,13 @@ class SelfHostedProcessor: StateProcessor<SelfHostedState, SelfHostedAction, Sel
     ///
     private func importClientCertificate(data: Data, alias: String, password: String) async {
         do {
-            let userId = (try? await services.stateService.getActiveAccountId())
-                ?? DefaultClientCertificateService.preLoginUserId
+            let activeAccountId = try? await services.stateService.getActiveAccountId()
+            let userId = activeAccountId ?? DefaultClientCertificateService.preLoginUserId
             let configuration = try await services.clientCertificateService.importCertificate(
                 data: data,
                 password: password,
                 alias: alias,
-                userId: userId
+                userId: userId,
             )
             state.clientCertificateConfiguration = configuration
             state.keyAlias = alias
@@ -191,8 +191,8 @@ class SelfHostedProcessor: StateProcessor<SelfHostedState, SelfHostedAction, Sel
     ///
     private func removeClientCertificate() async {
         do {
-            let userId = (try? await services.stateService.getActiveAccountId())
-                ?? DefaultClientCertificateService.preLoginUserId
+            let activeAccountId = try? await services.stateService.getActiveAccountId()
+            let userId = activeAccountId ?? DefaultClientCertificateService.preLoginUserId
             try await services.clientCertificateService.removeCertificate(userId: userId)
             state.clientCertificateConfiguration = .disabled
             state.keyAlias = ""
@@ -282,4 +282,3 @@ class SelfHostedProcessor: StateProcessor<SelfHostedState, SelfHostedAction, Sel
         }
     }
 }
-

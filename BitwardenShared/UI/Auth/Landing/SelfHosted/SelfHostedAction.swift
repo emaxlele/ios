@@ -33,7 +33,6 @@ enum SelfHostedAction: Equatable {
     /// A certificate file was selected.
     case certificateFileSelected(Result<URL, Error>)
 
-
     /// The user submitted a certificate alias and password.
     case certificateInfoSubmitted(alias: String, password: String)
 
@@ -76,7 +75,6 @@ enum SelfHostedAction: Equatable {
             default:
                 false
             }
-
         case let (.certificateInfoSubmitted(lhsAlias, lhsPassword), .certificateInfoSubmitted(rhsAlias, rhsPassword)):
             lhsAlias == rhsAlias && lhsPassword == rhsPassword
         case (.confirmOverwriteCertificate, .confirmOverwriteCertificate):

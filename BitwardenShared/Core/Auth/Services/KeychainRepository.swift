@@ -581,16 +581,6 @@ extension DefaultKeychainRepository {
     // MARK: Client Certificate Methods
 
     func getClientCertificateIdentity(userId: String) async throws -> SecIdentity? {
-        let appId = await appIdService.getOrCreateAppId()
-        // We use a formatted key similar to other items, but SecItemCopyMatching for identities
-        // often relies on kSecAttrLabel or kSecAttrApplicationLabel.
-        // For consistency with the previous implementation, we'll use a label derived from our storage key format/logic.
-        // However, `formattedKey` returns a string like "bwKeyChainStorage:APPID:clientCertificateIdentity_USERID".
-        // The previous implementation used "\(appId)_globalClientCertificateIdentity" as the label.
-        // To avoid migration issues with *existing* keys if we were keeping them, we'd be careful,
-        // but since we are switching to PER-USER, these are NEW keys.
-        // We will strictly follow the pattern: LABEL = formattedKey( .clientCertificateIdentity(userId) )
-
         let keyLabel = await formattedKey(for: .clientCertificateIdentity(userId: userId))
 
         let query: [String: Any] = [
@@ -645,17 +635,17 @@ extension DefaultKeychainRepository {
     }
 
     func deleteClientCertificateIdentity(userId: String) async throws {
-         let keyLabel = await formattedKey(for: .clientCertificateIdentity(userId: userId))
+        let keyLabel = await formattedKey(for: .clientCertificateIdentity(userId: userId))
 
-         let deleteQuery: [String: Any] = [
-             kSecClass as String: kSecClassIdentity,
-             kSecAttrLabel as String: keyLabel,
-         ]
-         let status = SecItemDelete(deleteQuery as CFDictionary)
-         // Ignore item not found errors
-         if status != errSecSuccess && status != errSecItemNotFound {
-             throw KeychainServiceError.osStatusError(status)
-         }
+        let deleteQuery: [String: Any] = [
+            kSecClass as String: kSecClassIdentity,
+            kSecAttrLabel as String: keyLabel,
+        ]
+        let status = SecItemDelete(deleteQuery as CFDictionary)
+        // Ignore item not found errors
+        if status != errSecSuccess, status != errSecItemNotFound {
+            throw KeychainServiceError.osStatusError(status)
+        }
     }
 }
 

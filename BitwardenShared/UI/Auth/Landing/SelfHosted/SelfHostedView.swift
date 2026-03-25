@@ -137,7 +137,6 @@ struct SelfHostedView: View {
                 Text(Localizations.confirmReplaceExistingCertificateDescriptionLong(alias))
             }
         }
-
     }
 
     // MARK: Private views

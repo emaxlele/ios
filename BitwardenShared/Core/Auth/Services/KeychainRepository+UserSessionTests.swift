@@ -1,6 +1,5 @@
 // swiftlint:disable:this file_name
 
-import BitwardenKitMocks
 import BitwardenKit
 import BitwardenKitMocks
 import XCTest
@@ -24,9 +23,6 @@ final class KeychainRepositoryUserSessionTests: BitwardenTestCase {
         appIDSettingsStore = MockAppIDSettingsStore()
         keychainService = MockKeychainService()
         subject = DefaultKeychainRepository(
-            appIDService: AppIDService(
-                appIDSettingsStore: appIDSettingsStore,
-            ),
             keychainService: keychainService,
         )
     }

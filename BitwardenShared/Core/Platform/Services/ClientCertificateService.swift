@@ -16,7 +16,12 @@ protocol ClientCertificateService: AnyObject {
     /// - Returns: The imported certificate configuration.
     /// - Throws: An error if the certificate cannot be imported.
     ///
-    func importCertificate(data: Data, password: String, alias: String, userId: String) async throws -> ClientCertificateConfiguration
+    func importCertificate(
+        data: Data,
+        password: String,
+        alias: String,
+        userId: String,
+    ) async throws -> ClientCertificateConfiguration
 
     /// Get the current client certificate configuration for a user.
     ///
@@ -63,6 +68,10 @@ protocol ClientCertificateService: AnyObject {
 /// Default implementation of the `ClientCertificateService`.
 ///
 final class DefaultClientCertificateService: ClientCertificateService {
+    // MARK: Properties
+
+    static let preLoginUserId = "pre_login_client_cert"
+
     // MARK: Private Properties
 
     /// The repository used to store certificate data in the keychain.
@@ -89,9 +98,12 @@ final class DefaultClientCertificateService: ClientCertificateService {
 
     // MARK: Methods
 
-    static let preLoginUserId = "pre_login_client_cert"
-
-    func importCertificate(data: Data, password: String, alias: String, userId: String) async throws -> ClientCertificateConfiguration {
+    func importCertificate(
+        data: Data,
+        password: String,
+        alias: String,
+        userId: String,
+    ) async throws -> ClientCertificateConfiguration {
         let importOptions: [String: Any] = [
             kSecImportExportPassphrase as String: password,
         ]
@@ -118,7 +130,7 @@ final class DefaultClientCertificateService: ClientCertificateService {
         let config = ClientCertificateConfiguration.enabled(alias: alias)
         try await stateService.setClientCertificateConfiguration(
             config,
-            userId: userId
+            userId: userId,
         )
 
         return config
@@ -153,13 +165,13 @@ final class DefaultClientCertificateService: ClientCertificateService {
 
     func getClientCertificateIdentity(userId: String) async -> SecIdentity? {
         do {
-             // We could check stateService here, but checking keychain directly is also valid
-             // and potentially faster if we just need the identity.
-             // However, strictly complying with "enabled" flag is good practice.
-             guard let config = try await stateService.getClientCertificateConfiguration(userId: userId),
-                   config.isEnabled else {
-                 return nil
-             }
+            // We could check stateService here, but checking keychain directly is also valid
+            // and potentially faster if we just need the identity.
+            // However, strictly complying with "enabled" flag is good practice.
+            guard let config = try await stateService.getClientCertificateConfiguration(userId: userId),
+                  config.isEnabled else {
+                return nil
+            }
             return try await keychainRepository.getClientCertificateIdentity(userId: userId)
         } catch {
             return nil

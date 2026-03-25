@@ -27,7 +27,6 @@ struct SelfHostedState: Equatable {
         case confirmOverwriteAlias(alias: String, certificateData: Data, password: String)
     }
 
-
     // MARK: Environment URLs
 
     /// The API server URL.
