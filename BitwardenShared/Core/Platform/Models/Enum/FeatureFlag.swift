@@ -8,6 +8,9 @@ extension FeatureFlag: @retroactive CaseIterable {
     /// A feature flag to enable/disable ciphers archive option.
     static let archiveVaultItems = FeatureFlag(rawValue: "pm-19148-innovation-archive")
 
+    /// A feature flag to enable/disable scanning a card to autocomplete its details in add/edit cipher.
+    static let cardScanner = FeatureFlag(rawValue: "pm-34171-card-scanner")
+
     /// Flag to enable/disable Credential Exchange export flow.
     static let cxpExportMobile = FeatureFlag(rawValue: "cxp-export-mobile")
 
@@ -41,6 +44,7 @@ extension FeatureFlag: @retroactive CaseIterable {
     public static var allCases: [FeatureFlag] {
         [
             .archiveVaultItems,
+            .cardScanner,
             .cxpExportMobile,
             .cxpImportMobile,
             .cipherKeyEncryption,

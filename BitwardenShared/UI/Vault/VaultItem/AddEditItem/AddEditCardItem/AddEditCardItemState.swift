@@ -12,6 +12,9 @@ protocol AddEditCardItemState: Equatable, Sendable {
     /// The number of the card.
     var cardNumber: String { get set }
 
+    /// Whether card scanning is enabled.
+    var cardScannerEnabled: Bool { get set }
+
     /// The security code of the card.
     var cardSecurityCode: String { get set }
 

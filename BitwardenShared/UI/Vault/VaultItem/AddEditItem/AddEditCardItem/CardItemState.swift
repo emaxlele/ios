@@ -14,6 +14,9 @@ struct CardItemState: Equatable {
     /// The number of the card.
     var cardNumber: String = ""
 
+    /// Whether card scanning is enabled.
+    var cardScannerEnabled: Bool = false
+
     /// The security code of the card.
     var cardSecurityCode: String = ""
 

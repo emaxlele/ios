@@ -447,6 +447,7 @@ final class AddEditItemProcessor: StateProcessor<// swiftlint:disable:this type_
     /// Loads the feature flags required for this processor.
     private func loadFeatureFlags() async {
         state.isArchiveVaultItemsFFEnabled = await services.configService.getFeatureFlag(.archiveVaultItems)
+        state.cardItemState.cardScannerEnabled = await services.configService.getFeatureFlag(.cardScanner)
     }
 
     /// Receives an `AddEditCardItem` action from the `AddEditCardView` view's store, and updates

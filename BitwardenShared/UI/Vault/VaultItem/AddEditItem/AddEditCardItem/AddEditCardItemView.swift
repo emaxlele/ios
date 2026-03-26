@@ -155,7 +155,7 @@ struct AddEditCardItemView: View {
 
     /// A button that opens the card scanner. Only shown on iOS 16+ devices with camera support.
     @ViewBuilder private var scanCardButton: some View {
-        if #available(iOS 16.0, *), DataScannerViewController.isSupported {
+        if #available(iOS 16.0, *), DataScannerViewController.isSupported, store.state.cardScannerEnabled {
             Button {
                 preWarmedScanner = CardScannerView.makeScanner()
                 store.send(.scanCardButtonTapped)
