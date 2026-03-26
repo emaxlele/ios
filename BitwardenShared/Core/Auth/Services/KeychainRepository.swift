@@ -586,6 +586,7 @@ extension DefaultKeychainRepository {
         let query: [String: Any] = [
             kSecClass as String: kSecClassIdentity,
             kSecAttrLabel as String: keyLabel,
+            kSecAttrAccessGroup as String: appSecAttrAccessGroup,
             kSecReturnRef as String: true,
             kSecMatchLimit as String: kSecMatchLimitOne,
         ]
@@ -611,6 +612,7 @@ extension DefaultKeychainRepository {
         let deleteQuery: [String: Any] = [
             kSecClass as String: kSecClassIdentity,
             kSecAttrLabel as String: keyLabel,
+            kSecAttrAccessGroup as String: appSecAttrAccessGroup,
         ]
         SecItemDelete(deleteQuery as CFDictionary)
 
@@ -619,13 +621,8 @@ extension DefaultKeychainRepository {
             kSecClass as String: kSecClassIdentity,
             kSecValueRef as String: identity,
             kSecAttrLabel as String: keyLabel,
-            // We should arguably set Access Control here as well if we want it protected when unlocked,
-            // but SecIdentity add often behaves slightly differently than GenericPassword.
-            // For now, we follow the previous pattern but add the Access Group if needed.
-            // The previous implementation didn't explicitly set AccessControl for the Identity *Add* op,
-            // relying on system defaults or the fact that it's an Identity.
-            // However, our `KeychainItem.clientCertificateIdentity` specifies `whenUnlocked`.
-            // Let's stick to the basic add first to ensure we match the `kSecClassIdentity` requirements.
+            kSecAttrAccessible as String: KeychainItem.clientCertificateIdentity(userId: userId).protection,
+            kSecAttrAccessGroup as String: appSecAttrAccessGroup,
         ]
 
         let status = SecItemAdd(addQuery as CFDictionary, nil)
@@ -640,6 +637,7 @@ extension DefaultKeychainRepository {
         let deleteQuery: [String: Any] = [
             kSecClass as String: kSecClassIdentity,
             kSecAttrLabel as String: keyLabel,
+            kSecAttrAccessGroup as String: appSecAttrAccessGroup,
         ]
         let status = SecItemDelete(deleteQuery as CFDictionary)
         // Ignore item not found errors
