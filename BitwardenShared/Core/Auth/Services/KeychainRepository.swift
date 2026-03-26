@@ -79,7 +79,6 @@ enum KeychainItem: Equatable, KeychainStorageKeyPossessing {
              .deviceAuthKey,
              .deviceAuthKeyMetadata,
              .deviceKey,
-             .clientCertificateIdentity,
              .lastActiveTime,
              .neverLock,
              .pendingAdminLoginRequest,
@@ -88,6 +87,7 @@ enum KeychainItem: Equatable, KeychainStorageKeyPossessing {
             kSecAttrAccessibleWhenUnlockedThisDeviceOnly
         case .accessToken,
              .authenticatorVaultKey,
+             .clientCertificateIdentity,
              .refreshToken,
              .serverCommunicationConfig:
             kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
