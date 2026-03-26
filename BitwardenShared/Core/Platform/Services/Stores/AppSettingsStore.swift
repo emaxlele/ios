@@ -271,12 +271,12 @@ protocol AppSettingsStore: AnyObject {
     /// - Returns: The server config for that user ID.
     func serverConfig(userId: String) -> ServerConfig?
 
-    /// The client certificate configuration for a user.
+    /// The client certificate alias for a user.
     ///
     /// - Parameter userId: The user ID associated with the client certificate configuration.
-    /// - Returns: The client certificate configuration for that user ID.
+    /// - Returns: The client certificate alias for that user ID.
     ///
-    func clientCertificateConfiguration(userId: String) -> ClientCertificateConfiguration?
+    func clientCertificate(userId: String) -> String?
 
     /// Sets the user's access token expiration date
     ///
@@ -502,13 +502,13 @@ protocol AppSettingsStore: AnyObject {
     ///
     func setServerConfig(_ config: ServerConfig?, userId: String)
 
-    /// Sets the client certificate configuration for a user.
+    /// Sets the client certificate alias for a user.
     ///
     /// - Parameters:
-    ///   - configuration: The client certificate configuration.
-    ///   - userId: The user ID associated with the client certificate configuration.
+    ///   - alias: The client certificate alias, or nil if none.
+    ///   - userId: The user ID associated with the client certificate.
     ///
-    func setClientCertificateConfiguration(_ configuration: ClientCertificateConfiguration, userId: String)
+    func setClientCertificate(_ alias: String?, userId: String)
 
     /// Set whether to trust the device.
     ///
@@ -785,7 +785,7 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
         case rememberedOrgIdentifier
         case reviewPromptData
         case serverConfig(userId: String)
-        case clientCertificateConfiguration(userId: String)
+        case clientCertificate(userId: String)
         case shouldTrustDevice(userId: String)
         case siriAndShortcutsAccess(userId: String)
         case syncToAuthenticator(userId: String)
@@ -894,8 +894,8 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
                 "reviewPromptData"
             case let .serverConfig(userId):
                 "serverConfig_\(userId)"
-            case let .clientCertificateConfiguration(userId):
-                "clientCertificateConfiguration_\(userId)"
+            case let .clientCertificate(userId):
+                "clientCertificate_\(userId)"
             case let .shouldTrustDevice(userId):
                 "shouldTrustDevice_\(userId)"
             case .state:
@@ -1145,8 +1145,8 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
         fetch(for: .serverConfig(userId: userId))
     }
 
-    func clientCertificateConfiguration(userId: String) -> ClientCertificateConfiguration? {
-        fetch(for: .clientCertificateConfiguration(userId: userId))
+    func clientCertificate(userId: String) -> String? {
+        fetch(for: .clientCertificate(userId: userId))
     }
 
     func setAccessTokenExpirationDate(_ expirationDate: Date?, userId: String) {
@@ -1261,8 +1261,8 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
         store(config, for: .serverConfig(userId: userId))
     }
 
-    func setClientCertificateConfiguration(_ configuration: ClientCertificateConfiguration, userId: String) {
-        store(configuration, for: .clientCertificateConfiguration(userId: userId))
+    func setClientCertificate(_ alias: String?, userId: String) {
+        store(alias, for: .clientCertificate(userId: userId))
     }
 
     func setShouldTrustDevice(shouldTrustDevice: Bool?, userId: String) {

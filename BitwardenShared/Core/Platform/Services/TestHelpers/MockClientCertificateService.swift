@@ -6,9 +6,9 @@ import Security
 class MockClientCertificateService: ClientCertificateService {
     // MARK: Properties
 
-    var importCertificateResult: Result<ClientCertificateConfiguration, Error> = .success(.enabled())
+    var importCertificateResult: Result<Void, Error> = .success(())
     var removeCertificateResult: Result<Void, Error> = .success(())
-    var currentConfiguration: ClientCertificateConfiguration = .disabled
+    var currentAlias: String?
     var clientCertificateIdentity: SecIdentity?
     var shouldUseCertificatesResult: Bool = false
 
@@ -30,17 +30,17 @@ class MockClientCertificateService: ClientCertificateService {
         password: String,
         alias: String,
         userId: String,
-    ) async throws -> ClientCertificateConfiguration {
+    ) async throws {
         importCertificateCalled = true
         importCertificateData = data
         importCertificatePassword = password
         importCertificateAlias = alias
         importCertificateUserId = userId
-        return try importCertificateResult.get()
+        try importCertificateResult.get()
     }
 
-    func getCurrentConfiguration(userId: String) async -> ClientCertificateConfiguration {
-        currentConfiguration
+    func getCertificateAlias(userId: String) async -> String? {
+        currentAlias
     }
 
     func removeCertificate(userId: String) async throws {

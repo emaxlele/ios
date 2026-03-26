@@ -145,15 +145,12 @@ class SelfHostedProcessor: StateProcessor<SelfHostedState, SelfHostedAction, Sel
         coordinator.navigate(to: .dismissPresented)
     }
 
-    /// Loads the saved client certificate state when the view appears.
-    ///
     private func loadCertificateState() async {
         let activeAccountId = try? await services.stateService.getActiveAccountId()
         let userId = activeAccountId ?? DefaultClientCertificateService.preLoginUserId
-        let config = await services.clientCertificateService.getCurrentConfiguration(userId: userId)
-        state.clientCertificateConfiguration = config
-        state.keyAlias = config.alias ?? ""
-        state.keyHost = config.isEnabled ? .keychain : nil
+        let alias = await services.clientCertificateService.getCertificateAlias(userId: userId)
+        state.keyAlias = alias ?? ""
+        state.keyHost = alias != nil ? .keychain : nil
     }
 
     /// Imports a client certificate from the provided data, alias, and password.
@@ -167,13 +164,12 @@ class SelfHostedProcessor: StateProcessor<SelfHostedState, SelfHostedAction, Sel
         do {
             let activeAccountId = try? await services.stateService.getActiveAccountId()
             let userId = activeAccountId ?? DefaultClientCertificateService.preLoginUserId
-            let configuration = try await services.clientCertificateService.importCertificate(
+            try await services.clientCertificateService.importCertificate(
                 data: data,
                 password: password,
                 alias: alias,
                 userId: userId,
             )
-            state.clientCertificateConfiguration = configuration
             state.keyAlias = alias
             state.keyHost = .keychain
             state.dialog = nil
@@ -187,14 +183,11 @@ class SelfHostedProcessor: StateProcessor<SelfHostedState, SelfHostedAction, Sel
         }
     }
 
-    /// Removes the current client certificate.
-    ///
     private func removeClientCertificate() async {
         do {
             let activeAccountId = try? await services.stateService.getActiveAccountId()
             let userId = activeAccountId ?? DefaultClientCertificateService.preLoginUserId
             try await services.clientCertificateService.removeCertificate(userId: userId)
-            state.clientCertificateConfiguration = .disabled
             state.keyAlias = ""
             state.keyHost = nil
         } catch {

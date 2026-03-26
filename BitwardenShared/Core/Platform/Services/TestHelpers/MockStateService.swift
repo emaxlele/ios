@@ -851,12 +851,12 @@ extension MockStateService {
 // MARK: Client Certificate
 
 extension MockStateService {
-    func getClientCertificateConfiguration(userId: String?) async throws -> ClientCertificateConfiguration? {
+    func getClientCertificate(userId: String?) async throws -> String? {
         nil
     }
 
-    func setClientCertificateConfiguration(
-        _ configuration: ClientCertificateConfiguration,
+    func setClientCertificate(
+        _ alias: String?,
         userId: String?,
     ) async throws {}
 } // swiftlint:disable:this file_length

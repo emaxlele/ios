@@ -46,9 +46,6 @@ struct SelfHostedState: Equatable {
 
     // MARK: Client Certificate
 
-    /// The client certificate configuration.
-    var clientCertificateConfiguration: ClientCertificateConfiguration = .disabled
-
     /// The alias of the currently configured client certificate.
     var keyAlias: String = ""
 

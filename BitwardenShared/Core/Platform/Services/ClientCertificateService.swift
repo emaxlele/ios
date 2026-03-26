@@ -21,14 +21,9 @@ protocol ClientCertificateService: AnyObject {
         password: String,
         alias: String,
         userId: String,
-    ) async throws -> ClientCertificateConfiguration
+    ) async throws
 
-    /// Get the current client certificate configuration for a user.
-    ///
-    /// - Parameter userId: The user ID to retrieve configuration for.
-    /// - Returns: The current certificate configuration, or `.disabled` if none is configured.
-    ///
-    func getCurrentConfiguration(userId: String) async -> ClientCertificateConfiguration
+    func getCertificateAlias(userId: String) async -> String?
 
     /// Remove the client certificate for a user.
     ///
@@ -103,7 +98,7 @@ final class DefaultClientCertificateService: ClientCertificateService {
         password: String,
         alias: String,
         userId: String,
-    ) async throws -> ClientCertificateConfiguration {
+    ) async throws {
         let importOptions: [String: Any] = [
             kSecImportExportPassphrase as String: password,
         ]
@@ -127,40 +122,38 @@ final class DefaultClientCertificateService: ClientCertificateService {
 
         try await keychainRepository.setClientCertificateIdentity(identity, userId: userId)
 
-        let config = ClientCertificateConfiguration.enabled(alias: alias)
-        try await stateService.setClientCertificateConfiguration(
-            config,
+        try await keychainRepository.setClientCertificateIdentity(identity, userId: userId)
+
+        try await stateService.setClientCertificate(
+            alias,
             userId: userId,
         )
-
-        return config
     }
 
-    func getCurrentConfiguration(userId: String) async -> ClientCertificateConfiguration {
+    func getCertificateAlias(userId: String) async -> String? {
         do {
-            guard let config = try await stateService.getClientCertificateConfiguration(userId: userId),
-                  config.isEnabled else {
-                return .disabled
+            guard let alias = try await stateService.getClientCertificate(userId: userId) else {
+                return nil
             }
 
             // We check if the identity actually exists in Keychain to be sure
             let identity = try await keychainRepository.getClientCertificateIdentity(userId: userId)
             if identity == nil {
                 // Config says enabled, but keychain is missing it. Revert to disabled?
-                // For now, return disabled state effectively, or just return the config but runtime will fail.
-                // Safest is to return disabled if missing.
-                return .disabled
+                // For now, return disabled state effectively, or just return the alias but runtime will fail.
+                // Safest is to return nil if missing.
+                return nil
             }
 
-            return config
+            return alias
         } catch {
-            return .disabled
+            return nil
         }
     }
 
     func removeCertificate(userId: String) async throws {
         try await keychainRepository.deleteClientCertificateIdentity(userId: userId)
-        try await stateService.setClientCertificateConfiguration(.disabled, userId: userId)
+        try await stateService.setClientCertificate(nil, userId: userId)
     }
 
     func getClientCertificateIdentity(userId: String) async -> SecIdentity? {
@@ -168,8 +161,8 @@ final class DefaultClientCertificateService: ClientCertificateService {
             // We could check stateService here, but checking keychain directly is also valid
             // and potentially faster if we just need the identity.
             // However, strictly complying with "enabled" flag is good practice.
-            guard let config = try await stateService.getClientCertificateConfiguration(userId: userId),
-                  config.isEnabled else {
+            guard let alias = try await stateService.getClientCertificate(userId: userId),
+                  !alias.isEmpty else {
                 return nil
             }
             return try await keychainRepository.getClientCertificateIdentity(userId: userId)

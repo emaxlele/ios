@@ -196,23 +196,23 @@ protocol StateService: AnyObject {
     ///
     func getEnvironmentURLs(userId: String?) async throws -> EnvironmentURLData?
 
-    /// Gets the client certificate configuration for a user ID.
+    /// Gets the client certificate alias for a user ID.
     ///
-    /// - Parameter userId: The user ID associated with the client certificate configuration.
+    /// - Parameter userId: The user ID associated with the client certificate.
     ///   Defaults to the active account if `nil`.
-    /// - Returns: The client certificate configuration, or `nil` if none is configured.
+    /// - Returns: The client certificate alias, or `nil` if none is configured.
     ///
-    func getClientCertificateConfiguration(userId: String?) async throws -> ClientCertificateConfiguration?
+    func getClientCertificate(userId: String?) async throws -> String?
 
-    /// Sets the client certificate configuration for a user ID.
+    /// Sets the client certificate alias for a user ID.
     ///
     /// - Parameters:
-    ///   - configuration: The client certificate configuration to set.
-    ///   - userId: The user ID associated with the client certificate configuration.
+    ///   - alias: The client certificate alias to set.
+    ///   - userId: The user ID associated with the client certificate.
     ///     Defaults to the active account if `nil`.
     ///
-    func setClientCertificateConfiguration(
-        _ configuration: ClientCertificateConfiguration,
+    func setClientCertificate(
+        _ alias: String?,
         userId: String?,
     ) async throws
 
@@ -1639,17 +1639,17 @@ actor DefaultStateService: StateService, ActiveAccountStateProvider, ConfigState
         return appSettingsStore.state?.accounts[userId]?.settings.environmentUrls
     }
 
-    func getClientCertificateConfiguration(userId: String?) async throws -> ClientCertificateConfiguration? {
+    func getClientCertificate(userId: String?) async throws -> String? {
         let userId = try userId ?? getActiveAccountUserId()
-        return appSettingsStore.clientCertificateConfiguration(userId: userId)
+        return appSettingsStore.clientCertificate(userId: userId)
     }
 
-    func setClientCertificateConfiguration(
-        _ configuration: ClientCertificateConfiguration,
+    func setClientCertificate(
+        _ alias: String?,
         userId: String?,
     ) async throws {
         let userId = try userId ?? getActiveAccountUserId()
-        appSettingsStore.setClientCertificateConfiguration(configuration, userId: userId)
+        appSettingsStore.setClientCertificate(alias, userId: userId)
     }
 
     func getEvents(userId: String?) async throws -> [EventData] {

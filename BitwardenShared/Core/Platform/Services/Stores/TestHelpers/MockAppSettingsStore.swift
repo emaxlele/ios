@@ -430,9 +430,9 @@ extension MockAppSettingsStore {
 // MARK: Client Certificate
 
 extension MockAppSettingsStore {
-    func clientCertificateConfiguration(userId: String) -> ClientCertificateConfiguration? {
+    func clientCertificate(userId: String) -> String? {
         nil
     }
 
-    func setClientCertificateConfiguration(_ configuration: ClientCertificateConfiguration, userId: String) {}
+    func setClientCertificate(_ alias: String?, userId: String) {}
 }
