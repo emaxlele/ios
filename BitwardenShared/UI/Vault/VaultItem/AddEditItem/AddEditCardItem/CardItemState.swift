@@ -11,6 +11,9 @@ struct CardItemState: Equatable {
     /// The name of the card holder.
     var cardholderName: String = ""
 
+    /// Cardholder name candidates populated when the scanner finds more than one possible name.
+    var cardholderNameCandidates: [String] = []
+
     /// The number of the card.
     var cardNumber: String = ""
 
@@ -26,20 +29,17 @@ struct CardItemState: Equatable {
     /// The expiration year of the card.
     var expirationYear: String = ""
 
+    /// Whether the cardholder name picker sheet is currently presented.
+    var isCardholderNamePickerPresented: Bool = false
+
+    /// Whether the card scanner sheet is currently presented.
+    var isCardScannerPresented: Bool = false
+
     /// The visibility of the security code.
     var isCodeVisible: Bool = false
 
     /// The visibility of the card number.
     var isNumberVisible: Bool = false
-
-    /// Whether the card scanner sheet is currently presented.
-    var isCardScannerPresented: Bool = false
-
-    /// Cardholder name candidates populated when the scanner finds more than one possible name.
-    var cardholderNameCandidates: [String] = []
-
-    /// Whether the cardholder name picker sheet is currently presented.
-    var isCardholderNamePickerPresented: Bool = false
 }
 
 extension CardItemState {
