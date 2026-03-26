@@ -9,6 +9,9 @@ protocol AddEditCardItemState: Equatable, Sendable {
     /// The name of the card holder.
     var cardholderName: String { get set }
 
+    /// Cardholder name candidates when the scanner found more than one possible name.
+    var cardholderNameCandidates: [String] { get set }
+
     /// The number of the card.
     var cardNumber: String { get set }
 
@@ -24,18 +27,15 @@ protocol AddEditCardItemState: Equatable, Sendable {
     /// The expiration year of the card.
     var expirationYear: String { get set }
 
+    /// Whether the cardholder name picker sheet is currently presented.
+    var isCardholderNamePickerPresented: Bool { get set }
+
+    /// Whether the card scanner sheet is currently presented.
+    var isCardScannerPresented: Bool { get set }
+
     /// The visibility of the security code.
     var isCodeVisible: Bool { get set }
 
     /// The visibility of the card number.
     var isNumberVisible: Bool { get set }
-
-    /// Whether the card scanner sheet is currently presented.
-    var isCardScannerPresented: Bool { get set }
-
-    /// Cardholder name candidates when the scanner found more than one possible name.
-    var cardholderNameCandidates: [String] { get set }
-
-    /// Whether the cardholder name picker sheet is currently presented.
-    var isCardholderNamePickerPresented: Bool { get set }
 }

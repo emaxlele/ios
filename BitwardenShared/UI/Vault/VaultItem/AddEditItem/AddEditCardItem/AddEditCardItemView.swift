@@ -153,7 +153,8 @@ struct AddEditCardItemView: View {
 
     // MARK: Private Views
 
-    /// A button that opens the card scanner. Only shown on iOS 16+ devices with camera support.
+    /// A button that opens the card scanner. Only shown on iOS 16+ devices with camera support
+    /// and ``FeatureFlag.cardScanner`` enabled.
     @ViewBuilder private var scanCardButton: some View {
         if #available(iOS 16.0, *), DataScannerViewController.isSupported, store.state.cardScannerEnabled {
             Button {
