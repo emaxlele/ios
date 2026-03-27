@@ -291,6 +291,7 @@
 "August" = "August";
 "Brand" = "Brand";
 "CardholderName" = "Cardholder name";
+"WeFoundMultipleMatchesChooseTheCorrectOne" = "We found multiple matches. Choose the correct one.";
 "CityTown" = "City / Town";
 "Company" = "Company";
 "Country" = "Country";

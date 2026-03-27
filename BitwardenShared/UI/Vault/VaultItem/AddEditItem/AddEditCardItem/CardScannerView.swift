@@ -45,10 +45,8 @@ struct CardScannerWrapperView: View {
             .navigationTitle(Localizations.scanCard)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button(Localizations.cancel) {
-                        dismiss()
-                    }
+                cancelToolbarItem {
+                    dismiss()
                 }
             }
         }

@@ -137,18 +137,14 @@ struct AddEditCardItemView: View {
                 }
             }
         }
-        .confirmationDialog(
-            Localizations.selectCardholderName,
+        .sheet(
             isPresented: Binding(
                 get: { store.state.isCardholderNamePickerPresented },
                 set: { _ in store.send(.cardholderNamePickerDismissed) },
             ),
-            titleVisibility: .visible,
         ) {
-            ForEach(store.state.cardholderNameCandidates, id: \.self) { name in
-                Button(name) {
-                    store.send(.cardholderNameCandidateSelected(name))
-                }
+            CardholderNamePickerView(candidates: store.state.cardholderNameCandidates) { name in
+                store.send(.cardholderNameCandidateSelected(name))
             }
         }
     }
