@@ -51,37 +51,43 @@ extension CertificateHTTPClient: URLSessionDelegate, URLSessionTaskDelegate {
         _ session: URLSession,
         task: URLSessionTask,
         willPerformHTTPRedirection response: HTTPURLResponse,
-        newRequest request: URLRequest,
-        completionHandler: @escaping (URLRequest?) -> Void,
-    ) {
+        newRequest request: URLRequest
+    ) async -> URLRequest? {
         // Reject all redirects, mimicking NoRedirectSessionDelegate
-        completionHandler(nil)
+        return nil
     }
 
     func urlSession(
         _ session: URLSession,
-        didReceive challenge: URLAuthenticationChallenge,
-        completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void,
-    ) {
+        task: URLSessionTask,
+        didReceive challenge: URLAuthenticationChallenge
+    ) async -> (URLSession.AuthChallengeDisposition, URLCredential?) {
+        await handle(challenge)
+    }
+
+    func urlSession(
+        _ session: URLSession,
+        didReceive challenge: URLAuthenticationChallenge
+    ) async -> (URLSession.AuthChallengeDisposition, URLCredential?) {
+        await handle(challenge)
+    }
+
+    private func handle(_ challenge: URLAuthenticationChallenge) async -> (URLSession.AuthChallengeDisposition, URLCredential?) {
         // Handle client certificate authentication challenges
         guard challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodClientCertificate else {
-            completionHandler(.performDefaultHandling, nil)
-            return
+            return (.performDefaultHandling, nil)
         }
 
-        Task {
-            guard let identity = await certificateService.getClientCertificateIdentity() else {
-                completionHandler(.performDefaultHandling, nil)
-                return
-            }
-
-            // Create the credential with the identity
-            let credential = URLCredential(
-                identity: identity,
-                certificates: nil,
-                persistence: .forSession,
-            )
-            completionHandler(.useCredential, credential)
+        guard let identity = await certificateService.getClientCertificateIdentity() else {
+            return (.performDefaultHandling, nil)
         }
+
+        // Create the credential with the identity
+        let credential = URLCredential(
+            identity: identity,
+            certificates: nil,
+            persistence: .forSession
+        )
+        return (.useCredential, credential)
     }
 }

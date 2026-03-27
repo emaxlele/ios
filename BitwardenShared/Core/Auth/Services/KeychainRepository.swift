@@ -500,6 +500,8 @@ extension DefaultKeychainRepository {
         for keychainItem in keychainItems {
             try await keychainService.delete(query: keychainQueryValues(for: keychainItem))
         }
+
+        try await deleteClientCertificateIdentity(userId: userId)
     }
 
     func deleteUserAuthKey(for item: KeychainItem) async throws {
@@ -591,18 +593,12 @@ extension DefaultKeychainRepository {
             kSecMatchLimit as String: kSecMatchLimitOne,
         ]
 
-        var result: CFTypeRef?
-        let status = SecItemCopyMatching(query as CFDictionary, &result)
-
-        guard status != errSecItemNotFound else {
+        do {
+            let foundItem = try await keychainService.search(query: query as CFDictionary)
+            return foundItem as! SecIdentity // swiftlint:disable:this force_cast
+        } catch KeychainServiceError.osStatusError(errSecItemNotFound) {
             return nil
         }
-
-        guard status == errSecSuccess, let identityRef = result else {
-            throw KeychainServiceError.osStatusError(status)
-        }
-
-        return unsafeBitCast(identityRef, to: SecIdentity.self)
     }
 
     func setClientCertificateIdentity(_ identity: SecIdentity, userId: String) async throws {
@@ -614,10 +610,10 @@ extension DefaultKeychainRepository {
             kSecAttrLabel as String: keyLabel,
             kSecAttrAccessGroup as String: appSecAttrAccessGroup,
         ]
-        SecItemDelete(deleteQuery as CFDictionary)
+        try? await keychainService.delete(query: deleteQuery as CFDictionary)
 
         // 2. Add new
-        let addQuery: [String: Any] = [
+        let addAttributes: [String: Any] = [
             kSecClass as String: kSecClassIdentity,
             kSecValueRef as String: identity,
             kSecAttrLabel as String: keyLabel,
@@ -625,10 +621,7 @@ extension DefaultKeychainRepository {
             kSecAttrAccessGroup as String: appSecAttrAccessGroup,
         ]
 
-        let status = SecItemAdd(addQuery as CFDictionary, nil)
-        guard status == errSecSuccess else {
-            throw KeychainServiceError.osStatusError(status)
-        }
+        try await keychainService.add(attributes: addAttributes as CFDictionary)
     }
 
     func deleteClientCertificateIdentity(userId: String) async throws {
@@ -639,10 +632,11 @@ extension DefaultKeychainRepository {
             kSecAttrLabel as String: keyLabel,
             kSecAttrAccessGroup as String: appSecAttrAccessGroup,
         ]
-        let status = SecItemDelete(deleteQuery as CFDictionary)
-        // Ignore item not found errors
-        if status != errSecSuccess, status != errSecItemNotFound {
-            throw KeychainServiceError.osStatusError(status)
+
+        do {
+            try await keychainService.delete(query: deleteQuery as CFDictionary)
+        } catch KeychainServiceError.osStatusError(errSecItemNotFound) {
+            // Ignore item not found errors
         }
     }
 }

@@ -122,8 +122,6 @@ final class DefaultClientCertificateService: ClientCertificateService {
 
         try await keychainRepository.setClientCertificateIdentity(identity, userId: userId)
 
-        try await keychainRepository.setClientCertificateIdentity(identity, userId: userId)
-
         try await stateService.setClientCertificate(
             alias,
             userId: userId,
@@ -161,8 +159,8 @@ final class DefaultClientCertificateService: ClientCertificateService {
             // We could check stateService here, but checking keychain directly is also valid
             // and potentially faster if we just need the identity.
             // However, strictly complying with "enabled" flag is good practice.
-            guard let alias = try await stateService.getClientCertificate(userId: userId),
-                  !alias.isEmpty else {
+            let alias = try await stateService.getClientCertificate(userId: userId)
+            guard let alias = alias, !alias.isEmpty else {
                 return nil
             }
             return try await keychainRepository.getClientCertificateIdentity(userId: userId)
@@ -178,7 +176,6 @@ final class DefaultClientCertificateService: ClientCertificateService {
             return identity
         }
 
-        // Fallback to pre-login user (for self-hosted config functionality before login)
         return await getClientCertificateIdentity(userId: DefaultClientCertificateService.preLoginUserId)
     }
 
