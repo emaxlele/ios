@@ -51,28 +51,30 @@ extension CertificateHTTPClient: URLSessionDelegate, URLSessionTaskDelegate {
         _ session: URLSession,
         task: URLSessionTask,
         willPerformHTTPRedirection response: HTTPURLResponse,
-        newRequest request: URLRequest
+        newRequest request: URLRequest,
     ) async -> URLRequest? {
         // Reject all redirects, mimicking NoRedirectSessionDelegate
-        return nil
+        nil
     }
 
     func urlSession(
         _ session: URLSession,
         task: URLSessionTask,
-        didReceive challenge: URLAuthenticationChallenge
+        didReceive challenge: URLAuthenticationChallenge,
     ) async -> (URLSession.AuthChallengeDisposition, URLCredential?) {
         await handle(challenge)
     }
 
     func urlSession(
         _ session: URLSession,
-        didReceive challenge: URLAuthenticationChallenge
+        didReceive challenge: URLAuthenticationChallenge,
     ) async -> (URLSession.AuthChallengeDisposition, URLCredential?) {
         await handle(challenge)
     }
 
-    private func handle(_ challenge: URLAuthenticationChallenge) async -> (URLSession.AuthChallengeDisposition, URLCredential?) {
+    private func handle(
+        _ challenge: URLAuthenticationChallenge,
+    ) async -> (URLSession.AuthChallengeDisposition, URLCredential?) {
         // Handle client certificate authentication challenges
         guard challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodClientCertificate else {
             return (.performDefaultHandling, nil)
@@ -86,7 +88,7 @@ extension CertificateHTTPClient: URLSessionDelegate, URLSessionTaskDelegate {
         let credential = URLCredential(
             identity: identity,
             certificates: nil,
-            persistence: .forSession
+            persistence: .forSession,
         )
         return (.useCredential, credential)
     }

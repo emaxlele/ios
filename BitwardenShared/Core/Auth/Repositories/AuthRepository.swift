@@ -948,13 +948,13 @@ extension DefaultAuthRepository: AuthRepository {
         // Set or delete the never lock key according to the current and new values.
         if case .never = newValue {
             try await keychainService.setUserAuthKey(
-                for: .neverLock(userId: id),
+                for: BitwardenKeychainItem.neverLock(userId: id),
                 value: clientService.crypto().getUserEncryptionKey(),
             )
         } else if currentValue == .never {
             // If there is a key, delete. If not, no worries.
             try? await keychainService.deleteUserAuthKey(
-                for: .neverLock(userId: id),
+                for: BitwardenKeychainItem.neverLock(userId: id),
             )
         }
 

@@ -5,7 +5,7 @@ import Foundation
 // MARK: - KeychainItem
 
 // swiftlint:disable file_length
-enum BitwardenKeychainItem: Equatable, KeychainItem {
+enum BitwardenKeychainItem: Equatable, BitwardenKit.KeychainItem {
     /// The keychain item for a user's access token.
     case accessToken(userId: String)
 
@@ -255,7 +255,7 @@ protocol KeychainRepository: AnyObject, ServerCommunicationConfigKeychainReposit
     ///    - item: The storage key for this auth key.
     ///    - value: A `String` representing the user auth key.
     ///
-    func setUserAuthKey(for item: KeychainItem, value: String) async throws
+    func setUserAuthKey(for item: BitwardenKeychainItem, value: String) async throws
 
     // MARK: Client Certificate Methods
 
@@ -381,7 +381,7 @@ class DefaultKeychainRepository: KeychainRepository {
         let string = try await getValue(for: item)
 
         guard let jsonData = string.data(using: .utf8) else {
-            throw BitwardenError.dataError("JSON string contains invalid UTF-8 encoding.")
+            throw BitwardenKit.BitwardenError.dataError("JSON string contains invalid UTF-8 encoding.")
         }
 
         return try JSONDecoder.defaultDecoder.decode(T.self, from: jsonData)
@@ -456,7 +456,7 @@ class DefaultKeychainRepository: KeychainRepository {
     func setValue<T: Codable>(_ value: T, for item: BitwardenKeychainItem) async throws {
         let jsonData = try JSONEncoder.defaultEncoder.encode(value)
         guard let jsonString = String(data: jsonData, encoding: .utf8) else {
-            throw BitwardenError.dataError("JSON data is not valid.")
+            throw BitwardenKit.BitwardenError.dataError("JSON data is not valid.")
         }
         try await setValue(jsonString, for: item)
     }
@@ -594,8 +594,10 @@ extension DefaultKeychainRepository {
         ]
 
         do {
-            let foundItem = try await keychainService.search(query: query as CFDictionary)
-            return foundItem as! SecIdentity // swiftlint:disable:this force_cast
+            let foundItem = try keychainService.search(query: query as CFDictionary)
+            guard let foundItem else { return nil }
+            // swiftlint:disable:next force_cast
+            return (foundItem as! SecIdentity)
         } catch KeychainServiceError.osStatusError(errSecItemNotFound) {
             return nil
         }
@@ -610,18 +612,18 @@ extension DefaultKeychainRepository {
             kSecAttrLabel as String: keyLabel,
             kSecAttrAccessGroup as String: appSecAttrAccessGroup,
         ]
-        try? await keychainService.delete(query: deleteQuery as CFDictionary)
+        try? keychainService.delete(query: deleteQuery as CFDictionary)
 
         // 2. Add new
         let addAttributes: [String: Any] = [
             kSecClass as String: kSecClassIdentity,
             kSecValueRef as String: identity,
             kSecAttrLabel as String: keyLabel,
-            kSecAttrAccessible as String: KeychainItem.clientCertificateIdentity(userId: userId).protection,
+            kSecAttrAccessible as String: BitwardenKeychainItem.clientCertificateIdentity(userId: userId).protection,
             kSecAttrAccessGroup as String: appSecAttrAccessGroup,
         ]
 
-        try await keychainService.add(attributes: addAttributes as CFDictionary)
+        try keychainService.add(attributes: addAttributes as CFDictionary)
     }
 
     func deleteClientCertificateIdentity(userId: String) async throws {
@@ -634,7 +636,7 @@ extension DefaultKeychainRepository {
         ]
 
         do {
-            try await keychainService.delete(query: deleteQuery as CFDictionary)
+            try keychainService.delete(query: deleteQuery as CFDictionary)
         } catch KeychainServiceError.osStatusError(errSecItemNotFound) {
             // Ignore item not found errors
         }

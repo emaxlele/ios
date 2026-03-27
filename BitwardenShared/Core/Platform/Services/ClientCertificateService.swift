@@ -160,7 +160,7 @@ final class DefaultClientCertificateService: ClientCertificateService {
             // and potentially faster if we just need the identity.
             // However, strictly complying with "enabled" flag is good practice.
             let alias = try await stateService.getClientCertificate(userId: userId)
-            guard let alias = alias, !alias.isEmpty else {
+            guard let alias, !alias.isEmpty else {
                 return nil
             }
             return try await keychainRepository.getClientCertificateIdentity(userId: userId)
