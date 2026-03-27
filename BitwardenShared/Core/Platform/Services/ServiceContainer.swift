@@ -1178,6 +1178,10 @@ extension ServiceContainer {
         apiService
     }
 
+    var billingAPIService: BillingAPIService {
+        apiService
+    }
+
     var configAPIService: ConfigAPIService {
         apiService
     }
