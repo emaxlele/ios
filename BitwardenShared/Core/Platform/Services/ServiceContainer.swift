@@ -66,6 +66,9 @@ public class ServiceContainer: Services { // swiftlint:disable:this type_body_le
     /// The service used by the application to manage camera use.
     let cameraService: CameraService
 
+    /// The service used to parse card text from OCR results.
+    let cardTextParser: CardTextParser
+
     /// The service used to change the user's KDF settings.
     let changeKdfService: ChangeKdfService
 
@@ -239,6 +242,7 @@ public class ServiceContainer: Services { // swiftlint:disable:this type_body_le
     ///     controls for the user.
     ///   - biometricsService: The service used to obtain device biometrics status & data.
     ///   - cameraService: The service used by the application to manage camera use.
+    ///   - cardTextParser: The service used to parse card text from OCR results.
     ///   - changeKdfService: The service used to change the user's KDF settings.
     ///   - cipherOwnershipHelper: A helper to create cipher views with proper ownership based on policies.
     ///   - clientService: The service used by the application to handle encryption and decryption tasks.
@@ -310,6 +314,7 @@ public class ServiceContainer: Services { // swiftlint:disable:this type_body_le
         biometricsRepository: BiometricsRepository,
         biometricsService: BiometricsService,
         cameraService: CameraService,
+        cardTextParser: CardTextParser,
         changeKdfService: ChangeKdfService,
         cipherOwnershipHelper: CipherOwnershipHelper,
         clientService: ClientService,
@@ -375,6 +380,7 @@ public class ServiceContainer: Services { // swiftlint:disable:this type_body_le
         self.biometricsRepository = biometricsRepository
         self.biometricsService = biometricsService
         self.cameraService = cameraService
+        self.cardTextParser = cardTextParser
         self.changeKdfService = changeKdfService
         self.cipherOwnershipHelper = cipherOwnershipHelper
         self.clientService = clientService
@@ -1076,6 +1082,7 @@ public class ServiceContainer: Services { // swiftlint:disable:this type_body_le
             biometricsRepository: biometricsRepository,
             biometricsService: biometricsService,
             cameraService: DefaultCameraService(),
+            cardTextParser: DefaultCardTextParser(),
             changeKdfService: changeKdfService,
             cipherOwnershipHelper: cipherOwnershipHelper,
             clientService: clientService,

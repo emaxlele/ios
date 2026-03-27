@@ -125,13 +125,15 @@ struct AddEditCardItemView: View {
         .sheet(
             isPresented: Binding(
                 get: { store.state.isCardScannerPresented },
-                set: { _ in store.send(.cardScannerDismissed) },
+                set: { _ in
+                    preWarmedScanner = nil
+                    store.send(.cardScannerDismissed)
+                },
             ),
         ) {
             if #available(iOS 16.0, *), let scanner = preWarmedScanner as? DataScannerViewController {
-                CardScannerWrapperView(scanner: scanner) { data in
-                    preWarmedScanner = nil
-                    store.send(.cardScanned(data))
+                CardScannerWrapperView(scanner: scanner) { lines in
+                    store.send(.cardScannerLinesUpdated(lines))
                 }
             }
         }

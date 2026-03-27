@@ -14,8 +14,9 @@ struct CardScannerWrapperView: View {
     /// The pre-warmed scanner instance created before the sheet was presented.
     let scanner: DataScannerViewController
 
-    /// Called with the parsed card data when the user confirms or sufficient data is detected.
-    let onCompletion: (ScannedCardData) -> Void
+    /// Called with the current recognized text lines when the scanner has sufficient data
+    /// or when the user explicitly completes the scan.
+    let onLinesUpdated: ([String]) -> Void
 
     /// Drives `startScanning()`/`stopScanning()` via the SwiftUI view lifecycle.
     @SwiftUI.State private var isScanning = false
@@ -32,7 +33,7 @@ struct CardScannerWrapperView: View {
 
                 CardScannerView(
                     scanner: scanner,
-                    onCompletion: onCompletion,
+                    onLinesUpdated: onLinesUpdated,
                     isScanning: $isScanning,
                 )
                 .padding(.horizontal, 12)
@@ -61,7 +62,6 @@ struct CardScannerWrapperView: View {
 ///
 /// - `isScanning` drives `startScanning()`/`stopScanning()` via `updateUIViewController`,
 ///   toggled by the wrapper's `.onAppear`/`.onDisappear`.
-/// - `isDone` triggers completion when the Done button is tapped.
 ///
 @available(iOS 16.0, *)
 struct CardScannerView: UIViewControllerRepresentable {
@@ -70,8 +70,9 @@ struct CardScannerView: UIViewControllerRepresentable {
     /// The pre-warmed scanner, created before the sheet opened to reduce startup latency.
     let scanner: DataScannerViewController
 
-    /// Called with the parsed card data when scanning completes.
-    let onCompletion: (ScannedCardData) -> Void
+    /// Called with the current recognized text lines when the scanner has sufficient data
+    /// or when the user explicitly completes the scan.
+    let onLinesUpdated: ([String]) -> Void
 
     /// When `true`, scanning is active; when `false`, scanning is stopped.
     @Binding var isScanning: Bool
@@ -95,7 +96,7 @@ struct CardScannerView: UIViewControllerRepresentable {
     // MARK: UIViewControllerRepresentable
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(onCompletion: onCompletion)
+        Coordinator(onLinesUpdated: onLinesUpdated)
     }
 
     func makeUIViewController(context: Context) -> DataScannerViewController {
@@ -118,25 +119,23 @@ struct CardScannerView: UIViewControllerRepresentable {
 @available(iOS 16.0, *)
 extension CardScannerView {
     /// Coordinator acting as `DataScannerViewControllerDelegate`.
-    /// Accumulates recognized text lines and calls `onCompletion` when ready.
+    /// Accumulates recognized text lines and forwards them to the processor via `onLinesUpdated`.
+    /// Parsing and sufficiency checks are handled by the processor, not here.
     final class Coordinator: NSObject, DataScannerViewControllerDelegate {
         // MARK: Properties
 
         /// Accumulated text lines recognized so far.
         private var recognizedLines: [String] = []
 
-        /// Whether scanning has already finished (prevents double-completion).
-        private var hasCompleted = false
-
         /// The scanner, set in `makeUIViewController`.
         weak var scanner: DataScannerViewController?
 
-        let onCompletion: (ScannedCardData) -> Void
+        let onLinesUpdated: ([String]) -> Void
 
         // MARK: Initialization
 
-        init(onCompletion: @escaping (ScannedCardData) -> Void) {
-            self.onCompletion = onCompletion
+        init(onLinesUpdated: @escaping ([String]) -> Void) {
+            self.onLinesUpdated = onLinesUpdated
         }
 
         // MARK: DataScannerViewControllerDelegate
@@ -147,7 +146,7 @@ extension CardScannerView {
             allItems: [RecognizedItem],
         ) {
             updateLines(from: allItems)
-            autoCompleteIfReady()
+            notifyProcessor()
         }
 
         func dataScanner(
@@ -156,7 +155,7 @@ extension CardScannerView {
             allItems: [RecognizedItem],
         ) {
             updateLines(from: allItems)
-            autoCompleteIfReady()
+            notifyProcessor()
         }
 
         func dataScanner(
@@ -165,21 +164,6 @@ extension CardScannerView {
             allItems: [RecognizedItem],
         ) {
             updateLines(from: allItems)
-        }
-
-        // MARK: Internal
-
-        /// Parses the current lines, fires `onCompletion`, and stops scanning.
-        /// Safe to call multiple times — only the first call has effect.
-        func complete() {
-            guard !hasCompleted else { return }
-            hasCompleted = true
-            let data = CardTextParser.parse(lines: recognizedLines)
-            // Clear raw OCR strings immediately after parsing so they don't sit in memory
-            // until this class is deallocated.
-            recognizedLines = []
-            scanner?.stopScanning()
-            onCompletion(data)
         }
 
         // MARK: Private Helpers
@@ -193,12 +177,10 @@ extension CardScannerView {
             }
         }
 
-        private func autoCompleteIfReady() {
-            guard !hasCompleted else { return }
-            let data = CardTextParser.parse(lines: recognizedLines)
-            if data.cardNumber != nil, data.expirationMonth != nil, !data.cardholderNameCandidates.isEmpty {
-                complete()
-            }
+        /// Forwards the current lines to the processor on every OCR update.
+        /// The processor decides whether the data is sufficient to dismiss the scanner.
+        private func notifyProcessor() {
+            onLinesUpdated(recognizedLines)
         }
     }
 }

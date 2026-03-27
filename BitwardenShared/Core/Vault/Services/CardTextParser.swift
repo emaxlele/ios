@@ -4,7 +4,19 @@ import Foundation
 
 /// Parses raw OCR text lines extracted from a payment card scan into structured card data.
 ///
-enum CardTextParser {
+protocol CardTextParser: AnyObject { // sourcery: AutoMockable
+    /// Parses a collection of OCR text strings and returns the best-matching `ScannedCardData`.
+    ///
+    /// - Parameter lines: The raw text lines recognized by the scanner.
+    /// - Returns: A `ScannedCardData` populated with whatever fields could be confidently detected.
+    func parseCard(lines: [String]) -> ScannedCardData
+}
+
+// MARK: - DefaultCardTextParser
+
+/// Default implementation of `CardTextParser` that uses regex-based extraction.
+///
+final class DefaultCardTextParser: CardTextParser {
     // MARK: Private Constants
 
     /// Labels printed on cards that should not be interpreted as cardholder names.
@@ -43,13 +55,9 @@ enum CardTextParser {
         pattern: #"\b(0?[1-9]|1[0-2])\s*/\s*(\d{2,4})\b"#,
     )
 
-    // MARK: Internal Methods
+    // MARK: CardTextParser
 
-    /// Parses a collection of OCR text strings and returns the best-matching `ScannedCardData`.
-    ///
-    /// - Parameter lines: The raw text lines recognized by the scanner.
-    /// - Returns: A `ScannedCardData` populated with whatever fields could be confidently detected.
-    static func parse(lines: [String]) -> ScannedCardData {
+    func parseCard(lines: [String]) -> ScannedCardData {
         var result = ScannedCardData()
 
         print("\n[CardTextParser] Parsing \(lines.count) lines: \(lines)")
@@ -123,8 +131,8 @@ enum CardTextParser {
     // MARK: Private Methods
 
     /// Extracts a card number from a line of text, returning digits only (no spaces/dashes).
-    private static func extractCardNumber(from line: String) -> String? {
-        guard let regex = cardNumberRegex else { return nil }
+    private func extractCardNumber(from line: String) -> String? {
+        guard let regex = Self.cardNumberRegex else { return nil }
         let range = NSRange(line.startIndex..., in: line)
         guard let match = regex.firstMatch(in: line, range: range) else { return nil }
         let matchRange = Range(match.range, in: line)!
@@ -137,8 +145,8 @@ enum CardTextParser {
     }
 
     /// Extracts an expiry month (1–12) and 4-digit year from a line of text.
-    private static func extractExpiry(from line: String) -> (month: Int, year: String)? {
-        guard let regex = expiryRegex else { return nil }
+    private func extractExpiry(from line: String) -> (month: Int, year: String)? {
+        guard let regex = Self.expiryRegex else { return nil }
         let range = NSRange(line.startIndex..., in: line)
         let allMatches = regex.matches(in: line, range: range)
         guard let match = allMatches.last,
@@ -164,7 +172,7 @@ enum CardTextParser {
     /// This lets the caller surface every plausible name slice from a multi-word line
     /// (e.g. "J SMITH EUR CURRENCY" yields "J SMITH", "SMITH EUR",
     /// "EUR CURRENCY", "J SMITH EUR", "SMITH EUR CURRENCY", "J SMITH EUR CURRENCY").
-    private static func extractName(from line: String) -> [String] {
+    private func extractName(from line: String) -> [String] {
         let trimmed = line.trimmingCharacters(in: .whitespaces)
         // Must be uppercase only (letters + spaces + hyphens for hyphenated names)
         guard trimmed == trimmed.uppercased() else { return [] }
@@ -179,7 +187,7 @@ enum CardTextParser {
         for start in 0 ..< words.count {
             for end in (start + 1) ..< words.count {
                 let candidate = words[start ... end].joined(separator: " ")
-                guard !ignoredNameLines.contains(candidate) else { continue }
+                guard !Self.ignoredNameLines.contains(candidate) else { continue }
                 candidates.append(candidate)
             }
         }
@@ -192,7 +200,7 @@ enum CardTextParser {
     /// multiple lines. A line qualifies as a card-number fragment when it contains only digits,
     /// spaces, and dashes, and every whitespace-separated group is ≤ 4 digits long.
     /// Consecutive fragment lines are joined with a space so the card-number regex can match them.
-    private static func mergeCardNumberFragments(from lines: [String]) -> [String] {
+    private func mergeCardNumberFragments(from lines: [String]) -> [String] {
         let cardFragmentChars = CharacterSet.decimalDigits.union(.init(charactersIn: " -"))
 
         func isFragment(_ line: String) -> Bool {
@@ -231,7 +239,7 @@ enum CardTextParser {
     }
 
     /// Returns `true` if a digit string looks like a date, year, or other non-card-number sequence.
-    private static func looksLikeDateOrYear(_ digits: String) -> Bool {
+    private func looksLikeDateOrYear(_ digits: String) -> Bool {
         // Reject 8-digit strings that look like MMDDYYYY or YYYYMMDD
         if digits.count == 8 {
             return true

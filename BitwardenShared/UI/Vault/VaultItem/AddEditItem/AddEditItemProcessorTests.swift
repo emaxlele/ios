@@ -19,6 +19,7 @@ class AddEditItemProcessorTests: BitwardenTestCase {
     var authRepository: MockAuthRepository!
     var appExtensionDelegate: MockAppExtensionDelegate!
     var cameraService: MockCameraService!
+    var cardTextParser: MockCardTextParser!
     var client: MockHTTPClient!
     var configService: MockConfigService!
     var coordinator: MockCoordinator<VaultItemRoute, VaultItemEvent>!
@@ -46,6 +47,7 @@ class AddEditItemProcessorTests: BitwardenTestCase {
         authRepository = MockAuthRepository()
         appExtensionDelegate = MockAppExtensionDelegate()
         cameraService = MockCameraService()
+        cardTextParser = MockCardTextParser()
         client = MockHTTPClient()
         configService = MockConfigService()
         coordinator = MockCoordinator<VaultItemRoute, VaultItemEvent>()
@@ -68,6 +70,7 @@ class AddEditItemProcessorTests: BitwardenTestCase {
             services: ServiceContainer.withMocks(
                 authRepository: authRepository,
                 cameraService: cameraService,
+                cardTextParser: cardTextParser,
                 configService: configService,
                 errorReporter: errorReporter,
                 eventService: eventService,
@@ -100,6 +103,7 @@ class AddEditItemProcessorTests: BitwardenTestCase {
         authRepository = nil
         appExtensionDelegate = nil
         cameraService = nil
+        cardTextParser = nil
         client = nil
         configService = nil
         coordinator = nil
@@ -2601,6 +2605,65 @@ class AddEditItemProcessorTests: BitwardenTestCase {
     func test_receive_cardFieldChanged_toggleNumberVisibilityChanged() {
         subject.receive(.cardFieldChanged(.toggleNumberVisibilityChanged(true)))
         XCTAssertEqual(subject.state.cardItemState.isNumberVisible, true)
+    }
+
+    /// `receive(_:)` with `.cardFieldChanged(.cardScannerLinesUpdated)` with sufficient data
+    /// dismisses the scanner and populates card state.
+    @MainActor
+    func test_receive_cardFieldChanged_cardScannerLinesUpdated_sufficientData() {
+        cardTextParser.parseCardResult = ScannedCardData(
+            cardNumber: "4111111111111111",
+            cardholderNameCandidates: ["JANE DOE"],
+            expirationMonth: 12,
+            expirationYear: "2028",
+        )
+        subject.state.cardItemState.isCardScannerPresented = true
+
+        subject.receive(.cardFieldChanged(.cardScannerLinesUpdated(["4111111111111111", "JANE DOE", "12/28"])))
+
+        XCTAssertFalse(subject.state.cardItemState.isCardScannerPresented)
+        XCTAssertEqual(subject.state.cardItemState.cardNumber, "4111111111111111")
+        XCTAssertEqual(subject.state.cardItemState.cardholderName, "JANE DOE")
+        XCTAssertEqual(subject.state.cardItemState.expirationMonth, .custom(.dec))
+        XCTAssertEqual(subject.state.cardItemState.expirationYear, "2028")
+    }
+
+    /// `receive(_:)` with `.cardFieldChanged(.cardScannerLinesUpdated)` with insufficient data
+    /// leaves the scanner open and does not update card state.
+    @MainActor
+    func test_receive_cardFieldChanged_cardScannerLinesUpdated_insufficientData() {
+        cardTextParser.parseCardResult = ScannedCardData(
+            cardNumber: nil,
+            cardholderNameCandidates: ["JANE DOE"],
+            expirationMonth: 12,
+            expirationYear: "2028",
+        )
+        subject.state.cardItemState.isCardScannerPresented = true
+
+        subject.receive(.cardFieldChanged(.cardScannerLinesUpdated(["JANE DOE", "12/28"])))
+
+        XCTAssertTrue(subject.state.cardItemState.isCardScannerPresented)
+        XCTAssertEqual(subject.state.cardItemState.cardNumber, "")
+    }
+
+    /// `receive(_:)` with `.cardFieldChanged(.cardScannerLinesUpdated)` with multiple name candidates
+    /// dismisses the scanner and shows the name disambiguation picker.
+    @MainActor
+    func test_receive_cardFieldChanged_cardScannerLinesUpdated_multipleNameCandidates() {
+        cardTextParser.parseCardResult = ScannedCardData(
+            cardNumber: "4111111111111111",
+            cardholderNameCandidates: ["JANE DOE", "DOE CORP"],
+            expirationMonth: 12,
+            expirationYear: "2028",
+        )
+        subject.state.cardItemState.isCardScannerPresented = true
+
+        subject.receive(.cardFieldChanged(.cardScannerLinesUpdated(["4111111111111111", "JANE DOE CORP", "12/28"])))
+
+        XCTAssertFalse(subject.state.cardItemState.isCardScannerPresented)
+        XCTAssertTrue(subject.state.cardItemState.isCardholderNamePickerPresented)
+        XCTAssertEqual(subject.state.cardItemState.cardholderNameCandidates, ["JANE DOE", "DOE CORP"])
+        XCTAssertEqual(subject.state.cardItemState.cardholderName, "")
     }
 
     /// `receive(_:)` with `.identityFieldChanged(.firstNameChanged)` with a value updates the state correctly.
