@@ -113,6 +113,10 @@ final class DefaultCardTextParser: CardTextParser {
             }
         }
 
+        guard !flatLines.isEmpty else { 
+            return result 
+        }
+
         // Second pass: combine adjacent flat lines in case a first/last name is split across them.
         for index in 0 ..< (flatLines.count - 1) {
             let combined = flatLines[index].trimmingCharacters(in: .whitespaces)

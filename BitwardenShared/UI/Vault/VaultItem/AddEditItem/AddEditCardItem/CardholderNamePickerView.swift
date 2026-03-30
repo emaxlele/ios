@@ -65,8 +65,6 @@ struct CardholderNamePickerView: View {
                     dismiss()
                 } label: {
                     HStack(spacing: 12) {
-                        Image(uiImage: SharedAsset.Icons.checkCircle24.image)
-                            .foregroundColor(SharedAsset.Colors.iconPrimary.swiftUIColor)
                         Text(name)
                             .styleGuide(.body)
                             .foregroundColor(SharedAsset.Colors.textPrimary.swiftUIColor)
