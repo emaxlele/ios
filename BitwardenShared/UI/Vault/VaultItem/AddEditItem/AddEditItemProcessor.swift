@@ -465,7 +465,7 @@ final class AddEditItemProcessor: StateProcessor<// swiftlint:disable:this type_
         case let .cardholderNameChanged(name):
             state.cardItemState.cardholderName = name
         case let .cardNumberChanged(number):
-            state.cardItemState.cardNumber = number
+            state.cardItemState.cardNumber = number.filter(\.isNumber)
         case let .cardSecurityCodeChanged(code):
             state.cardItemState.cardSecurityCode = code
         case let .expirationMonthChanged(month):
