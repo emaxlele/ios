@@ -57,10 +57,8 @@ final class DefaultCardTextParser: CardTextParser {
 
     // MARK: CardTextParser
 
-    func parseCard(lines: [String]) -> ScannedCardData {
+    func parseCard(lines: [String]) -> ScannedCardData { // swiftlint:disable:this cyclomatic_complexity
         var result = ScannedCardData()
-
-        print("\n[CardTextParser] Parsing \(lines.count) lines: \(lines)")
 
         // Flatten embedded newlines: OCR transcripts can contain \n within a single
         // recognized region. Split here so all downstream logic works on single-line strings.
@@ -75,7 +73,6 @@ final class DefaultCardTextParser: CardTextParser {
         for line in flatLines {
             let trimmed = line.trimmingCharacters(in: .whitespaces)
             if let number = extractCardNumber(from: trimmed) {
-                print("[CardTextParser] cardNumber matched on line '\(trimmed)': \(number)")
                 result.cardNumber = number
                 break
             }
@@ -84,11 +81,9 @@ final class DefaultCardTextParser: CardTextParser {
         // Only merge fragments when no card number was found on a single line.
         if result.cardNumber == nil {
             let mergedLines = mergeCardNumberFragments(from: flatLines)
-            print("[CardTextParser] No card number found on single lines — retrying with merged fragments: \(mergedLines)")
             for line in mergedLines {
                 let trimmed = line.trimmingCharacters(in: .whitespaces)
                 if let number = extractCardNumber(from: trimmed) {
-                    print("[CardTextParser] cardNumber matched on merged line '\(trimmed)': \(number)")
                     result.cardNumber = number
                     break
                 }
@@ -102,19 +97,17 @@ final class DefaultCardTextParser: CardTextParser {
             // Always overwrite with the latest match so that when a card shows both a
             // "valid from" and a "valid thru" date we end up with the expiry, not the start date.
             if let (month, year) = extractExpiry(from: trimmed) {
-                print("[CardTextParser] expiry matched on line '\(trimmed)': month=\(month), year=\(year)")
                 result.expirationMonth = month
                 result.expirationYear = year
             }
 
             for name in extractName(from: trimmed) where !result.cardholderNameCandidates.contains(name) {
-                print("[CardTextParser] cardholderName candidate on line '\(trimmed)': \(name)")
                 result.cardholderNameCandidates.append(name)
             }
         }
 
-        guard !flatLines.isEmpty else { 
-            return result 
+        guard !flatLines.isEmpty else {
+            return result
         }
 
         // Second pass: combine adjacent flat lines in case a first/last name is split across them.
@@ -123,12 +116,10 @@ final class DefaultCardTextParser: CardTextParser {
                 + " "
                 + flatLines[index + 1].trimmingCharacters(in: .whitespaces)
             for name in extractName(from: combined) where !result.cardholderNameCandidates.contains(name) {
-                print("[CardTextParser] cardholderName candidate (combined lines \(index)+\(index + 1)) '\(combined)': \(name)")
                 result.cardholderNameCandidates.append(name)
             }
         }
 
-        print("[CardTextParser] Result: \(result)")
         return result
     }
 

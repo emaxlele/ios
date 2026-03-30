@@ -40,13 +40,13 @@ class CardComponentBrandTests: BitwardenTestCase {
     }
 
     /// `detect(from:)` returns `.mastercard` for numbers starting with 51–55.
-    func test_detect_mastercard_prefix51to55() {
+    func test_detect_mastercard_prefix51to55() { // swiftlint:disable:this inclusive_language
         XCTAssertEqual(CardComponent.Brand.detect(from: "5100000000000000"), .mastercard)
         XCTAssertEqual(CardComponent.Brand.detect(from: "5555555555554444"), .mastercard)
     }
 
     /// `detect(from:)` returns `.mastercard` for numbers in the 2221–2720 range.
-    func test_detect_mastercard_prefix2221to2720() {
+    func test_detect_mastercard_prefix2221to2720() { // swiftlint:disable:this inclusive_language
         XCTAssertEqual(CardComponent.Brand.detect(from: "2221000000000000"), .mastercard)
         XCTAssertEqual(CardComponent.Brand.detect(from: "2720000000000000"), .mastercard)
     }

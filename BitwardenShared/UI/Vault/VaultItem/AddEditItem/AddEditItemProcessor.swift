@@ -458,6 +458,7 @@ final class AddEditItemProcessor: StateProcessor<// swiftlint:disable:this type_
     ///   - state: The parent `AddEditCardState` to be updated.
     ///   - action: The `AddEditCardItemAction` received.
     private func updateCardState(_ state: inout AddEditItemState, for action: AddEditCardItemAction) {
+        // swiftlint:disable:previous function_body_length
         switch action {
         case let .brandChanged(brand):
             state.cardItemState.brand = brand
@@ -501,8 +502,8 @@ final class AddEditItemProcessor: StateProcessor<// swiftlint:disable:this type_
             let data = services.cardTextParser.parseCard(lines: lines)
             guard data.cardNumber != nil,
                   data.expirationMonth != nil,
-                  !data.cardholderNameCandidates.isEmpty else { 
-                    break 
+                  !data.cardholderNameCandidates.isEmpty else {
+                break
             }
             state.cardItemState.isCardScannerPresented = false
             if let number = data.cardNumber {

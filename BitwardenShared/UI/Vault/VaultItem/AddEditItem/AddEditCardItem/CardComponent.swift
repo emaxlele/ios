@@ -124,7 +124,7 @@ extension CardComponent.Brand {
     ///
     /// - Parameter number: The card number (digits only, no spaces).
     /// - Returns: The detected brand, or `.other` if unrecognized.
-    static func detect(from number: String) -> CardComponent.Brand {
+    static func detect(from number: String) -> CardComponent.Brand { // swiftlint:disable:this cyclomatic_complexity
         guard !number.isEmpty else { return .other }
 
         if number.hasPrefix("4") { return .visa }
@@ -146,7 +146,7 @@ extension CardComponent.Brand {
         }
 
         if let prefix6 = Int(number.prefix(6)) {
-            if (622126 ... 622925).contains(prefix6) { return .discover }
+            if (622_126 ... 622_925).contains(prefix6) { return .discover }
         }
 
         if let prefix2 = Int(number.prefix(2)) {
