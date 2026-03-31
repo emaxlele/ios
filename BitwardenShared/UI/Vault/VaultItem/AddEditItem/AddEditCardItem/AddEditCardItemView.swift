@@ -25,6 +25,9 @@ struct AddEditCardItemView: View {
     /// The currently focused field.
     @FocusState private var focusedField: FocusedField?
 
+    /// Whether the cardholder name field should receive focus once the name picker sheet dismisses.
+    @SwiftUI.State private var focusCardholderNameOnPickerDismiss = false
+
     /// Pre-warmed scanner created the moment the button is tapped so hardware init
     /// overlaps the sheet presentation animation rather than happening after it.
     /// Typed as `AnyObject?` to avoid placing `@available` on a stored property.
@@ -143,9 +146,17 @@ struct AddEditCardItemView: View {
                 set: { _ in store.send(.cardholderNamePickerDismissed) },
             ),
         ) {
-            CardholderNamePickerView(candidates: store.state.cardholderNameCandidates) { name in
-                store.send(.cardholderNameCandidateSelected(name))
-            }
+            CardholderNamePickerView(
+                candidates: store.state.cardholderNameCandidates,
+                onCancelled: { store.send(.cardholderNamePickerCancelled) },
+                onNameSelected: { name in store.send(.cardholderNameCandidateSelected(name)) },
+                onNoneSelected: { focusCardholderNameOnPickerDismiss = true },
+            )
+        }
+        .onChange(of: store.state.isCardholderNamePickerPresented) { isPresented in
+            guard !isPresented, focusCardholderNameOnPickerDismiss else { return }
+            focusedField = .cardholderName
+            focusCardholderNameOnPickerDismiss = false
         }
     }
 
