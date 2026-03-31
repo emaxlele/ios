@@ -2017,7 +2017,6 @@ class AddEditItemProcessorTests: BitwardenTestCase {
     func test_receive_cardFieldChanged_cardScannerLinesUpdated_sufficientData() {
         cardTextParser.parseCardReturnValue = ScannedCardData(
             cardNumber: "4111111111111111",
-            cardholderNameCandidates: ["JANE DOE"],
             expirationMonth: 12,
             expirationYear: "2028",
         )
@@ -2027,7 +2026,6 @@ class AddEditItemProcessorTests: BitwardenTestCase {
 
         XCTAssertFalse(subject.state.cardItemState.isCardScannerPresented)
         XCTAssertEqual(subject.state.cardItemState.cardNumber, "4111111111111111")
-        XCTAssertEqual(subject.state.cardItemState.cardholderName, "JANE DOE")
         XCTAssertEqual(subject.state.cardItemState.expirationMonth, .custom(.dec))
         XCTAssertEqual(subject.state.cardItemState.expirationYear, "2028")
     }
@@ -2038,7 +2036,6 @@ class AddEditItemProcessorTests: BitwardenTestCase {
     func test_receive_cardFieldChanged_cardScannerLinesUpdated_insufficientData() {
         cardTextParser.parseCardReturnValue = ScannedCardData(
             cardNumber: nil,
-            cardholderNameCandidates: ["JANE DOE"],
             expirationMonth: 12,
             expirationYear: "2028",
         )
@@ -2050,51 +2047,12 @@ class AddEditItemProcessorTests: BitwardenTestCase {
         XCTAssertEqual(subject.state.cardItemState.cardNumber, "")
     }
 
-    /// `receive(_:)` with `.cardFieldChanged(.cardScannerLinesUpdated)` with multiple name candidates
-    /// dismisses the scanner and shows the name disambiguation picker.
-    @MainActor
-    func test_receive_cardFieldChanged_cardScannerLinesUpdated_multipleNameCandidates() {
-        cardTextParser.parseCardReturnValue = ScannedCardData(
-            cardNumber: "4111111111111111",
-            cardholderNameCandidates: ["JANE DOE", "DOE CORP"],
-            expirationMonth: 12,
-            expirationYear: "2028",
-        )
-        subject.state.cardItemState.isCardScannerPresented = true
-
-        subject.receive(.cardFieldChanged(.cardScannerLinesUpdated(["4111111111111111", "JANE DOE CORP", "12/28"])))
-
-        XCTAssertFalse(subject.state.cardItemState.isCardScannerPresented)
-        XCTAssertTrue(subject.state.cardItemState.isCardholderNamePickerPresented)
-        XCTAssertEqual(subject.state.cardItemState.cardholderNameCandidates, ["JANE DOE", "DOE CORP"])
-        XCTAssertEqual(subject.state.cardItemState.cardholderName, "")
-    }
-
-    /// `receive(_:)` with `.cardFieldChanged(.cardScannerLinesUpdated)` with a single name candidate
-    /// sets the cardholder name directly without showing the picker.
-    @MainActor
-    func test_receive_cardFieldChanged_cardScannerLinesUpdated_singleNameCandidate() {
-        cardTextParser.parseCardReturnValue = ScannedCardData(
-            cardNumber: "4111111111111111",
-            cardholderNameCandidates: ["JANE DOE"],
-            expirationMonth: 12,
-            expirationYear: "2028",
-        )
-        subject.state.cardItemState.isCardScannerPresented = true
-
-        subject.receive(.cardFieldChanged(.cardScannerLinesUpdated(["4111111111111111", "JANE DOE", "12/28"])))
-
-        XCTAssertFalse(subject.state.cardItemState.isCardholderNamePickerPresented)
-        XCTAssertEqual(subject.state.cardItemState.cardholderName, "JANE DOE")
-    }
-
     /// `receive(_:)` with `.cardFieldChanged(.cardScannerLinesUpdated)` sets the card brand
     /// inferred from the detected card number.
     @MainActor
     func test_receive_cardFieldChanged_cardScannerLinesUpdated_setsCardBrand() {
         cardTextParser.parseCardReturnValue = ScannedCardData(
             cardNumber: "4111111111111111",
-            cardholderNameCandidates: ["JANE DOE"],
             expirationMonth: 12,
             expirationYear: "2028",
         )
@@ -2123,55 +2081,6 @@ class AddEditItemProcessorTests: BitwardenTestCase {
         subject.receive(.cardFieldChanged(.cardScannerDismissed))
 
         XCTAssertFalse(subject.state.cardItemState.isCardScannerPresented)
-    }
-
-    /// `receive(_:)` with `.cardFieldChanged(.cardholderNameCandidateSelected)` sets the name,
-    /// clears the candidates list, and dismisses the picker.
-    @MainActor
-    func test_receive_cardFieldChanged_cardholderNameCandidateSelected() {
-        subject.state.cardItemState.cardholderNameCandidates = ["JANE DOE", "DOE CORP"]
-        subject.state.cardItemState.isCardholderNamePickerPresented = true
-
-        subject.receive(.cardFieldChanged(.cardholderNameCandidateSelected("JANE DOE")))
-
-        XCTAssertEqual(subject.state.cardItemState.cardholderName, "JANE DOE")
-        XCTAssertTrue(subject.state.cardItemState.cardholderNameCandidates.isEmpty)
-        XCTAssertFalse(subject.state.cardItemState.isCardholderNamePickerPresented)
-    }
-
-    /// `receive(_:)` with `.cardFieldChanged(.cardholderNamePickerCancelled)` clears all scanned
-    /// card data and dismisses the picker.
-    @MainActor
-    func test_receive_cardFieldChanged_cardholderNamePickerCancelled() {
-        subject.state.cardItemState.cardholderNameCandidates = ["JANE DOE", "DOE CORP"]
-        subject.state.cardItemState.isCardholderNamePickerPresented = true
-        subject.state.cardItemState.cardNumber = "4111111111111111"
-        subject.state.cardItemState.brand = .custom(.visa)
-        subject.state.cardItemState.expirationMonth = .custom(.dec)
-        subject.state.cardItemState.expirationYear = "2028"
-
-        subject.receive(.cardFieldChanged(.cardholderNamePickerCancelled))
-
-        XCTAssertEqual(subject.state.cardItemState.cardNumber, "")
-        XCTAssertEqual(subject.state.cardItemState.brand, .default)
-        XCTAssertEqual(subject.state.cardItemState.expirationMonth, .default)
-        XCTAssertEqual(subject.state.cardItemState.expirationYear, "")
-        XCTAssertTrue(subject.state.cardItemState.cardholderNameCandidates.isEmpty)
-        XCTAssertFalse(subject.state.cardItemState.isCardholderNamePickerPresented)
-    }
-
-    /// `receive(_:)` with `.cardFieldChanged(.cardholderNamePickerDismissed)` clears the candidates
-    /// list and dismisses the picker without setting a name.
-    @MainActor
-    func test_receive_cardFieldChanged_cardholderNamePickerDismissed() {
-        subject.state.cardItemState.cardholderNameCandidates = ["JANE DOE", "DOE CORP"]
-        subject.state.cardItemState.isCardholderNamePickerPresented = true
-
-        subject.receive(.cardFieldChanged(.cardholderNamePickerDismissed))
-
-        XCTAssertEqual(subject.state.cardItemState.cardholderName, "")
-        XCTAssertTrue(subject.state.cardItemState.cardholderNameCandidates.isEmpty)
-        XCTAssertFalse(subject.state.cardItemState.isCardholderNamePickerPresented)
     }
 
     /// `receive(_:)` with `.clearTOTPKey` clears the authenticator key.
