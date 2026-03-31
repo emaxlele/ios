@@ -11,8 +11,14 @@ struct CardholderNamePickerView: View {
     /// The list of candidate names detected by the card scanner.
     let candidates: [String]
 
+    /// Called when the user taps Cancel, discarding all scanned card data.
+    let onCancelled: () -> Void
+
     /// Called with the name the user selected.
     let onNameSelected: (String) -> Void
+
+    /// Called when the user indicates none of the candidates match.
+    let onNoneSelected: () -> Void
 
     /// The dismiss action for the modal sheet.
     @Environment(\.dismiss) private var dismiss
@@ -31,6 +37,7 @@ struct CardholderNamePickerView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 cancelToolbarItem {
+                    onCancelled()
                     dismiss()
                 }
             }
@@ -76,6 +83,21 @@ struct CardholderNamePickerView: View {
                 Divider()
                     .padding(.leading, 16)
             }
+            Button {
+                onNoneSelected()
+                dismiss()
+            } label: {
+                HStack(spacing: 12) {
+                    Text(Localizations.noneOfTheAbove)
+                        .styleGuide(.body)
+                        .foregroundColor(SharedAsset.Colors.textPrimary.swiftUIColor)
+                    Spacer()
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 14)
+            }
+            Divider()
+                .padding(.leading, 16)
         }
         .background(SharedAsset.Colors.backgroundSecondary.swiftUIColor)
         .clipShape(RoundedRectangle(cornerRadius: 8))
@@ -89,7 +111,9 @@ struct CardholderNamePickerView: View {
 #Preview("Cardholder Name Picker") {
     CardholderNamePickerView(
         candidates: ["J Smith", "John Smith", "VISA PLATINUM"],
+        onCancelled: {},
         onNameSelected: { _ in },
+        onNoneSelected: {},
     )
 }
 #endif

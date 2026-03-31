@@ -2155,6 +2155,27 @@ class AddEditItemProcessorTests: BitwardenTestCase {
         XCTAssertFalse(subject.state.cardItemState.isCardholderNamePickerPresented)
     }
 
+    /// `receive(_:)` with `.cardFieldChanged(.cardholderNamePickerCancelled)` clears all scanned
+    /// card data and dismisses the picker.
+    @MainActor
+    func test_receive_cardFieldChanged_cardholderNamePickerCancelled() {
+        subject.state.cardItemState.cardholderNameCandidates = ["JANE DOE", "DOE CORP"]
+        subject.state.cardItemState.isCardholderNamePickerPresented = true
+        subject.state.cardItemState.cardNumber = "4111111111111111"
+        subject.state.cardItemState.brand = .custom(.visa)
+        subject.state.cardItemState.expirationMonth = .custom(.dec)
+        subject.state.cardItemState.expirationYear = "2028"
+
+        subject.receive(.cardFieldChanged(.cardholderNamePickerCancelled))
+
+        XCTAssertEqual(subject.state.cardItemState.cardNumber, "")
+        XCTAssertEqual(subject.state.cardItemState.brand, .default)
+        XCTAssertEqual(subject.state.cardItemState.expirationMonth, .default)
+        XCTAssertEqual(subject.state.cardItemState.expirationYear, "")
+        XCTAssertTrue(subject.state.cardItemState.cardholderNameCandidates.isEmpty)
+        XCTAssertFalse(subject.state.cardItemState.isCardholderNamePickerPresented)
+    }
+
     /// `receive(_:)` with `.cardFieldChanged(.cardholderNamePickerDismissed)` clears the candidates
     /// list and dismisses the picker without setting a name.
     @MainActor

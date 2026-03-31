@@ -1229,6 +1229,7 @@
 "NoAskMe" = "No, ask me";
 "NoCodes" = "You don’t have any codes to display";
 "None" = "None";
+"NoneOfTheAbove" = "None of the above";
 "NumberOfDigits" = "Number of digits";
 "OtpType" = "OTP Type";
 "RefreshPeriod" = "Refresh period";
