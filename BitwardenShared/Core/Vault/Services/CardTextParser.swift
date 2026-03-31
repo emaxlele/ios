@@ -19,32 +19,6 @@ protocol CardTextParser: AnyObject { // sourcery: AutoMockable
 final class DefaultCardTextParser: CardTextParser {
     // MARK: Private Constants
 
-    /// Labels printed on cards that should not be interpreted as cardholder names.
-    private static let ignoredNameLines: Set<String> = [
-        "VALID THRU",
-        "VALID FROM",
-        "VALID DATES",
-        "MEMBER SINCE",
-        "GOOD THRU",
-        "GOOD FROM",
-        "EXPIRES END",
-        "CREDIT CARD",
-        "DEBIT CARD",
-        "PREPAID CARD",
-        "PLATINUM",
-        "GOLD",
-        "CLASSIC",
-        "STANDARD",
-        "BUSINESS",
-        "SIGNATURE",
-        "PREFERRED",
-        "REWARDS",
-        "CASHBACK",
-        "INFINITE",
-        "WORLD",
-        "ICON",
-    ]
-
     /// Regex that matches a payment card number: 13–19 digit groups optionally separated by spaces or dashes.
     private static let cardNumberRegex = try? NSRegularExpression(
         pattern: #"(?<!\d)(\d[ \-]?){12,18}\d(?!\d)"#,
@@ -90,7 +64,7 @@ final class DefaultCardTextParser: CardTextParser {
             }
         }
 
-        // Expiry and name are always extracted from the flat (unmerged) lines.
+        // Expiry is extracted from the flat (unmerged) lines.
         for line in flatLines {
             let trimmed = line.trimmingCharacters(in: .whitespaces)
 
@@ -99,24 +73,6 @@ final class DefaultCardTextParser: CardTextParser {
             if let (month, year) = extractExpiry(from: trimmed) {
                 result.expirationMonth = month
                 result.expirationYear = year
-            }
-
-            for name in extractName(from: trimmed) where !result.cardholderNameCandidates.contains(name) {
-                result.cardholderNameCandidates.append(name)
-            }
-        }
-
-        guard !flatLines.isEmpty else {
-            return result
-        }
-
-        // Second pass: combine adjacent flat lines in case a first/last name is split across them.
-        for index in 0 ..< (flatLines.count - 1) {
-            let combined = flatLines[index].trimmingCharacters(in: .whitespaces)
-                + " "
-                + flatLines[index + 1].trimmingCharacters(in: .whitespaces)
-            for name in extractName(from: combined) where !result.cardholderNameCandidates.contains(name) {
-                result.cardholderNameCandidates.append(name)
             }
         }
 
@@ -157,36 +113,6 @@ final class DefaultCardTextParser: CardTextParser {
             yearString = "20\(yearString)"
         }
         return (month, yearString)
-    }
-
-    /// Extracts all cardholder name candidates from a line of text.
-    ///
-    /// The line must be all-uppercase and contain only letters, spaces, and hyphens.
-    /// All contiguous subsequences of two or more words are returned as candidates,
-    /// excluding any that match known card labels (e.g. "VALID THRU", "EUR CURRENCY").
-    /// This lets the caller surface every plausible name slice from a multi-word line
-    /// (e.g. "J SMITH EUR CURRENCY" yields "J SMITH", "SMITH EUR",
-    /// "EUR CURRENCY", "J SMITH EUR", "SMITH EUR CURRENCY", "J SMITH EUR CURRENCY").
-    private func extractName(from line: String) -> [String] {
-        let trimmed = line.trimmingCharacters(in: .whitespaces)
-        // Must be uppercase only (letters + spaces + hyphens for hyphenated names)
-        guard trimmed == trimmed.uppercased() else { return [] }
-        // Must contain only letters, spaces, and hyphens
-        let allowedChars = CharacterSet.letters.union(.init(charactersIn: " -"))
-        guard trimmed.unicodeScalars.allSatisfy({ allowedChars.contains($0) }) else { return [] }
-        let words = trimmed.split(separator: " ").map(String.init)
-        guard words.count >= 2 else { return [] }
-
-        // Collect every contiguous subsequence of 2+ words that isn't a known label.
-        var candidates: [String] = []
-        for start in 0 ..< words.count {
-            for end in (start + 1) ..< words.count {
-                let candidate = words[start ... end].joined(separator: " ")
-                guard !Self.ignoredNameLines.contains(candidate) else { continue }
-                candidates.append(candidate)
-            }
-        }
-        return candidates
     }
 
     /// Merges adjacent lines that look like split card-number digit groups into a single line.

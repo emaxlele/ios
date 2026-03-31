@@ -9,9 +9,6 @@ protocol AddEditCardItemState: Equatable, Sendable {
     /// The name of the card holder.
     var cardholderName: String { get set }
 
-    /// Cardholder name candidates when the scanner found more than one possible name.
-    var cardholderNameCandidates: [String] { get set }
-
     /// The number of the card.
     var cardNumber: String { get set }
 
@@ -29,9 +26,6 @@ protocol AddEditCardItemState: Equatable, Sendable {
 
     /// The card number formatted with brand-appropriate digit grouping for display.
     var formattedCardNumber: String { get }
-
-    /// Whether the cardholder name picker sheet is currently presented.
-    var isCardholderNamePickerPresented: Bool { get set }
 
     /// Whether the card scanner sheet is currently presented.
     var isCardScannerPresented: Bool { get set }

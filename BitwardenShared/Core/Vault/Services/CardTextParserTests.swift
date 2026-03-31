@@ -129,68 +129,12 @@ class CardTextParserTests: BitwardenTestCase {
         XCTAssertNil(result.expirationYear)
     }
 
-    // MARK: Tests – Cardholder Name
-
-    /// `parseCard(lines:)` returns a single name candidate for an unambiguous two-word name.
-    func test_parseCard_extractsName_singleCandidate() {
-        let result = subject.parseCard(lines: ["JANE DOE"])
-        XCTAssertEqual(result.cardholderNameCandidates, ["JANE DOE"])
-    }
-
-    /// `parseCard(lines:)` returns all contiguous 2+ word subsequences for a multi-word line.
-    func test_parseCard_extractsName_multipleCandidatesFromMultiWordLine() {
-        let result = subject.parseCard(lines: ["J SMITH EUR CURRENCY"])
-        // Expected subsequences (ignoring ignored labels): "J SMITH", "SMITH EUR",
-        // "EUR CURRENCY" (ignored), "J SMITH EUR", "SMITH EUR CURRENCY", "J SMITH EUR CURRENCY"
-        XCTAssertTrue(result.cardholderNameCandidates.contains("J SMITH"))
-        XCTAssertTrue(result.cardholderNameCandidates.contains("J SMITH EUR"))
-        XCTAssertFalse(result.cardholderNameCandidates.isEmpty)
-    }
-
-    /// `parseCard(lines:)` does not include known card labels as name candidates.
-    func test_parseCard_ignoresKnownCardLabels() {
-        let result = subject.parseCard(lines: ["VALID THRU"])
-        XCTAssertFalse(result.cardholderNameCandidates.contains("VALID THRU"))
-    }
-
-    /// `parseCard(lines:)` ignores lines that are not all-uppercase.
-    func test_parseCard_ignoresMixedCaseLine() {
-        let result = subject.parseCard(lines: ["Jane Doe"])
-        XCTAssertTrue(result.cardholderNameCandidates.isEmpty)
-    }
-
-    /// `parseCard(lines:)` ignores single-word lines (not a two-part name).
-    func test_parseCard_ignoresSingleWordLine() {
-        let result = subject.parseCard(lines: ["PLATINUM"])
-        XCTAssertTrue(result.cardholderNameCandidates.isEmpty)
-    }
-
-    /// `parseCard(lines:)` ignores lines containing digits.
-    func test_parseCard_ignoresLinesWithDigits() {
-        let result = subject.parseCard(lines: ["CARD 1234"])
-        XCTAssertTrue(result.cardholderNameCandidates.isEmpty)
-    }
-
-    /// `parseCard(lines:)` accepts hyphenated names.
-    func test_parseCard_acceptsHyphenatedName() {
-        let result = subject.parseCard(lines: ["MARY-ANNE SMITH"])
-        XCTAssertTrue(result.cardholderNameCandidates.contains("MARY-ANNE SMITH"))
-    }
-
-    /// `parseCard(lines:)` combines adjacent lines so a first/last name split across two lines
-    /// is still returned as a candidate.
-    func test_parseCard_combinesAdjacentLinesForName() {
-        let result = subject.parseCard(lines: ["JANE", "DOE"])
-        XCTAssertTrue(result.cardholderNameCandidates.contains("JANE DOE"))
-    }
-
     /// `parseCard(lines:)` returns an empty result for empty input.
     func test_parseCard_emptyInput() {
         let result = subject.parseCard(lines: [])
         XCTAssertNil(result.cardNumber)
         XCTAssertNil(result.expirationMonth)
         XCTAssertNil(result.expirationYear)
-        XCTAssertTrue(result.cardholderNameCandidates.isEmpty)
     }
 
     /// `parseCard(lines:)` flattens embedded newlines within a single OCR transcript string.
@@ -198,7 +142,6 @@ class CardTextParserTests: BitwardenTestCase {
         let result = subject.parseCard(lines: ["4111111111111111\nJANE DOE\n12/28"])
         XCTAssertEqual(result.cardNumber, "4111111111111111")
         XCTAssertEqual(result.expirationMonth, 12)
-        XCTAssertTrue(result.cardholderNameCandidates.contains("JANE DOE"))
     }
 
     /// `parseCard(lines:)` discards whitespace-only lines.
@@ -207,8 +150,8 @@ class CardTextParserTests: BitwardenTestCase {
         XCTAssertEqual(result.cardNumber, "4111111111111111")
     }
 
-    /// `parseCard(lines:)` populates all three fields from a realistic card scan.
-    func test_parseCard_realisticScan_allFields() {
+    /// `parseCard(lines:)` populates card number and expiry from a realistic card scan.
+    func test_parseCard_realisticScan_cardNumberAndExpiry() {
         let lines = [
             "4111 1111 1111 1111",
             "JANE DOE",
@@ -218,14 +161,5 @@ class CardTextParserTests: BitwardenTestCase {
         XCTAssertEqual(result.cardNumber, "4111111111111111")
         XCTAssertEqual(result.expirationMonth, 12)
         XCTAssertEqual(result.expirationYear, "2028")
-        XCTAssertTrue(result.cardholderNameCandidates.contains("JANE DOE"))
-    }
-
-    /// `parseCard(lines:)` does not return duplicate name candidates.
-    func test_parseCard_noDuplicateNameCandidates() {
-        let lines = ["JANE DOE", "JANE DOE"]
-        let result = subject.parseCard(lines: lines)
-        let occurrences = result.cardholderNameCandidates.filter { $0 == "JANE DOE" }
-        XCTAssertEqual(occurrences.count, 1)
     }
 }
