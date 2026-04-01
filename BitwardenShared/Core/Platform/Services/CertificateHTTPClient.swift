@@ -53,8 +53,12 @@ extension CertificateHTTPClient: URLSessionDelegate, URLSessionTaskDelegate {
         willPerformHTTPRedirection response: HTTPURLResponse,
         newRequest request: URLRequest,
     ) async -> URLRequest? {
-        // Reject all redirects, mimicking NoRedirectSessionDelegate
-        nil
+        // So far we only need 302 redirection to be surfaced and handled manually.
+        if response.statusCode == 302 {
+            return nil
+        } else {
+            return request
+        }
     }
 
     func urlSession(
