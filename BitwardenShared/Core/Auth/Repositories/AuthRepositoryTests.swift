@@ -16,6 +16,7 @@ class AuthRepositoryTests: BitwardenTestCase { // swiftlint:disable:this type_bo
     var appContextHelper: MockAppContextHelper!
     var authService: MockAuthService!
     var biometricsRepository: MockBiometricsRepository!
+    var clientCertificateService: MockClientCertificateService!
     var changeKdfService: MockChangeKdfService!
     var client: MockHTTPClient!
     var clientService: MockClientService!
@@ -100,6 +101,7 @@ class AuthRepositoryTests: BitwardenTestCase { // swiftlint:disable:this type_bo
         accountAPIService = APIService(client: client)
         authService = MockAuthService()
         biometricsRepository = MockBiometricsRepository()
+        clientCertificateService = MockClientCertificateService()
         changeKdfService = MockChangeKdfService()
         configService = MockConfigService()
         environmentService = MockEnvironmentService()
@@ -124,6 +126,7 @@ class AuthRepositoryTests: BitwardenTestCase { // swiftlint:disable:this type_bo
             appContextHelper: appContextHelper,
             authService: authService,
             biometricsRepository: biometricsRepository,
+            clientCertificateService: clientCertificateService,
             changeKdfService: changeKdfService,
             clientService: clientService,
             configService: configService,
@@ -150,6 +153,7 @@ class AuthRepositoryTests: BitwardenTestCase { // swiftlint:disable:this type_bo
         appContextHelper = nil
         authService = nil
         biometricsRepository = nil
+        clientCertificateService = nil
         changeKdfService = nil
         client = nil
         clientService = nil

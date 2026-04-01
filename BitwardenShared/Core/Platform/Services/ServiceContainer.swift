@@ -783,6 +783,7 @@ public class ServiceContainer: Services { // swiftlint:disable:this type_body_le
             appContextHelper: appContextHelper,
             authService: authService,
             biometricsRepository: biometricsRepository,
+            clientCertificateService: clientCertificateService,
             changeKdfService: changeKdfService,
             clientService: clientService,
             configService: configService,

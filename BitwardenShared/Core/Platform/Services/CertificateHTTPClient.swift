@@ -54,11 +54,7 @@ extension CertificateHTTPClient: URLSessionDelegate, URLSessionTaskDelegate {
         newRequest request: URLRequest,
     ) async -> URLRequest? {
         // So far we only need 302 redirection to be surfaced and handled manually.
-        if response.statusCode == 302 {
-            return nil
-        } else {
-            return request
-        }
+        response.statusCode == 302 ? nil : request
     }
 
     func urlSession(

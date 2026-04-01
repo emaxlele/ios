@@ -204,6 +204,14 @@ protocol StateService: AnyObject {
     ///
     func getClientCertificate(userId: String?) async throws -> String?
 
+    /// Gets the certificate fingerprint for a user ID.
+    ///
+    /// - Parameter userId: The user ID associated with the certificate.
+    ///   Defaults to the active account if `nil`.
+    /// - Returns: The SHA-256 fingerprint of the certificate, or `nil` if none is configured.
+    ///
+    func getCertificateFingerprint(userId: String?) async throws -> String?
+
     /// Sets the client certificate alias for a user ID.
     ///
     /// - Parameters:
@@ -213,6 +221,18 @@ protocol StateService: AnyObject {
     ///
     func setClientCertificate(
         _ alias: String?,
+        userId: String?,
+    ) async throws
+
+    /// Sets the certificate fingerprint for a user ID.
+    ///
+    /// - Parameters:
+    ///   - fingerprint: The SHA-256 fingerprint to set, or nil to clear.
+    ///   - userId: The user ID associated with the certificate.
+    ///     Defaults to the active account if `nil`.
+    ///
+    func setCertificateFingerprint(
+        _ fingerprint: String?,
         userId: String?,
     ) async throws
 
@@ -1682,12 +1702,25 @@ actor DefaultStateService: StateService, ActiveAccountStateProvider, ConfigState
         return appSettingsStore.clientCertificate(userId: userId)
     }
 
+    func getCertificateFingerprint(userId: String?) async throws -> String? {
+        let userId = try userId ?? getActiveAccountUserId()
+        return appSettingsStore.clientCertificateFingerprint(userId: userId)
+    }
+
     func setClientCertificate(
         _ alias: String?,
         userId: String?,
     ) async throws {
         let userId = try userId ?? getActiveAccountUserId()
         appSettingsStore.setClientCertificate(alias, userId: userId)
+    }
+
+    func setCertificateFingerprint(
+        _ fingerprint: String?,
+        userId: String?,
+    ) async throws {
+        let userId = try userId ?? getActiveAccountUserId()
+        appSettingsStore.setClientCertificateFingerprint(fingerprint, userId: userId)
     }
 
     func getEvents(userId: String?) async throws -> [EventData] {

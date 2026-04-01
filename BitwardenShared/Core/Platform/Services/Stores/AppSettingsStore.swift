@@ -285,6 +285,21 @@ protocol AppSettingsStore: AnyObject {
     ///
     func clientCertificate(userId: String) -> String?
 
+    /// The client certificate fingerprint for a user.
+    ///
+    /// - Parameter userId: The user ID associated with the client certificate configuration.
+    /// - Returns: The SHA-256 fingerprint of the certificate for that user ID.
+    ///
+    func clientCertificateFingerprint(userId: String) -> String?
+
+    /// Sets the client certificate fingerprint for a user.
+    ///
+    /// - Parameters:
+    ///   - fingerprint: The SHA-256 fingerprint of the certificate, or nil to clear.
+    ///   - userId: The user ID associated with the client certificate.
+    ///
+    func setClientCertificateFingerprint(_ fingerprint: String?, userId: String)
+
     /// Sets the user's access token expiration date
     ///
     /// - Parameters:
@@ -802,6 +817,7 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
         case reviewPromptData
         case serverConfig(userId: String)
         case clientCertificate(userId: String)
+        case clientCertificateFingerprint(userId: String)
         case shouldTrustDevice(userId: String)
         case siriAndShortcutsAccess(userId: String)
         case syncToAuthenticator(userId: String)
@@ -914,6 +930,8 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
                 "serverConfig_\(userId)"
             case let .clientCertificate(userId):
                 "clientCertificate_\(userId)"
+            case let .clientCertificateFingerprint(userId):
+                "clientCertificateFingerprint_\(userId)"
             case let .shouldTrustDevice(userId):
                 "shouldTrustDevice_\(userId)"
             case .state:
@@ -1171,6 +1189,10 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
         fetch(for: .clientCertificate(userId: userId))
     }
 
+    func clientCertificateFingerprint(userId: String) -> String? {
+        fetch(for: .clientCertificateFingerprint(userId: userId))
+    }
+
     func setAccessTokenExpirationDate(_ expirationDate: Date?, userId: String) {
         store(expirationDate, for: .accessTokenExpirationDate(userId: userId))
     }
@@ -1289,6 +1311,10 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
 
     func setClientCertificate(_ alias: String?, userId: String) {
         store(alias, for: .clientCertificate(userId: userId))
+    }
+
+    func setClientCertificateFingerprint(_ fingerprint: String?, userId: String) {
+        store(fingerprint, for: .clientCertificateFingerprint(userId: userId))
     }
 
     func setShouldTrustDevice(shouldTrustDevice: Bool?, userId: String) {

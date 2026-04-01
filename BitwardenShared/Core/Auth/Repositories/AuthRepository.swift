@@ -432,6 +432,9 @@ class DefaultAuthRepository {
     /// Helper to know about the app context.
     private let appContextHelper: AppContextHelper
 
+    /// The service used to manage client certificates for mTLS authentication.
+    private let clientCertificateService: ClientCertificateService
+
     /// The service used that handles some of the auth logic.
     private let authService: AuthService
 
@@ -494,6 +497,7 @@ class DefaultAuthRepository {
     ///   - accountAPIService: The services used by the application to make account related API requests.
     ///   - appContextHelper: The helper to know about the app context.
     ///   - authService: The service used that handles some of the auth logic.
+    ///   - clientCertificateService: The service used to manage client certificates for mTLS authentication.
     ///   - biometricsRepository: The service to use system Biometrics for vault unlock.
     ///   - changeKdfService: The service used to change the user's KDF settings.
     ///   - clientService: The service that handles common client functionality such as encryption and decryption.
@@ -518,6 +522,7 @@ class DefaultAuthRepository {
         appContextHelper: AppContextHelper,
         authService: AuthService,
         biometricsRepository: BiometricsRepository,
+        clientCertificateService: ClientCertificateService,
         changeKdfService: ChangeKdfService,
         clientService: ClientService,
         configService: ConfigService,
@@ -539,6 +544,7 @@ class DefaultAuthRepository {
         self.appContextHelper = appContextHelper
         self.authService = authService
         self.biometricsRepository = biometricsRepository
+        self.clientCertificateService = clientCertificateService
         self.changeKdfService = changeKdfService
         self.clientService = clientService
         self.configService = configService
@@ -809,6 +815,7 @@ extension DefaultAuthRepository: AuthRepository {
         try await stateService.setSyncToAuthenticator(false, userId: userId)
         try await biometricsRepository.setBiometricUnlockKey(authKey: nil, userId: userId)
         try await keychainService.deleteItems(for: userId)
+        try await clientCertificateService.removeCertificate(userId: userId)
         await vaultTimeoutService.remove(userId: userId)
 
         if await policyService.policyAppliesToUser(.removeUnlockWithPin) {

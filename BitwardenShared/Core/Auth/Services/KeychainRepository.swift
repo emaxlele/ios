@@ -45,8 +45,8 @@ enum BitwardenKeychainItem: Equatable, BitwardenKit.KeychainItem {
     /// The keychain item for a user's vault timeout.
     case vaultTimeout(userId: String)
 
-    /// The keychain item for a user's client certificate identity (SecIdentity).
-    case clientCertificateIdentity(userId: String)
+    /// The keychain item for a client certificate identity (SecIdentity), keyed by certificate fingerprint.
+    case clientCertificateIdentity(fingerprint: String)
 
     /// The `SecAccessControlCreateFlags` level for this keychain item.
     ///     If `nil`, no extra protection is applied.
@@ -106,8 +106,8 @@ enum BitwardenKeychainItem: Equatable, BitwardenKit.KeychainItem {
             "userKeyBiometricUnlock_" + id
         case let .deviceKey(userId: id):
             "deviceKey_" + id
-        case let .clientCertificateIdentity(userId):
-            "clientCertificateIdentity_\(userId)"
+        case let .clientCertificateIdentity(fingerprint):
+            "clientCertificateIdentity_\(fingerprint)"
         case let .deviceAuthKey(userId: id):
             "deviceAuthKey_" + id
         case let .deviceAuthKeyMetadata(userId: id):
@@ -259,27 +259,25 @@ protocol KeychainRepository: AnyObject, ServerCommunicationConfigKeychainReposit
 
     // MARK: Client Certificate Methods
 
-    /// Gets the client certificate identity for a user from the keychain.
+    /// Gets the client certificate identity from the keychain by certificate fingerprint.
     ///
-    /// - Parameter userId: The user ID associated with the identity.
+    /// - Parameter fingerprint: The SHA-256 fingerprint of the certificate.
     /// - Returns: The SecIdentity, or `nil` if not stored.
     ///
-    /// - Note: This replaces `getGlobalClientCertificateIdentity` to support multi-user environments.
-    func getClientCertificateIdentity(userId: String) async throws -> SecIdentity?
+    func getClientCertificateIdentity(fingerprint: String) async throws -> SecIdentity?
 
-    /// Stores the client certificate identity for a user in the keychain.
+    /// Stores the client certificate identity in the keychain, keyed by certificate fingerprint.
     ///
     /// - Parameters:
     ///   - identity: The SecIdentity to store.
-    ///   - userId: The user ID to associate with the identity.
+    ///   - fingerprint: The SHA-256 fingerprint of the certificate used as the keychain label.
     ///
-    /// - Note: This replaces `setGlobalClientCertificateIdentity` to support multi-user environments.
-    func setClientCertificateIdentity(_ identity: SecIdentity, userId: String) async throws
+    func setClientCertificateIdentity(_ identity: SecIdentity, fingerprint: String) async throws
 
-    /// Deletes the client certificate identity for a user from the keychain.
+    /// Deletes the client certificate identity from the keychain by certificate fingerprint.
     ///
-    /// - Parameter userId: The user ID associated with the identity to delete.
-    func deleteClientCertificateIdentity(userId: String) async throws
+    /// - Parameter fingerprint: The SHA-256 fingerprint of the certificate to delete.
+    func deleteClientCertificateIdentity(fingerprint: String) async throws
 }
 
 extension KeychainRepository {
@@ -500,8 +498,6 @@ extension DefaultKeychainRepository {
         for keychainItem in keychainItems {
             try await keychainService.delete(query: keychainQueryValues(for: keychainItem))
         }
-
-        try await deleteClientCertificateIdentity(userId: userId)
     }
 
     func deleteUserAuthKey(for item: BitwardenKeychainItem) async throws {
@@ -582,8 +578,8 @@ extension DefaultKeychainRepository {
 
     // MARK: Client Certificate Methods
 
-    func getClientCertificateIdentity(userId: String) async throws -> SecIdentity? {
-        let keyLabel = await formattedKey(for: .clientCertificateIdentity(userId: userId))
+    func getClientCertificateIdentity(fingerprint: String) async throws -> SecIdentity? {
+        let keyLabel = await formattedKey(for: .clientCertificateIdentity(fingerprint: fingerprint))
 
         let query: [String: Any] = [
             kSecClass as String: kSecClassIdentity,
@@ -603,31 +599,23 @@ extension DefaultKeychainRepository {
         }
     }
 
-    func setClientCertificateIdentity(_ identity: SecIdentity, userId: String) async throws {
-        let keyLabel = await formattedKey(for: .clientCertificateIdentity(userId: userId))
+    func setClientCertificateIdentity(_ identity: SecIdentity, fingerprint: String) async throws {
+        let keyLabel = await formattedKey(for: .clientCertificateIdentity(fingerprint: fingerprint))
 
-        // 1. Delete existing
-        let deleteQuery: [String: Any] = [
-            kSecClass as String: kSecClassIdentity,
-            kSecAttrLabel as String: keyLabel,
-            kSecAttrAccessGroup as String: appSecAttrAccessGroup,
-        ]
-        try? keychainService.delete(query: deleteQuery as CFDictionary)
-
-        // 2. Add new
         let addAttributes: [String: Any] = [
             kSecClass as String: kSecClassIdentity,
             kSecValueRef as String: identity,
             kSecAttrLabel as String: keyLabel,
-            kSecAttrAccessible as String: BitwardenKeychainItem.clientCertificateIdentity(userId: userId).protection,
+            kSecAttrAccessible as String: BitwardenKeychainItem.clientCertificateIdentity(fingerprint: fingerprint)
+                .protection,
             kSecAttrAccessGroup as String: appSecAttrAccessGroup,
         ]
 
         try keychainService.add(attributes: addAttributes as CFDictionary)
     }
 
-    func deleteClientCertificateIdentity(userId: String) async throws {
-        let keyLabel = await formattedKey(for: .clientCertificateIdentity(userId: userId))
+    func deleteClientCertificateIdentity(fingerprint: String) async throws {
+        let keyLabel = await formattedKey(for: .clientCertificateIdentity(fingerprint: fingerprint))
 
         let deleteQuery: [String: Any] = [
             kSecClass as String: kSecClassIdentity,

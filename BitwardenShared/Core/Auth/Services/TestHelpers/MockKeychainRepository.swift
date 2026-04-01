@@ -40,6 +40,9 @@ class MockKeychainRepository: KeychainRepository {
     var getClientCertificateIdentityResult: Result<SecIdentity?, Error> = .success(nil)
     var setClientCertificateIdentityResult: Result<Void, Error> = .success(())
     var deleteClientCertificateIdentityResult: Result<Void, Error> = .success(())
+    var getClientCertIdentityFingerprints = [String]()
+    var setClientCertIdentityFingerprints = [String]()
+    var deleteClientCertIdentityFingerprints = [String]()
     var storedIdentities = [String: SecIdentity]()
 
     func deleteAllItems() async throws {
@@ -118,14 +121,14 @@ class MockKeychainRepository: KeychainRepository {
         } else if let value = mockStorage[formattedKey] {
             return value
         } else {
-            throw KeychainServiceError.keyNotFound(item)
+            throw KeychainServiceError.osStatusError(errSecItemNotFound)
         }
     }
 
     func getValue(for item: BitwardenKeychainItem) throws -> String {
         let formattedKey = formattedKey(for: item)
         guard let value = mockStorage[formattedKey] else {
-            throw KeychainServiceError.keyNotFound(item)
+            throw KeychainServiceError.osStatusError(errSecItemNotFound)
         }
         return value
     }
@@ -176,18 +179,21 @@ class MockKeychainRepository: KeychainRepository {
 
     // MARK: Client Certificate Methods
 
-    func getClientCertificateIdentity(userId: String) async throws -> SecIdentity? {
+    func getClientCertificateIdentity(fingerprint: String) async throws -> SecIdentity? {
+        getClientCertIdentityFingerprints.append(fingerprint)
         _ = try getClientCertificateIdentityResult.get()
-        return storedIdentities[userId]
+        return storedIdentities[fingerprint]
     }
 
-    func setClientCertificateIdentity(_ identity: SecIdentity, userId: String) async throws {
+    func setClientCertificateIdentity(_ identity: SecIdentity, fingerprint: String) async throws {
+        setClientCertIdentityFingerprints.append(fingerprint)
         try setClientCertificateIdentityResult.get()
-        storedIdentities[userId] = identity
+        storedIdentities[fingerprint] = identity
     }
 
-    func deleteClientCertificateIdentity(userId: String) async throws {
+    func deleteClientCertificateIdentity(fingerprint: String) async throws {
+        deleteClientCertIdentityFingerprints.append(fingerprint)
         try deleteClientCertificateIdentityResult.get()
-        storedIdentities.removeValue(forKey: userId)
+        storedIdentities.removeValue(forKey: fingerprint)
     }
 }

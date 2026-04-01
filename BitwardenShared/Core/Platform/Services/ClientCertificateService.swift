@@ -1,4 +1,5 @@
 import BitwardenResources
+import CryptoKit
 import Foundation
 import Security
 
@@ -12,8 +13,8 @@ protocol ClientCertificateService: AnyObject {
     /// - Parameters:
     ///   - data: The PKCS#12 certificate data.
     ///   - password: The password for the certificate.
+    ///   - alias: The human-readable label to associate with the certificate for this user.
     ///   - userId: The user ID to associate with the certificate.
-    /// - Returns: The imported certificate configuration.
     /// - Throws: An error if the certificate cannot be imported.
     ///
     func importCertificate(
@@ -119,27 +120,42 @@ final class DefaultClientCertificateService: ClientCertificateService {
 
         // SecIdentity is a CoreFoundation type; use CFTypeRef bridge instead of conditional cast.
         let identity = identityRef as! SecIdentity // swiftlint:disable:this force_cast
+        let fingerprint = try certificateFingerprint(for: identity)
 
-        try await keychainRepository.setClientCertificateIdentity(identity, userId: userId)
+        // Capture any previous fingerprint before we overwrite state — needed for old cert cleanup below.
+        let previousFingerprint = try? await stateService.getCertificateFingerprint(userId: userId)
 
-        try await stateService.setClientCertificate(
-            alias,
-            userId: userId,
-        )
+        // Only add to Keychain if this certificate isn't already stored.
+        // Multiple users may share the same certificate — keyed by fingerprint, not userId.
+        let existing = try await keychainRepository.getClientCertificateIdentity(fingerprint: fingerprint)
+        if existing == nil {
+            try await keychainRepository.setClientCertificateIdentity(identity, fingerprint: fingerprint)
+        }
+
+        // Associate the certificate with this user via alias + fingerprint in state.
+        try await stateService.setClientCertificate(alias, userId: userId)
+        try await stateService.setCertificateFingerprint(fingerprint, userId: userId)
+
+        // If the user replaced a different certificate, clean up the old Keychain item
+        // as long as no other user still references it.
+        if let previousFingerprint, previousFingerprint != fingerprint {
+            let oldStillInUse = await isFingerprintInUse(previousFingerprint, excludingUserId: userId)
+            if !oldStillInUse {
+                try await keychainRepository.deleteClientCertificateIdentity(fingerprint: previousFingerprint)
+            }
+        }
     }
 
     func getCertificateAlias(userId: String) async -> String? {
         do {
-            guard let alias = try await stateService.getClientCertificate(userId: userId) else {
+            guard let alias = try await stateService.getClientCertificate(userId: userId),
+                  !alias.isEmpty else {
                 return nil
             }
 
-            // We check if the identity actually exists in Keychain to be sure
-            let identity = try await keychainRepository.getClientCertificateIdentity(userId: userId)
-            if identity == nil {
-                // Config says enabled, but keychain is missing it. Revert to disabled?
-                // For now, return disabled state effectively, or just return the alias but runtime will fail.
-                // Safest is to return nil if missing.
+            // Verify the identity still exists in Keychain.
+            guard let fingerprint = try await stateService.getCertificateFingerprint(userId: userId),
+                try await keychainRepository.getClientCertificateIdentity(fingerprint: fingerprint) != nil else {
                 return nil
             }
 
@@ -150,27 +166,38 @@ final class DefaultClientCertificateService: ClientCertificateService {
     }
 
     func removeCertificate(userId: String) async throws {
-        try await keychainRepository.deleteClientCertificateIdentity(userId: userId)
+        // Capture the fingerprint before clearing state.
+        let fingerprint = try? await stateService.getCertificateFingerprint(userId: userId)
+
+        // Clear per-user state unconditionally.
         try await stateService.setClientCertificate(nil, userId: userId)
+        try await stateService.setCertificateFingerprint(nil, userId: userId)
+
+        guard let fingerprint else { return }
+
+        // Only delete the Keychain item if no other user still references this certificate.
+        let inUse = await isFingerprintInUse(fingerprint, excludingUserId: userId)
+        if !inUse {
+            try await keychainRepository.deleteClientCertificateIdentity(fingerprint: fingerprint)
+        }
     }
 
     func getClientCertificateIdentity(userId: String) async -> SecIdentity? {
         do {
-            // We could check stateService here, but checking keychain directly is also valid
-            // and potentially faster if we just need the identity.
-            // However, strictly complying with "enabled" flag is good practice.
             let alias = try await stateService.getClientCertificate(userId: userId)
-            guard let alias, !alias.isEmpty else {
+            guard let alias, !alias.isEmpty else { return nil }
+
+            guard let fingerprint = try await stateService.getCertificateFingerprint(userId: userId) else {
                 return nil
             }
-            return try await keychainRepository.getClientCertificateIdentity(userId: userId)
+            return try await keychainRepository.getClientCertificateIdentity(fingerprint: fingerprint)
         } catch {
             return nil
         }
     }
 
     func getClientCertificateIdentity() async -> SecIdentity? {
-        // Try active user first
+        // Try active user first.
         if let activeUserId = try? await stateService.getActiveAccountId(),
            let identity = await getClientCertificateIdentity(userId: activeUserId) {
             return identity
@@ -180,13 +207,49 @@ final class DefaultClientCertificateService: ClientCertificateService {
     }
 
     func shouldUseCertificates(userId: String) async -> Bool {
-        let identity = await getClientCertificateIdentity(userId: userId)
-        return identity != nil
+        await getClientCertificateIdentity(userId: userId) != nil
     }
 
     func shouldUseCertificates() async -> Bool {
-        let identity = await getClientCertificateIdentity()
-        return identity != nil
+        await getClientCertificateIdentity() != nil
+    }
+
+    // MARK: Private
+
+    /// Computes the SHA-256 fingerprint of the certificate within a SecIdentity.
+    ///
+    private func certificateFingerprint(for identity: SecIdentity) throws -> String {
+        var certificate: SecCertificate?
+        let status = SecIdentityCopyCertificate(identity, &certificate)
+        guard status == errSecSuccess, let cert = certificate else {
+            throw ClientCertificateError.invalidCertificate
+        }
+        let data = SecCertificateCopyData(cert) as Data
+        let digest = SHA256.hash(data: data)
+        return digest.compactMap { String(format: "%02x", $0) }.joined()
+    }
+
+    /// Returns whether any user (other than the excluded one) still references the given fingerprint.
+    ///
+    private func isFingerprintInUse(_ fingerprint: String, excludingUserId: String) async -> Bool {
+        // Check the pre-login user.
+        if excludingUserId != DefaultClientCertificateService.preLoginUserId {
+            let preLoginFingerprint = try? await stateService.getCertificateFingerprint(
+                userId: DefaultClientCertificateService.preLoginUserId,
+            )
+            if preLoginFingerprint == fingerprint { return true }
+        }
+
+        // Check all regular accounts.
+        let accounts = await (try? stateService.getAccounts()) ?? []
+        for account in accounts {
+            let accountUserId = account.profile.userId
+            guard accountUserId != excludingUserId else { continue }
+            let accountFingerprint = try? await stateService.getCertificateFingerprint(userId: accountUserId)
+            if accountFingerprint == fingerprint { return true }
+        }
+
+        return false
     }
 }
 
