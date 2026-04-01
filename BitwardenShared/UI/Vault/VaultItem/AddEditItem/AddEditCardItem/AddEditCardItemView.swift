@@ -137,6 +137,10 @@ struct AddEditCardItemView: View {
                 }
             }
         }
+        .onChange(of: store.state.shouldFocusCardholderNameAfterScan) { shouldFocus in
+            guard shouldFocus else { return }
+            focusedField = .cardholderName
+        }
     }
 
     // MARK: Private Views

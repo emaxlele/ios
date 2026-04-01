@@ -35,4 +35,7 @@ protocol AddEditCardItemState: Equatable, Sendable {
 
     /// The visibility of the card number.
     var isNumberVisible: Bool { get set }
+
+    /// Whether the cardholder name field should receive focus after a successful scan.
+    var shouldFocusCardholderNameAfterScan: Bool { get set }
 }

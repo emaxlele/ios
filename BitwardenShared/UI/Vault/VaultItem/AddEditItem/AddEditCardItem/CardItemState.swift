@@ -29,6 +29,9 @@ struct CardItemState: Equatable {
     /// Whether the card scanner sheet is currently presented.
     var isCardScannerPresented: Bool = false
 
+    /// Whether the cardholder name field should receive focus after a successful scan.
+    var shouldFocusCardholderNameAfterScan: Bool = false
+
     /// The visibility of the security code.
     var isCodeVisible: Bool = false
 
