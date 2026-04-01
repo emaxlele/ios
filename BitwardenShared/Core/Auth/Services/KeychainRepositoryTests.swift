@@ -116,6 +116,7 @@ final class KeychainRepositoryTests: BitwardenTestCase { // swiftlint:disable:th
     func test_deleteItems_forUserId() async throws {
         try await subject.deleteItems(for: "1")
 
+        let clientCertificateIdentityLabel = await subject.formattedKey(for: .clientCertificateIdentity(userId: "1"))
         let expectedQueries = await [
             subject.keychainQueryValues(for: .accessToken(userId: "1")),
             subject.keychainQueryValues(for: .authenticatorVaultKey(userId: "1")),
@@ -124,6 +125,11 @@ final class KeychainRepositoryTests: BitwardenTestCase { // swiftlint:disable:th
             subject.keychainQueryValues(for: .neverLock(userId: "1")),
             subject.keychainQueryValues(for: .refreshToken(userId: "1")),
             subject.keychainQueryValues(for: .unsuccessfulUnlockAttempts(userId: "1")),
+            [
+                kSecAttrAccessGroup: subject.appSecAttrAccessGroup,
+                kSecAttrLabel: clientCertificateIdentityLabel,
+                kSecClass: kSecClassIdentity,
+            ] as CFDictionary,
         ]
 
         XCTAssertEqual(
