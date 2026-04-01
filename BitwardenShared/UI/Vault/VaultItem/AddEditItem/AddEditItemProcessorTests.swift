@@ -2025,6 +2025,7 @@ class AddEditItemProcessorTests: BitwardenTestCase {
         subject.receive(.cardFieldChanged(.cardScannerLinesUpdated(["4111111111111111", "JANE DOE", "12/28"])))
 
         XCTAssertFalse(subject.state.cardItemState.isCardScannerPresented)
+        XCTAssertTrue(subject.state.cardItemState.shouldFocusCardholderNameAfterScan)
         XCTAssertEqual(subject.state.cardItemState.cardNumber, "4111111111111111")
         XCTAssertEqual(subject.state.cardItemState.expirationMonth, .custom(.dec))
         XCTAssertEqual(subject.state.cardItemState.expirationYear, "2028")
@@ -2073,14 +2074,17 @@ class AddEditItemProcessorTests: BitwardenTestCase {
         XCTAssertTrue(subject.state.cardItemState.isCardScannerPresented)
     }
 
-    /// `receive(_:)` with `.cardFieldChanged(.cardScannerDismissed)` hides the card scanner.
+    /// `receive(_:)` with `.cardFieldChanged(.cardScannerDismissed)` hides the card scanner and
+    /// resets the focus flag.
     @MainActor
     func test_receive_cardFieldChanged_cardScannerDismissed() {
         subject.state.cardItemState.isCardScannerPresented = true
+        subject.state.cardItemState.shouldFocusCardholderNameAfterScan = true
 
         subject.receive(.cardFieldChanged(.cardScannerDismissed))
 
         XCTAssertFalse(subject.state.cardItemState.isCardScannerPresented)
+        XCTAssertFalse(subject.state.cardItemState.shouldFocusCardholderNameAfterScan)
     }
 
     /// `receive(_:)` with `.clearTOTPKey` clears the authenticator key.
