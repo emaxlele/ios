@@ -1,3 +1,5 @@
+import BitwardenKit
+import BitwardenKitMocks
 import TestHelpers
 import XCTest
 
@@ -7,6 +9,7 @@ import XCTest
 final class ClientCertificateServiceTests: BitwardenTestCase {
     // MARK: Properties
 
+    var environmentService: MockEnvironmentService!
     var keychainRepository: MockKeychainRepository!
     var stateService: MockStateService!
     var subject: DefaultClientCertificateService!
@@ -16,9 +19,11 @@ final class ClientCertificateServiceTests: BitwardenTestCase {
     override func setUp() {
         super.setUp()
 
+        environmentService = MockEnvironmentService()
         keychainRepository = MockKeychainRepository()
         stateService = MockStateService()
         subject = DefaultClientCertificateService(
+            environmentService: environmentService,
             keychainRepository: keychainRepository,
             stateService: stateService,
         )
@@ -27,15 +32,16 @@ final class ClientCertificateServiceTests: BitwardenTestCase {
     override func tearDown() {
         super.tearDown()
 
+        environmentService = nil
         keychainRepository = nil
         stateService = nil
         subject = nil
     }
 
-    // MARK: Tests
+    // MARK: Tests - removeCertificate(userId:)
 
     /// `removeCertificate(userId:)` keeps the keychain identity when another account references
-    /// the same certificate fingerprint.
+    /// the same certificate fingerprint in its environment URLs.
     func test_removeCertificate_sharedFingerprintAcrossAccounts_doesNotDeleteKeychainIdentity() async throws {
         let user1 = "1"
         let user2 = "2"
@@ -46,17 +52,19 @@ final class ClientCertificateServiceTests: BitwardenTestCase {
             .fixture(profile: .fixture(userId: user2)),
         ]
         stateService.activeAccount = .fixture(profile: .fixture(userId: user1))
-        stateService.clientCertificateAliasByUserId[user1] = "Cert A"
-        stateService.clientCertificateAliasByUserId[user2] = "Cert B"
-        stateService.clientCertificateFingerprintByUserId[user1] = fingerprint
-        stateService.clientCertificateFingerprintByUserId[user2] = fingerprint
+        stateService.environmentURLs[user1] = EnvironmentURLData(
+            base: URL(string: "https://example.com"),
+            clientCertificateAlias: "Cert A",
+            clientCertificateFingerprint: fingerprint,
+        )
+        stateService.environmentURLs[user2] = EnvironmentURLData(
+            base: URL(string: "https://example.com"),
+            clientCertificateAlias: "Cert B",
+            clientCertificateFingerprint: fingerprint,
+        )
 
         try await subject.removeCertificate(userId: user1)
 
-        XCTAssertNil(stateService.clientCertificateAliasByUserId[user1])
-        XCTAssertNil(stateService.clientCertificateFingerprintByUserId[user1])
-        XCTAssertEqual(stateService.clientCertificateAliasByUserId[user2], "Cert B")
-        XCTAssertEqual(stateService.clientCertificateFingerprintByUserId[user2], fingerprint)
         XCTAssertEqual(keychainRepository.deleteClientCertIdentityFingerprints, [])
     }
 
@@ -70,28 +78,37 @@ final class ClientCertificateServiceTests: BitwardenTestCase {
             .fixture(profile: .fixture(userId: user1)),
         ]
         stateService.activeAccount = .fixture(profile: .fixture(userId: user1))
-        stateService.clientCertificateAliasByUserId[user1] = "Cert A"
-        stateService.clientCertificateFingerprintByUserId[user1] = fingerprint
+        stateService.environmentURLs[user1] = EnvironmentURLData(
+            base: URL(string: "https://example.com"),
+            clientCertificateAlias: "Cert A",
+            clientCertificateFingerprint: fingerprint,
+        )
 
         try await subject.removeCertificate(userId: user1)
 
         XCTAssertEqual(keychainRepository.deleteClientCertIdentityFingerprints, [fingerprint])
     }
 
-    /// `removeCertificate(userId:)` keeps the keychain identity when the pre-login profile still
-    /// references the same certificate fingerprint.
-    func test_removeCertificate_sharedWithPreLogin_doesNotDeleteKeychainIdentity() async throws {
+    /// `removeCertificate(userId:)` keeps the keychain identity when the pre-auth environment URLs
+    /// still reference the same certificate fingerprint.
+    func test_removeCertificate_sharedWithPreAuth_doesNotDeleteKeychainIdentity() async throws {
         let user1 = "1"
-        let fingerprint = "shared-with-prelogin"
+        let fingerprint = "shared-with-preauth"
 
         stateService.accounts = [
             .fixture(profile: .fixture(userId: user1)),
         ]
         stateService.activeAccount = .fixture(profile: .fixture(userId: user1))
-        stateService.clientCertificateAliasByUserId[user1] = "Cert A"
-        stateService.clientCertificateFingerprintByUserId[user1] = fingerprint
-        stateService.clientCertificateAliasByUserId[DefaultClientCertificateService.preLoginUserId] = "PreLogin Cert"
-        stateService.clientCertificateFingerprintByUserId[DefaultClientCertificateService.preLoginUserId] = fingerprint
+        stateService.environmentURLs[user1] = EnvironmentURLData(
+            base: URL(string: "https://example.com"),
+            clientCertificateAlias: "Cert A",
+            clientCertificateFingerprint: fingerprint,
+        )
+        stateService.preAuthEnvironmentURLs = EnvironmentURLData(
+            base: URL(string: "https://example.com"),
+            clientCertificateAlias: "PreAuth Cert",
+            clientCertificateFingerprint: fingerprint,
+        )
 
         try await subject.removeCertificate(userId: user1)
 
@@ -106,64 +123,73 @@ final class ClientCertificateServiceTests: BitwardenTestCase {
             .fixture(profile: .fixture(userId: user1)),
         ]
         stateService.activeAccount = .fixture(profile: .fixture(userId: user1))
-        // No certificate configured for user1
+        stateService.environmentURLs[user1] = EnvironmentURLData(
+            base: URL(string: "https://example.com"),
+        )
 
         try await subject.removeCertificate(userId: user1)
 
         XCTAssertEqual(keychainRepository.deleteClientCertIdentityFingerprints, [])
     }
 
-    /// `getClientCertificateIdentity(userId:)` returns nil when no alias is configured.
-    func test_getClientCertificateIdentity_noAliasConfigured_returnsNil() async {
-        let user1 = "1"
+    // MARK: Tests - removeCertificate()
 
-        stateService.accounts = [
-            .fixture(profile: .fixture(userId: user1)),
-        ]
-        stateService.activeAccount = .fixture(profile: .fixture(userId: user1))
-        // No certificate alias set
+    /// `removeCertificate()` clears cert info from the current environment and deletes the keychain
+    /// identity when no other account references it.
+    func test_removeCertificate_currentEnvironment_deletesKeychainIdentity() async throws {
+        let fingerprint = "current-env-fingerprint"
 
-        let result = await subject.getClientCertificateIdentity(userId: user1)
+        environmentService.clientCertificateFingerprint = fingerprint
+        environmentService.clientCertificateAlias = "My Cert"
+        stateService.accounts = []
+
+        try await subject.removeCertificate()
+
+        XCTAssertTrue(environmentService.updateClientCertificateInfoCalled)
+        XCTAssertNil(environmentService.updateClientCertificateInfoFingerprint)
+        XCTAssertNil(environmentService.updateClientCertificateInfoAlias)
+        XCTAssertEqual(keychainRepository.deleteClientCertIdentityFingerprints, [fingerprint])
+    }
+
+    // MARK: Tests - getClientCertificateIdentity()
+
+    /// `getClientCertificateIdentity()` returns nil when no fingerprint is in the environment.
+    func test_getClientCertificateIdentity_noFingerprint_returnsNil() async {
+        environmentService.clientCertificateFingerprint = nil
+
+        let result = await subject.getClientCertificateIdentity()
 
         XCTAssertNil(result)
     }
 
-    /// `getClientCertificateIdentity(userId:)` returns nil when the state has a fingerprint
-    /// but the keychain identity is missing.
-    func test_getClientCertificateIdentity_fingerprintInStateMissingFromKeychain_returnsNil() async {
-        let user1 = "1"
-        let fingerprint = "missing-from-keychain"
-
-        stateService.accounts = [
-            .fixture(profile: .fixture(userId: user1)),
-        ]
-        stateService.activeAccount = .fixture(profile: .fixture(userId: user1))
-        stateService.clientCertificateAliasByUserId[user1] = "My Cert"
-        stateService.clientCertificateFingerprintByUserId[user1] = fingerprint
-        // Intentionally not adding to keychainRepository.storedIdentities
-
-        let result = await subject.getClientCertificateIdentity(userId: user1)
-
-        XCTAssertNil(result)
-    }
-
-    /// `getCertificateAlias(userId:)` returns nil when the alias is set but the keychain
+    /// `getClientCertificateIdentity()` returns nil when the fingerprint is set but the keychain
     /// identity is missing.
-    func test_getCertificateAlias_aliasSetButKeychainMissing_returnsNil() async {
-        let user1 = "1"
-        let fingerprint = "missing-from-keychain"
+    func test_getClientCertificateIdentity_fingerprintSetButKeychainMissing_returnsNil() async {
+        environmentService.clientCertificateFingerprint = "missing-from-keychain"
 
-        stateService.accounts = [
-            .fixture(profile: .fixture(userId: user1)),
-        ]
-        stateService.activeAccount = .fixture(profile: .fixture(userId: user1))
-        stateService.clientCertificateAliasByUserId[user1] = "My Cert"
-        stateService.clientCertificateFingerprintByUserId[user1] = fingerprint
-        // Intentionally not adding to keychainRepository.storedIdentities (simulates external keychain wipe)
-
-        let result = await subject.getCertificateAlias(userId: user1)
+        let result = await subject.getClientCertificateIdentity()
 
         XCTAssertNil(result)
     }
 
+    // MARK: Tests - getCertificateAlias()
+
+    /// `getCertificateAlias()` returns nil when no alias is in the environment.
+    func test_getCertificateAlias_noAlias_returnsNil() async {
+        environmentService.clientCertificateAlias = nil
+
+        let result = await subject.getCertificateAlias()
+
+        XCTAssertNil(result)
+    }
+
+    /// `getCertificateAlias()` returns nil when the alias is set but the keychain identity is missing.
+    func test_getCertificateAlias_aliasSetButKeychainMissing_returnsNil() async {
+        environmentService.clientCertificateAlias = "My Cert"
+        environmentService.clientCertificateFingerprint = "missing-from-keychain"
+
+        let result = await subject.getCertificateAlias()
+
+        XCTAssertNil(result)
+    }
 }

@@ -34,8 +34,6 @@ class MockStateService: StateService, ActiveAccountStateProvider, AutofillStateS
     var capturedUserId: String?
     var clearClipboardValues = [String: ClearClipboardValue]()
     var clearClipboardResult: Result<Void, Error> = .success(())
-    var clientCertificateAliasByUserId = [String: String]()
-    var clientCertificateFingerprintByUserId = [String: String]()
     var connectToWatchByUserId = [String: Bool]()
     var connectToWatchResult: Result<Void, Error> = .success(())
     var connectToWatchSubject = CurrentValueSubject<(String?, Bool), Never>((nil, false))
@@ -861,43 +859,5 @@ extension MockStateService {
         let userId = try unwrapUserId(userId)
         try setBiometricAuthenticationEnabledResult.get()
         biometricsEnabled[userId] = isEnabled
-    }
-}
-
-// MARK: Client Certificate
-
-extension MockStateService {
-    func getClientCertificate(userId: String?) async throws -> String? {
-        let userId = try unwrapUserId(userId)
-        return clientCertificateAliasByUserId[userId]
-    }
-
-    func getCertificateFingerprint(userId: String?) async throws -> String? {
-        let userId = try unwrapUserId(userId)
-        return clientCertificateFingerprintByUserId[userId]
-    }
-
-    func setClientCertificate(
-        _ alias: String?,
-        userId: String?,
-    ) async throws {
-        let userId = try unwrapUserId(userId)
-        if let alias {
-            clientCertificateAliasByUserId[userId] = alias
-        } else {
-            clientCertificateAliasByUserId.removeValue(forKey: userId)
-        }
-    }
-
-    func setCertificateFingerprint(
-        _ fingerprint: String?,
-        userId: String?,
-    ) async throws {
-        let userId = try unwrapUserId(userId)
-        if let fingerprint {
-            clientCertificateFingerprintByUserId[userId] = fingerprint
-        } else {
-            clientCertificateFingerprintByUserId.removeValue(forKey: userId)
-        }
     }
 } // swiftlint:disable:this file_length

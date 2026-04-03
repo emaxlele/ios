@@ -19,6 +19,9 @@ class DefaultEnvironmentService: EnvironmentService {
 
     // MARK: Private Properties
 
+    /// The raw environment URL data, used to access non-URL fields like certificate info.
+    private var environmentURLData: EnvironmentURLData
+
     /// The app's current environment URLs.
     private var environmentURLs: EnvironmentURLs
 
@@ -40,6 +43,7 @@ class DefaultEnvironmentService: EnvironmentService {
         self.stateService = stateService
         self.standardUserDefaults = standardUserDefaults
 
+        environmentURLData = .defaultUS
         environmentURLs = EnvironmentURLs(environmentURLData: .defaultUS)
     }
 
@@ -59,6 +63,7 @@ class DefaultEnvironmentService: EnvironmentService {
         }
 
         await setPreAuthURLs(urls: managedSettingsURLs ?? urls)
+        environmentURLData = urls
         environmentURLs = EnvironmentURLs(environmentURLData: urls)
 
         errorReporter.setRegion(region.errorReporterName, isPreAuth: false)
@@ -69,12 +74,28 @@ class DefaultEnvironmentService: EnvironmentService {
 
     func setPreAuthURLs(urls: EnvironmentURLData) async {
         await stateService.setPreAuthEnvironmentURLs(urls)
+        environmentURLData = urls
         environmentURLs = EnvironmentURLs(environmentURLData: urls)
 
         errorReporter.setRegion(region.errorReporterName, isPreAuth: true)
 
         // swiftformat:disable:next redundantSelf
         Logger.application.info("Setting pre-auth URLs: \(String(describing: self.environmentURLs))")
+    }
+
+    func updateClientCertificateInfo(fingerprint: String?, alias: String?) async {
+        let updatedData = EnvironmentURLData(
+            api: environmentURLData.api,
+            base: environmentURLData.base,
+            clientCertificateAlias: alias,
+            clientCertificateFingerprint: fingerprint,
+            events: environmentURLData.events,
+            icons: environmentURLData.icons,
+            identity: environmentURLData.identity,
+            notifications: environmentURLData.notifications,
+            webVault: environmentURLData.webVault,
+        )
+        await setPreAuthURLs(urls: updatedData)
     }
 
     // MARK: Private
@@ -97,6 +118,14 @@ class DefaultEnvironmentService: EnvironmentService {
 extension DefaultEnvironmentService {
     var apiURL: URL {
         environmentURLs.apiURL
+    }
+
+    var clientCertificateAlias: String? {
+        environmentURLData.clientCertificateAlias
+    }
+
+    var clientCertificateFingerprint: String? {
+        environmentURLData.clientCertificateFingerprint
     }
 
     var baseURL: URL {

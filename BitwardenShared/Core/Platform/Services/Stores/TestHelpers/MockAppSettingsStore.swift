@@ -4,8 +4,8 @@ import Foundation
 
 @testable import BitwardenShared
 
-// swiftlint:disable file_length type_body_length
-
+// swiftlint:disable file_length
+// swiftlint:disable:next type_body_length
 class MockAppSettingsStore: AppSettingsStore {
     var accessTokenExpirationDateByUserId = [String: Date]()
     var accountKeys = [String: PrivateKeysResponseModel]()
@@ -40,8 +40,6 @@ class MockAppSettingsStore: AppSettingsStore {
     var biometricAuthenticationEnabled = [String: Bool?]()
     var clearClipboardValues = [String: ClearClipboardValue]()
     var connectToWatchByUserId = [String: Bool]()
-    var clientCertificateAliasByUserId = [String: String]()
-    var clientCertificateFingerprintByUserId = [String: String]()
     var defaultUriMatchTypeByUserId = [String: UriMatchType]()
     var disableAutoTotpCopyByUserId = [String: Bool]()
     var encryptedPinByUserId = [String: String]()
@@ -435,25 +433,5 @@ extension MockAppSettingsStore {
             return
         }
         biometricAuthenticationEnabled[userId] = isEnabled
-    }
-}
-
-// MARK: Client Certificate
-
-extension MockAppSettingsStore {
-    func clientCertificate(userId: String) -> String? {
-        clientCertificateAliasByUserId[userId]
-    }
-
-    func clientCertificateFingerprint(userId: String) -> String? {
-        clientCertificateFingerprintByUserId[userId]
-    }
-
-    func setClientCertificate(_ alias: String?, userId: String) {
-        clientCertificateAliasByUserId[userId] = alias
-    }
-
-    func setClientCertificateFingerprint(_ fingerprint: String?, userId: String) {
-        clientCertificateFingerprintByUserId[userId] = fingerprint
     }
 }

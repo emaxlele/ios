@@ -25,6 +25,13 @@ public class MockEnvironmentService: EnvironmentService {
     )!
     public var webVaultURL = URL(string: "https://example.com")!
 
+    public var clientCertificateAlias: String?
+    public var clientCertificateFingerprint: String?
+
+    public var updateClientCertificateInfoCalled = false
+    public var updateClientCertificateInfoFingerprint: String?
+    public var updateClientCertificateInfoAlias: String?
+
     public init() {}
 
     public func loadURLsForActiveAccount() async {
@@ -37,5 +44,13 @@ public class MockEnvironmentService: EnvironmentService {
 
     public func setPreAuthURLs(urls: EnvironmentURLData) async {
         setPreAuthEnvironmentURLsData = urls
+    }
+
+    public func updateClientCertificateInfo(fingerprint: String?, alias: String?) async {
+        updateClientCertificateInfoCalled = true
+        updateClientCertificateInfoFingerprint = fingerprint
+        updateClientCertificateInfoAlias = alias
+        clientCertificateFingerprint = fingerprint
+        clientCertificateAlias = alias
     }
 }

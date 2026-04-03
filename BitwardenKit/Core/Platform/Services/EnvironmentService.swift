@@ -50,6 +50,12 @@ public protocol EnvironmentService {
     /// The URL for the web vault.
     var webVaultURL: URL { get }
 
+    /// The human-readable alias for the client certificate used for mTLS, if configured.
+    var clientCertificateAlias: String? { get }
+
+    /// The SHA-256 fingerprint of the client certificate used for mTLS, if configured.
+    var clientCertificateFingerprint: String? { get }
+
     /// Loads the URLs for the active account into the environment. This can be called on app launch
     /// whether there's an active account or not to pre-populate the environment. If there's no
     /// active account, the US URLs will be used.
@@ -62,4 +68,12 @@ public protocol EnvironmentService {
     /// - Parameter urls: The URLs to set and use prior to user authentication.
     ///
     func setPreAuthURLs(urls: EnvironmentURLData) async
+
+    /// Updates the client certificate information in the current environment URLs.
+    ///
+    /// - Parameters:
+    ///   - fingerprint: The SHA-256 fingerprint of the certificate, or nil to clear.
+    ///   - alias: The human-readable alias for the certificate, or nil to clear.
+    ///
+    func updateClientCertificateInfo(fingerprint: String?, alias: String?) async
 }

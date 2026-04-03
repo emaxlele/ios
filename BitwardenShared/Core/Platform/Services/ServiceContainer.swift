@@ -521,6 +521,7 @@ public class ServiceContainer: Services { // swiftlint:disable:this type_body_le
             stateService: stateService,
         )
         let clientCertificateService = DefaultClientCertificateService(
+            environmentService: environmentService,
             keychainRepository: keychainRepository,
             stateService: stateService,
         )

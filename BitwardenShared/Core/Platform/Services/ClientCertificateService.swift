@@ -1,3 +1,4 @@
+import BitwardenKit
 import BitwardenResources
 import CryptoKit
 import Foundation
@@ -10,49 +11,57 @@ import Security
 protocol ClientCertificateService: AnyObject {
     /// Import a client certificate from PKCS#12 data.
     ///
+    /// Parses the certificate, stores the identity in the Keychain, and updates the current
+    /// environment URLs with the certificate fingerprint and alias.
+    ///
     /// - Parameters:
     ///   - data: The PKCS#12 certificate data.
     ///   - password: The password for the certificate.
-    ///   - alias: The human-readable label to associate with the certificate for this user.
-    ///   - userId: The user ID to associate with the certificate.
+    ///   - alias: The human-readable label to associate with the certificate.
     /// - Throws: An error if the certificate cannot be imported.
     ///
     func importCertificate(
         data: Data,
         password: String,
         alias: String,
-        userId: String,
     ) async throws
 
-    func getCertificateAlias(userId: String) async -> String?
-
-    /// Remove the client certificate for a user.
+    /// Gets the human-readable alias for the currently configured client certificate.
     ///
-    /// - Parameter userId: The user ID associated with the certificate to remove.
+    /// Returns the alias from the current environment if the certificate identity still
+    /// exists in the Keychain.
+    ///
+    /// - Returns: The certificate alias, or `nil` if none is configured or the Keychain identity is missing.
+    ///
+    func getCertificateAlias() async -> String?
+
+    /// Removes the client certificate for the current environment.
+    ///
+    /// Clears the certificate info from the environment URLs and deletes the Keychain identity
+    /// if no other account still references it.
+    ///
+    func removeCertificate() async throws
+
+    /// Removes the client certificate for a specific user account.
+    ///
+    /// Used during account logout to clean up certificate data. Reads the certificate fingerprint
+    /// from the account's stored environment URLs and deletes the Keychain identity only if no
+    /// other account still references it.
+    ///
+    /// - Parameter userId: The user ID of the account being removed.
     ///
     func removeCertificate(userId: String) async throws
 
-    /// Get the client certificate identity for mTLS authentication for a user.
+    /// Gets the client certificate identity for mTLS authentication from the current environment.
     ///
-    /// - Parameter userId: The user ID associated with the certificate.
-    /// - Returns: A SecIdentity for the certificate, or nil if no certificate is configured.
+    /// The environment service determines which URLs are active (pre-auth or logged-in account),
+    /// so this returns the correct certificate for the current context.
     ///
-    func getClientCertificateIdentity(userId: String) async -> SecIdentity?
-
-    /// Get the client certificate identity for mTLS authentication for the active, or pre-login, user.
-    ///
-    /// - Returns: A SecIdentity for the certificate, or nil if no certificate is configured.
+    /// - Returns: A `SecIdentity` for the certificate, or `nil` if none is configured.
     ///
     func getClientCertificateIdentity() async -> SecIdentity?
 
-    /// Checks if client certificates are currently enabled and configured for a user.
-    ///
-    /// - Parameter userId: The user ID to check configuration for.
-    /// - Returns: `true` if client certificates should be used for authentication.
-    ///
-    func shouldUseCertificates(userId: String) async -> Bool
-
-    /// Checks if client certificates are currently enabled and configured for the active, or pre-login, user.
+    /// Checks if client certificates are currently enabled and configured for the active environment.
     ///
     /// - Returns: `true` if client certificates should be used for authentication.
     ///
@@ -64,11 +73,10 @@ protocol ClientCertificateService: AnyObject {
 /// Default implementation of the `ClientCertificateService`.
 ///
 final class DefaultClientCertificateService: ClientCertificateService {
-    // MARK: Properties
-
-    static let preLoginUserId = "pre_login_client_cert"
-
     // MARK: Private Properties
+
+    /// The service used to manage environment URLs (handles pre-auth vs active account).
+    private let environmentService: EnvironmentService
 
     /// The repository used to store certificate data in the keychain.
     private let keychainRepository: KeychainRepository
@@ -81,13 +89,16 @@ final class DefaultClientCertificateService: ClientCertificateService {
     /// Initialize a `DefaultClientCertificateService`.
     ///
     /// - Parameters:
+    ///   - environmentService: The service used to manage environment URLs.
     ///   - keychainRepository: The repository used to store sensitive certificate data in the Keychain.
     ///   - stateService: The service used to manage application state.
     ///
     init(
+        environmentService: EnvironmentService,
         keychainRepository: KeychainRepository,
         stateService: StateService,
     ) {
+        self.environmentService = environmentService
         self.keychainRepository = keychainRepository
         self.stateService = stateService
     }
@@ -98,7 +109,6 @@ final class DefaultClientCertificateService: ClientCertificateService {
         data: Data,
         password: String,
         alias: String,
-        userId: String,
     ) async throws {
         let importOptions: [String: Any] = [
             kSecImportExportPassphrase as String: password,
@@ -122,8 +132,8 @@ final class DefaultClientCertificateService: ClientCertificateService {
         let identity = identityRef as! SecIdentity // swiftlint:disable:this force_cast
         let fingerprint = try certificateFingerprint(for: identity)
 
-        // Capture any previous fingerprint before we overwrite state — needed for old cert cleanup below.
-        let previousFingerprint = try? await stateService.getCertificateFingerprint(userId: userId)
+        // Capture the previous fingerprint from the current environment for old cert cleanup.
+        let previousFingerprint = environmentService.clientCertificateFingerprint
 
         // Only add to Keychain if this certificate isn't already stored.
         // Multiple users may share the same certificate — keyed by fingerprint, not userId.
@@ -132,82 +142,70 @@ final class DefaultClientCertificateService: ClientCertificateService {
             try await keychainRepository.setClientCertificateIdentity(identity, fingerprint: fingerprint)
         }
 
-        // Associate the certificate with this user via alias + fingerprint in state.
-        try await stateService.setClientCertificate(alias, userId: userId)
-        try await stateService.setCertificateFingerprint(fingerprint, userId: userId)
+        // Update the environment URLs with the new certificate info.
+        await environmentService.updateClientCertificateInfo(fingerprint: fingerprint, alias: alias)
 
         // If the user replaced a different certificate, clean up the old Keychain item
-        // as long as no other user still references it.
+        // as long as no other account still references it.
         if let previousFingerprint, previousFingerprint != fingerprint {
-            let oldStillInUse = await isFingerprintInUse(previousFingerprint, excludingUserId: userId)
+            let oldStillInUse = await isFingerprintInUse(previousFingerprint)
             if !oldStillInUse {
                 try await keychainRepository.deleteClientCertificateIdentity(fingerprint: previousFingerprint)
             }
         }
     }
 
-    func getCertificateAlias(userId: String) async -> String? {
-        do {
-            guard let alias = try await stateService.getClientCertificate(userId: userId),
-                  !alias.isEmpty else {
-                return nil
-            }
-
-            // Verify the identity still exists in Keychain.
-            guard let fingerprint = try await stateService.getCertificateFingerprint(userId: userId),
-                try await keychainRepository.getClientCertificateIdentity(fingerprint: fingerprint) != nil else {
-                return nil
-            }
-
-            return alias
-        } catch {
+    func getCertificateAlias() async -> String? {
+        guard let alias = environmentService.clientCertificateAlias,
+              !alias.isEmpty else {
             return nil
+        }
+
+        // Verify the identity still exists in Keychain.
+        guard let fingerprint = environmentService.clientCertificateFingerprint,
+              await (try? keychainRepository.getClientCertificateIdentity(fingerprint: fingerprint)) != nil else {
+            return nil
+        }
+
+        return alias
+    }
+
+    func removeCertificate() async throws {
+        // Capture the fingerprint from the current environment before clearing.
+        let fingerprint = environmentService.clientCertificateFingerprint
+
+        // Clear certificate info from the current environment URLs.
+        await environmentService.updateClientCertificateInfo(fingerprint: nil, alias: nil)
+
+        guard let fingerprint else { return }
+
+        // Only delete the Keychain item if no other account still references this certificate.
+        let inUse = await isFingerprintInUse(fingerprint)
+        if !inUse {
+            try await keychainRepository.deleteClientCertificateIdentity(fingerprint: fingerprint)
         }
     }
 
     func removeCertificate(userId: String) async throws {
-        // Capture the fingerprint before clearing state.
-        let fingerprint = try? await stateService.getCertificateFingerprint(userId: userId)
-
-        // Clear per-user state unconditionally.
-        try await stateService.setClientCertificate(nil, userId: userId)
-        try await stateService.setCertificateFingerprint(nil, userId: userId)
+        // Read the fingerprint from the account's stored environment URLs.
+        let environmentURLs = try? await stateService.getEnvironmentURLs(userId: userId)
+        let fingerprint = environmentURLs?.clientCertificateFingerprint
 
         guard let fingerprint else { return }
 
-        // Only delete the Keychain item if no other user still references this certificate.
+        // Only delete the Keychain item if no other account still references this certificate.
         let inUse = await isFingerprintInUse(fingerprint, excludingUserId: userId)
         if !inUse {
             try await keychainRepository.deleteClientCertificateIdentity(fingerprint: fingerprint)
         }
     }
 
-    func getClientCertificateIdentity(userId: String) async -> SecIdentity? {
-        do {
-            let alias = try await stateService.getClientCertificate(userId: userId)
-            guard let alias, !alias.isEmpty else { return nil }
-
-            guard let fingerprint = try await stateService.getCertificateFingerprint(userId: userId) else {
-                return nil
-            }
-            return try await keychainRepository.getClientCertificateIdentity(fingerprint: fingerprint)
-        } catch {
+    func getClientCertificateIdentity() async -> SecIdentity? {
+        guard let fingerprint = environmentService.clientCertificateFingerprint,
+              !fingerprint.isEmpty else {
             return nil
         }
-    }
-
-    func getClientCertificateIdentity() async -> SecIdentity? {
-        // Try active user first.
-        if let activeUserId = try? await stateService.getActiveAccountId(),
-           let identity = await getClientCertificateIdentity(userId: activeUserId) {
-            return identity
-        }
-
-        return await getClientCertificateIdentity(userId: DefaultClientCertificateService.preLoginUserId)
-    }
-
-    func shouldUseCertificates(userId: String) async -> Bool {
-        await getClientCertificateIdentity(userId: userId) != nil
+        return try? await keychainRepository.getClientCertificateIdentity(fingerprint: fingerprint)
     }
 
     func shouldUseCertificates() async -> Bool {
@@ -229,24 +227,26 @@ final class DefaultClientCertificateService: ClientCertificateService {
         return digest.compactMap { String(format: "%02x", $0) }.joined()
     }
 
-    /// Returns whether any user (other than the excluded one) still references the given fingerprint.
+    /// Returns whether any account's environment URLs still reference the given fingerprint.
     ///
-    private func isFingerprintInUse(_ fingerprint: String, excludingUserId: String) async -> Bool {
-        // Check the pre-login user.
-        if excludingUserId != DefaultClientCertificateService.preLoginUserId {
-            let preLoginFingerprint = try? await stateService.getCertificateFingerprint(
-                userId: DefaultClientCertificateService.preLoginUserId,
-            )
-            if preLoginFingerprint == fingerprint { return true }
+    /// - Parameters:
+    ///   - fingerprint: The certificate fingerprint to check.
+    ///   - excludingUserId: An optional user ID to exclude from the check (e.g., the account being removed).
+    ///
+    private func isFingerprintInUse(_ fingerprint: String, excludingUserId: String? = nil) async -> Bool {
+        // Check the pre-auth environment URLs.
+        let preAuthURLs = await stateService.getPreAuthEnvironmentURLs()
+        if preAuthURLs?.clientCertificateFingerprint == fingerprint {
+            return true
         }
 
-        // Check all regular accounts.
+        // Check all regular accounts' environment URLs.
         let accounts = await (try? stateService.getAccounts()) ?? []
         for account in accounts {
             let accountUserId = account.profile.userId
-            guard accountUserId != excludingUserId else { continue }
-            let accountFingerprint = try? await stateService.getCertificateFingerprint(userId: accountUserId)
-            if accountFingerprint == fingerprint { return true }
+            if let excludingUserId, accountUserId == excludingUserId { continue }
+            let accountURLs = try? await stateService.getEnvironmentURLs(userId: accountUserId)
+            if accountURLs?.clientCertificateFingerprint == fingerprint { return true }
         }
 
         return false

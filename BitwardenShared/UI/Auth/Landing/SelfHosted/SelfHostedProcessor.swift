@@ -19,7 +19,7 @@ protocol SelfHostedProcessorDelegate: AnyObject {
 class SelfHostedProcessor: StateProcessor<SelfHostedState, SelfHostedAction, SelfHostedEffect> {
     // MARK: Types
 
-    typealias Services = HasClientCertificateService & HasStateService
+    typealias Services = HasClientCertificateService & HasEnvironmentService
 
     // MARK: Private Properties
 
@@ -135,6 +135,8 @@ class SelfHostedProcessor: StateProcessor<SelfHostedState, SelfHostedAction, Sel
         let urls = EnvironmentURLData(
             api: URL(string: state.apiServerUrl)?.sanitized,
             base: URL(string: state.serverUrl)?.sanitized,
+            clientCertificateAlias: services.environmentService.clientCertificateAlias,
+            clientCertificateFingerprint: services.environmentService.clientCertificateFingerprint,
             events: nil as URL?,
             icons: URL(string: state.iconsServerUrl)?.sanitized,
             identity: URL(string: state.identityServerUrl)?.sanitized,
@@ -146,9 +148,7 @@ class SelfHostedProcessor: StateProcessor<SelfHostedState, SelfHostedAction, Sel
     }
 
     private func loadCertificateState() async {
-        let activeAccountId = try? await services.stateService.getActiveAccountId()
-        let userId = activeAccountId ?? DefaultClientCertificateService.preLoginUserId
-        let alias = await services.clientCertificateService.getCertificateAlias(userId: userId)
+        let alias = await services.clientCertificateService.getCertificateAlias()
         state.keyAlias = alias ?? ""
         state.keyHost = alias != nil ? .keychain : nil
     }
@@ -162,13 +162,10 @@ class SelfHostedProcessor: StateProcessor<SelfHostedState, SelfHostedAction, Sel
     ///
     private func importClientCertificate(data: Data, alias: String, password: String) async {
         do {
-            let activeAccountId = try? await services.stateService.getActiveAccountId()
-            let userId = activeAccountId ?? DefaultClientCertificateService.preLoginUserId
             try await services.clientCertificateService.importCertificate(
                 data: data,
                 password: password,
                 alias: alias,
-                userId: userId,
             )
             state.keyAlias = alias
             state.keyHost = .keychain
@@ -185,9 +182,7 @@ class SelfHostedProcessor: StateProcessor<SelfHostedState, SelfHostedAction, Sel
 
     private func removeClientCertificate() async {
         do {
-            let activeAccountId = try? await services.stateService.getActiveAccountId()
-            let userId = activeAccountId ?? DefaultClientCertificateService.preLoginUserId
-            try await services.clientCertificateService.removeCertificate(userId: userId)
+            try await services.clientCertificateService.removeCertificate()
             state.keyAlias = ""
             state.keyHost = nil
         } catch {
