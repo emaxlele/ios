@@ -187,7 +187,13 @@ class AuthenticatorItemRepositoryTests: BitwardenTestCase { // swiftlint:disable
             codeGenerationDate: timeProvider.presentTime,
             period: 30,
         )
+        let nextCodeModel = TOTPCodeModel(
+            code: "246813",
+            codeGenerationDate: timeProvider.presentTime,
+            period: 30,
+        )
         totpService.getTotpCodeResult = .success(newCodeModel)
+        totpService.getNextTotpCodeResult = .success(nextCodeModel)
 
         let item = ItemListItem.fixture()
         let sharedItem = ItemListItem.fixtureShared()
@@ -199,6 +205,7 @@ class AuthenticatorItemRepositoryTests: BitwardenTestCase { // swiftlint:disable
         XCTAssertEqual(actual.name, item.name)
         XCTAssertEqual(actual.accountName, item.accountName)
         XCTAssertEqual(actual.totpCodeModel, newCodeModel)
+        XCTAssertEqual(actual.nextTotpCodeModel, nextCodeModel)
 
         let shared = try XCTUnwrap(result[1])
 
@@ -206,6 +213,7 @@ class AuthenticatorItemRepositoryTests: BitwardenTestCase { // swiftlint:disable
         XCTAssertEqual(shared.name, sharedItem.name)
         XCTAssertEqual(shared.accountName, sharedItem.accountName)
         XCTAssertEqual(shared.totpCodeModel, newCodeModel)
+        XCTAssertEqual(shared.nextTotpCodeModel, nextCodeModel)
 
         let syncError = try XCTUnwrap(result[2])
         XCTAssertEqual(syncError, ItemListItem.syncError())

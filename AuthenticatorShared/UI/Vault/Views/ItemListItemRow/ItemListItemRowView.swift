@@ -38,6 +38,7 @@ struct ItemListItemRowView: View {
                             name: store.state.item.name,
                             accountName: store.state.item.accountName,
                             model: totpCodeModel,
+                            nextCode: store.state.item.nextTotpCodeModel,
                         )
                     } else {
                         EmptyView()
@@ -77,7 +78,12 @@ struct ItemListItemRowView: View {
 
     /// The row showing the totp code.
     @ViewBuilder
-    private func totpCodeRow(name: String, accountName: String?, model: TOTPCodeModel) -> some View {
+    private func totpCodeRow(
+        name: String,
+        accountName: String?,
+        model: TOTPCodeModel,
+        nextCode: TOTPCodeModel?,
+    ) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             if let name = name.nilIfEmpty {
                 Text(name)
@@ -100,14 +106,43 @@ struct ItemListItemRowView: View {
             }
         }
         Spacer()
-        TOTPCountdownTimerView(
-            timeProvider: timeProvider,
-            totpCode: model,
-            onExpiration: nil,
-        )
-        Text(model.displayCode)
-            .styleGuide(.bodyMonospaced, weight: .regular, monoSpacedDigit: true)
-            .foregroundColor(Asset.Colors.textPrimary.swiftUIColor)
+        TimelineView(.periodic(from: .now, by: 0.1)) { context in
+            totpCountdownRow(
+                model: model,
+                nextCode: nextCode,
+                remaining: TOTPExpirationCalculator.remainingSeconds(
+                    for: context.date,
+                    using: Int(model.period),
+                ),
+            )
+        }
+    }
+
+    /// The HStack showing the TOTP countdown timer and code(s).
+    @ViewBuilder
+    private func totpCountdownRow(
+        model: TOTPCodeModel,
+        nextCode: TOTPCodeModel?,
+        remaining: Int,
+    ) -> some View {
+        HStack(spacing: 8) {
+            VStack(alignment: .trailing, spacing: 0) {
+                Text(model.displayCode)
+                    .styleGuide(.bodyMonospaced, weight: .regular, monoSpacedDigit: true)
+                    .foregroundColor(Asset.Colors.textPrimary.swiftUIColor)
+                if remaining <= Constants.nextTOTPCodePreviewThreshold, let nextCode {
+                    Text(nextCode.displayCode)
+                        .styleGuide(.caption2Monospaced, monoSpacedDigit: true)
+                        .foregroundColor(Asset.Colors.textSecondary.swiftUIColor)
+                        .accessibilityLabel(Localizations.nextVerificationCode)
+                }
+            }
+            TOTPCountdownTimerView(
+                timeProvider: timeProvider,
+                totpCode: model,
+                onExpiration: nil,
+            )
+        }
     }
 }
 
