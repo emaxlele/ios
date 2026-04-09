@@ -172,6 +172,37 @@ class ItemListProcessorTests: BitwardenTestCase { // swiftlint:disable:this type
         XCTAssertEqual(subject.state.loadingState, .data([resultSection]))
     }
 
+    /// `perform(_:)` with `.appeared` sets `showNextTotpCode` from the store when the value is `true`.
+    @MainActor
+    func test_perform_appeared_setsShowNextTotpCode_true() {
+        appSettingsStore.showNextTotpCode = true
+
+        let task = Task {
+            await subject.perform(.appeared)
+        }
+
+        waitFor(subject.state.showNextTotpCode == true)
+        task.cancel()
+
+        XCTAssertTrue(subject.state.showNextTotpCode)
+    }
+
+    /// `perform(_:)` with `.appeared` sets `showNextTotpCode` from the store when the value is `false`.
+    @MainActor
+    func test_perform_appeared_setsShowNextTotpCode_false() {
+        subject.state.showNextTotpCode = true
+        appSettingsStore.showNextTotpCode = false
+
+        let task = Task {
+            await subject.perform(.appeared)
+        }
+
+        waitFor(subject.state.showNextTotpCode == false)
+        task.cancel()
+
+        XCTAssertFalse(subject.state.showNextTotpCode)
+    }
+
     /// `perform(_:)` with `.appeared` records any errors.
     func test_perform_appeared_error_vaultListGroupSubjectFail() {
         authItemRepository.itemListSubject.send(completion: .failure(BitwardenTestError.example))

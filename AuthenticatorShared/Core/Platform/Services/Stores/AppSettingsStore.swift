@@ -19,6 +19,9 @@ protocol AppSettingsStore: AnyObject {
     /// Whether to disable the website icons.
     var disableWebIcons: Bool { get set }
 
+    /// Whether to show the next TOTP code when the current code is about to expire.
+    var showNextTotpCode: Bool { get set }
+
     /// The default save location for new keys.
     var defaultSaveOption: DefaultSaveOption { get set }
 
@@ -301,6 +304,7 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
         case preAuthServerConfig
         case secretKey(userId: String)
         case serverConfig(userId: String)
+        case showNextTotpCode
         case vaultTimeout(userId: String)
 
         /// Returns the key used to store the data under for retrieving it later.
@@ -340,6 +344,8 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
                 "secretKey_\(userId)"
             case let .serverConfig(userId):
                 "serverConfig_\(userId)"
+            case .showNextTotpCode:
+                "showNextTotpCode"
             case let .vaultTimeout(userId):
                 "vaultTimeout_\(userId)"
             }
@@ -395,6 +401,11 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
     var preAuthServerConfig: ServerConfig? {
         get { fetch(for: .preAuthServerConfig) }
         set { store(newValue, for: .preAuthServerConfig) }
+    }
+
+    var showNextTotpCode: Bool {
+        get { fetch(for: .showNextTotpCode) }
+        set { store(newValue, for: .showNextTotpCode) }
     }
 
     func cardClosedState(card: ItemListCard) -> Bool {

@@ -255,6 +255,48 @@ class SettingsProcessorTests: BitwardenTestCase {
         XCTAssertEqual(subject.state.sessionTimeoutValue, .onAppRestart)
     }
 
+    /// `perform(_:)` with `.toggleShowNextTotpCode(false)` updates the state and persists the value.
+    @MainActor
+    func test_perform_toggleShowNextTotpCode_false() async {
+        subject.state.showNextTotpCode = true
+
+        await subject.perform(.toggleShowNextTotpCode(false))
+
+        XCTAssertFalse(subject.state.showNextTotpCode)
+        XCTAssertFalse(appSettingsStore.showNextTotpCode)
+    }
+
+    /// `perform(_:)` with `.toggleShowNextTotpCode(true)` updates the state and persists the value.
+    @MainActor
+    func test_perform_toggleShowNextTotpCode_true() async {
+        subject.state.showNextTotpCode = false
+
+        await subject.perform(.toggleShowNextTotpCode(true))
+
+        XCTAssertTrue(subject.state.showNextTotpCode)
+        XCTAssertTrue(appSettingsStore.showNextTotpCode)
+    }
+
+    /// `perform(_:)` with `.loadData` loads the `showNextTotpCode` value from the store.
+    @MainActor
+    func test_perform_loadData_showNextTotpCode_true() async throws {
+        appSettingsStore.showNextTotpCode = true
+
+        await subject.perform(.loadData)
+
+        XCTAssertTrue(subject.state.showNextTotpCode)
+    }
+
+    /// `perform(_:)` with `.loadData` loads the `showNextTotpCode` value from the store.
+    @MainActor
+    func test_perform_loadData_showNextTotpCode_false() async throws {
+        appSettingsStore.showNextTotpCode = false
+
+        await subject.perform(.loadData)
+
+        XCTAssertFalse(subject.state.showNextTotpCode)
+    }
+
     /// Receiving `.backupTapped` shows an alert for the backup information.
     @MainActor
     func test_receive_backupTapped() async throws {

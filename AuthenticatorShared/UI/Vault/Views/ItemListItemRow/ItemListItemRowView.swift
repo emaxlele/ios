@@ -130,7 +130,7 @@ struct ItemListItemRowView: View {
                 Text(model.displayCode)
                     .styleGuide(.bodyMonospaced, weight: .regular, monoSpacedDigit: true)
                     .foregroundColor(Asset.Colors.textPrimary.swiftUIColor)
-                if remaining <= Constants.nextTOTPCodePreviewThreshold, let nextCode {
+                if remaining <= Constants.nextTOTPCodePreviewThreshold, let nextCode, store.state.showNextTotpCode {
                     Text(nextCode.displayCode)
                         .styleGuide(.caption2Monospaced, monoSpacedDigit: true)
                         .foregroundColor(Asset.Colors.textSecondary.swiftUIColor)
@@ -168,6 +168,7 @@ struct ItemListItemRowView: View {
                         ),
                     ),
                     hasDivider: true,
+                    showNextTotpCode: true,
                     showWebIcons: true,
                 ),
             ),
@@ -197,6 +198,7 @@ struct ItemListItemRowView: View {
                         ),
                     ),
                     hasDivider: true,
+                    showNextTotpCode: true,
                     showWebIcons: true,
                 ),
             ),
@@ -226,6 +228,7 @@ struct ItemListItemRowView: View {
                         ),
                     ),
                     hasDivider: true,
+                    showNextTotpCode: true,
                     showWebIcons: true,
                 ),
             ),
@@ -245,6 +248,7 @@ struct ItemListItemRow_Previews: PreviewProvider {
                                 state: ItemListItemRowState(
                                     item: item,
                                     hasDivider: true,
+                                    showNextTotpCode: true,
                                     showWebIcons: true,
                                 ),
                             ),
@@ -265,6 +269,7 @@ struct ItemListItemRow_Previews: PreviewProvider {
                                 state: ItemListItemRowState(
                                     item: item,
                                     hasDivider: true,
+                                    showNextTotpCode: true,
                                     showWebIcons: true,
                                 ),
                             ),

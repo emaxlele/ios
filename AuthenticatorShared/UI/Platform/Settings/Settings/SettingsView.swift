@@ -87,6 +87,17 @@ struct SettingsView: View {
         SectionView(Localizations.appearance, contentSpacing: 8) {
             language
             theme
+            ContentBlock {
+                BitwardenToggle(
+                    Localizations.showNextCode,
+                    isOn: store.bindingAsync(
+                        get: \.showNextTotpCode,
+                        perform: SettingsEffect.toggleShowNextTotpCode,
+                    ),
+                )
+                .accessibilityIdentifier("ShowNextCodeSwitch")
+                .accessibilityLabel(Localizations.showNextCode)
+            }
         }
     }
 
