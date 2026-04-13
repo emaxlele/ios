@@ -290,6 +290,7 @@ class SettingsProcessorTests: BitwardenTestCase {
     /// `perform(_:)` with `.loadData` loads the `showNextTotpCode` value from the store.
     @MainActor
     func test_perform_loadData_showNextTotpCode_false() async throws {
+        subject.state.showNextTotpCode = true
         appSettingsStore.showNextTotpCode = false
 
         await subject.perform(.loadData)

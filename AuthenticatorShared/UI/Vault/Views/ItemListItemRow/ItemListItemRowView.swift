@@ -106,12 +106,12 @@ struct ItemListItemRowView: View {
             }
         }
         Spacer()
-        TimelineView(.periodic(from: .now, by: 0.1)) { context in
+        TimelineView(.periodic(from: .now, by: 0.1)) { _ in
             totpCountdownRow(
                 model: model,
                 nextCode: nextCode,
                 remaining: TOTPExpirationCalculator.remainingSeconds(
-                    for: context.date,
+                    for: timeProvider.presentTime,
                     using: Int(model.period),
                 ),
             )
@@ -234,6 +234,43 @@ struct ItemListItemRowView: View {
             ),
         ),
         timeProvider: PreviewTimeProvider(),
+    )
+}
+
+#Preview("With next code visible") {
+    ItemListItemRowView(
+        store: Store(
+            processor: StateProcessor(
+                state: ItemListItemRowState(
+                    item: ItemListItem(
+                        id: UUID().uuidString,
+                        name: "Example",
+                        accountName: "person@example.com",
+                        itemType: .totp(
+                            model: ItemListTotpItem(
+                                itemView: AuthenticatorItemView.fixture(),
+                                nextTotpCode: TOTPCodeModel(
+                                    code: "789012",
+                                    codeGenerationDate: Date(),
+                                    period: 30,
+                                ),
+                                totpCode: TOTPCodeModel(
+                                    code: "123456",
+                                    codeGenerationDate: Date().addingTimeInterval(-22),
+                                    period: 30,
+                                ),
+                            ),
+                        ),
+                    ),
+                    hasDivider: true,
+                    showNextTotpCode: true,
+                    showWebIcons: true,
+                ),
+            ),
+        ),
+        timeProvider: PreviewTimeProvider(
+            fixedDate: Date(year: 2023, month: 12, day: 31, hour: 0, minute: 0, second: 25),
+        ),
     )
 }
 

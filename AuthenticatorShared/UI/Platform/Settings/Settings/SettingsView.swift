@@ -87,17 +87,6 @@ struct SettingsView: View {
         SectionView(Localizations.appearance, contentSpacing: 8) {
             language
             theme
-            ContentBlock {
-                BitwardenToggle(
-                    Localizations.showNextCode,
-                    isOn: store.bindingAsync(
-                        get: \.showNextTotpCode,
-                        perform: SettingsEffect.toggleShowNextTotpCode,
-                    ),
-                )
-                .accessibilityIdentifier("ShowNextCodeSwitch")
-                .accessibilityLabel(Localizations.showNextCode)
-            }
         }
     }
 
@@ -131,6 +120,16 @@ struct SettingsView: View {
                 if store.state.shouldShowDefaultSaveOption {
                     defaultSaveOption
                 }
+
+                BitwardenToggle(
+                    Localizations.showNextCode,
+                    isOn: store.bindingAsync(
+                        get: \.showNextTotpCode,
+                        perform: SettingsEffect.toggleShowNextTotpCode,
+                    ),
+                )
+                .accessibilityIdentifier("ShowNextCodeSwitch")
+                .accessibilityLabel(Localizations.showNextCode)
             }
         }
     }
@@ -300,6 +299,32 @@ struct SettingsView: View {
 // MARK: - Previews
 
 #if DEBUG
+#Preview("Show next code - off") {
+    NavigationView {
+        SettingsView(
+            store: Store(
+                processor: StateProcessor(
+                    state: SettingsState(showNextTotpCode: false),
+                ),
+            ),
+        )
+    }
+    .previewLayout(.fixed(width: 390, height: 900))
+}
+
+#Preview("Show next code - on") {
+    NavigationView {
+        SettingsView(
+            store: Store(
+                processor: StateProcessor(
+                    state: SettingsState(showNextTotpCode: true),
+                ),
+            ),
+        )
+    }
+    .previewLayout(.fixed(width: 390, height: 900))
+}
+
 struct SettingsView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationView {
