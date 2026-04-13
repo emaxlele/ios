@@ -134,7 +134,7 @@ struct ItemListItemRowView: View {
                     Text(nextCode.displayCode)
                         .styleGuide(.caption2Monospaced, monoSpacedDigit: true)
                         .foregroundColor(Asset.Colors.textSecondary.swiftUIColor)
-                        .accessibilityLabel(Localizations.nextVerificationCode)
+                        .accessibilityLabel(Localizations.nextCode)
                 }
             }
             TOTPCountdownTimerView(

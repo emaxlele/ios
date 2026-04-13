@@ -769,7 +769,7 @@
 "UnableToMoveTheSelectedItemPleaseTryAgain" = "Unable to move the selected item. Please try again.";
 "Done" = "Done";
 "Next" = "Next";
-"NextVerificationCode" = "Next verification code";
+"NextCode" = "Next code";
 "CopyPublicKey" = "Copy public key";
 "CopyPrivateKey" = "Copy private key";
 "CopyFingerprint" = "Copy fingerprint";
