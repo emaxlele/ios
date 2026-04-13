@@ -299,60 +299,46 @@ struct SettingsView: View {
 // MARK: - Previews
 
 #if DEBUG
-#Preview("Show next code - off") {
+#Preview("Default") {
     NavigationView {
         SettingsView(
             store: Store(
                 processor: StateProcessor(
-                    state: SettingsState(showNextTotpCode: false),
+                    state: SettingsState(),
                 ),
             ),
         )
     }
-    .previewLayout(.fixed(width: 390, height: 900))
 }
 
-#Preview("Show next code - on") {
+#Preview("With FaceID Available") {
     NavigationView {
         SettingsView(
             store: Store(
                 processor: StateProcessor(
-                    state: SettingsState(showNextTotpCode: true),
+                    state: SettingsState(
+                        biometricUnlockStatus: .available(
+                            .faceID,
+                            enabled: false,
+                        ),
+                    ),
                 ),
             ),
         )
     }
-    .previewLayout(.fixed(width: 390, height: 900))
 }
 
-struct SettingsView_Previews: PreviewProvider {
-    static var previews: some View {
-        NavigationView {
-            SettingsView(
-                store: Store(
-                    processor: StateProcessor(
-                        state: SettingsState(
-                            biometricUnlockStatus: .available(
-                                .faceID,
-                                enabled: false,
-                            ),
-                        ),
+#Preview("With Default Save Option") {
+    NavigationView {
+        SettingsView(
+            store: Store(
+                processor: StateProcessor(
+                    state: SettingsState(
+                        shouldShowDefaultSaveOption: true,
                     ),
                 ),
-            )
-        }.previewDisplayName("SettingsView")
-
-        NavigationView {
-            SettingsView(
-                store: Store(
-                    processor: StateProcessor(
-                        state: SettingsState(
-                            shouldShowDefaultSaveOption: true,
-                        ),
-                    ),
-                ),
-            )
-        }.previewDisplayName("With Default Save Option")
+            ),
+        )
     }
 }
 #endif
