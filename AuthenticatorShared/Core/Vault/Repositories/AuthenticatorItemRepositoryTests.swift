@@ -13,6 +13,7 @@ class AuthenticatorItemRepositoryTests: BitwardenTestCase { // swiftlint:disable
     // MARK: Properties
 
     var application: MockApplication!
+    var appSettingsStore: MockAppSettingsStore!
     var authItemService: MockAuthenticatorItemService!
     var authenticatorItemService: MockAuthenticatorItemService!
     var configService: MockConfigService!
@@ -29,6 +30,7 @@ class AuthenticatorItemRepositoryTests: BitwardenTestCase { // swiftlint:disable
         super.setUp()
 
         application = MockApplication()
+        appSettingsStore = MockAppSettingsStore()
         authItemService = MockAuthenticatorItemService()
         authenticatorItemService = MockAuthenticatorItemService()
         configService = MockConfigService()
@@ -40,6 +42,7 @@ class AuthenticatorItemRepositoryTests: BitwardenTestCase { // swiftlint:disable
 
         subject = DefaultAuthenticatorItemRepository(
             application: application,
+            appSettingsStore: appSettingsStore,
             authenticatorItemService: authItemService,
             configService: configService,
             cryptographyService: cryptographyService,
@@ -192,6 +195,7 @@ class AuthenticatorItemRepositoryTests: BitwardenTestCase { // swiftlint:disable
             codeGenerationDate: timeProvider.presentTime,
             period: 30,
         )
+        appSettingsStore.showNextTotpCode = true
         totpService.getTotpCodeResult = .success(newCodeModel)
         totpService.getNextTotpCodeResult = .success(nextCodeModel)
 
@@ -219,6 +223,25 @@ class AuthenticatorItemRepositoryTests: BitwardenTestCase { // swiftlint:disable
         XCTAssertEqual(syncError, ItemListItem.syncError())
 
         XCTAssertTrue(errorReporter.errors.isEmpty)
+    }
+
+    /// `refreshTOTPCodes(on:)` skips next-code generation when `showNextTotpCode` is disabled.
+    func test_refreshTOTPCodes_showNextTotpCode_disabled() async throws {
+        let newCodeModel = TOTPCodeModel(
+            code: "987654",
+            codeGenerationDate: timeProvider.presentTime,
+            period: 30,
+        )
+        appSettingsStore.showNextTotpCode = false
+        totpService.getTotpCodeResult = .success(newCodeModel)
+
+        let item = ItemListItem.fixture()
+        let result = try await subject.refreshTOTPCodes(on: [item])
+
+        let actual = try XCTUnwrap(result[0])
+        XCTAssertEqual(actual.totpCodeModel, newCodeModel)
+        XCTAssertNil(actual.nextTotpCodeModel)
+        XCTAssertNil(totpService.getNextTotpCodeKey)
     }
 
     /// `saveTemporarySharedItem(_)` saves a temporary item into the Authenticator Bridge shared store.
