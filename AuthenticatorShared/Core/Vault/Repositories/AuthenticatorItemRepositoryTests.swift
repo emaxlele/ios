@@ -39,6 +39,7 @@ class AuthenticatorItemRepositoryTests: BitwardenTestCase { // swiftlint:disable
         sharedItemService = MockAuthenticatorBridgeItemService()
         timeProvider = MockTimeProvider(.mockTime(Date()))
         totpItemDisplayStateService = MockTOTPItemDisplayStateService()
+        totpItemDisplayStateService.getShowNextTOTPCodeReturnValue = false
         totpService = MockTOTPService()
 
         subject = DefaultAuthenticatorItemRepository(
