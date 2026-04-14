@@ -28,11 +28,11 @@ struct SettingsState: Equatable {
     /// The current default save option.
     var sessionTimeoutValue: SessionTimeoutValue = .never
 
-    /// Whether to show the next TOTP code preview.
-    var showNextTOTPCode = false
-
     /// A flag to indicate if we should show the default save option menu.
     var shouldShowDefaultSaveOption = false
+
+    /// Whether to show the next TOTP code preview.
+    var showNextTOTPCode = false
 
     /// A toast message to show in the view.
     var toast: Toast?

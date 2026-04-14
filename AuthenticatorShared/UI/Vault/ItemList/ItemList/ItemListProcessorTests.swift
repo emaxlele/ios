@@ -24,7 +24,6 @@ class ItemListProcessorTests: BitwardenTestCase { // swiftlint:disable:this type
     var flightRecorder: MockFlightRecorder!
     var notificationCenterService: MockNotificationCenterService!
     var pasteboardService: MockPasteboardService!
-    var stateService: MockStateService!
     var totpItemDisplayStateService: MockTOTPItemDisplayStateService!
     var totpService: MockTOTPService!
     var subject: ItemListProcessor!
@@ -47,7 +46,6 @@ class ItemListProcessorTests: BitwardenTestCase { // swiftlint:disable:this type
         flightRecorder = MockFlightRecorder()
         notificationCenterService = MockNotificationCenterService()
         pasteboardService = MockPasteboardService()
-        stateService = MockStateService()
         totpItemDisplayStateService = MockTOTPItemDisplayStateService()
         totpItemDisplayStateService.getShowNextTOTPCodeReturnValue = false
         totpService = MockTOTPService()
@@ -70,7 +68,6 @@ class ItemListProcessorTests: BitwardenTestCase { // swiftlint:disable:this type
             flightRecorder: flightRecorder,
             notificationCenterService: notificationCenterService,
             pasteboardService: pasteboardService,
-            stateService: stateService,
             totpExpirationManagerFactory: totpExpirationManagerFactory,
             totpItemDisplayStateService: totpItemDisplayStateService,
             totpService: totpService,
@@ -95,7 +92,6 @@ class ItemListProcessorTests: BitwardenTestCase { // swiftlint:disable:this type
         flightRecorder = nil
         notificationCenterService = nil
         pasteboardService = nil
-        stateService = nil
         totpItemDisplayStateService = nil
         totpService = nil
         coordinator = nil
