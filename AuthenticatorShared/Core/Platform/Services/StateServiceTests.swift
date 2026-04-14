@@ -68,4 +68,19 @@ class StateServiceTests: BitwardenTestCase {
         await subject.setFlightRecorderData(nil)
         XCTAssertNil(appSettingsStore.flightRecorderData)
     }
+
+    /// `getShowNextTotpCode()` returns `false` when no value has been set.
+    func test_getShowNextTotpCode_defaultsFalse() async {
+        let result = await subject.getShowNextTotpCode()
+        XCTAssertFalse(result)
+    }
+
+    /// `setShowNextTotpCode(_:)` persists the value through `AppSettingsStore`.
+    func test_setShowNextTotpCode_persistsToAppSettingsStore() async {
+        await subject.setShowNextTotpCode(true)
+        XCTAssertTrue(appSettingsStore.showNextTotpCode)
+
+        let result = await subject.getShowNextTotpCode()
+        XCTAssertTrue(result)
+    }
 }

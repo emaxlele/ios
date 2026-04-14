@@ -81,7 +81,7 @@ final class SettingsProcessor: StateProcessor<SettingsState, SettingsAction, Set
             await streamFlightRecorderLog()
         case let .toggleShowNextTotpCode(isOn):
             state.showNextTotpCode = isOn
-            services.appSettingsStore.showNextTotpCode = isOn
+            await services.stateService.setShowNextTotpCode(isOn)
         case let .toggleUnlockWithBiometrics(isOn):
             await setBiometricAuth(isOn)
         }
@@ -164,7 +164,7 @@ final class SettingsProcessor: StateProcessor<SettingsState, SettingsAction, Set
         state.sessionTimeoutValue = loadTimeoutValue(biometricsEnabled: state.biometricUnlockStatus.isEnabled)
         state.shouldShowDefaultSaveOption = await services.authenticatorItemRepository.isPasswordManagerSyncActive()
         state.defaultSaveOption = services.appSettingsStore.defaultSaveOption
-        state.showNextTotpCode = services.appSettingsStore.showNextTotpCode
+        state.showNextTotpCode = await services.stateService.getShowNextTotpCode()
     }
 
     /// Load the Session Timeout Value.

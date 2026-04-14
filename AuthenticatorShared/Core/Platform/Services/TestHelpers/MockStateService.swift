@@ -21,6 +21,7 @@ class MockStateService: StateService {
     var serverConfig = [String: ServerConfig]()
     var setSecretKeyResult: Result<Void, Error> = .success(())
     var timeProvider = MockTimeProvider(.currentTime)
+    var showNextTotpCode = false
     var showWebIcons = true
     var showWebIconsSubject = CurrentValueSubject<Bool, Never>(true)
     var vaultTimeout = SessionTimeoutValue.never
@@ -54,6 +55,10 @@ class MockStateService: StateService {
         return serverConfig[userId]
     }
 
+    func getShowNextTotpCode() async -> Bool {
+        showNextTotpCode
+    }
+
     func getShowWebIcons() async -> Bool {
         showWebIcons
     }
@@ -74,6 +79,10 @@ class MockStateService: StateService {
 
     func setFlightRecorderData(_ data: FlightRecorderData?) async {
         flightRecorderData = data
+    }
+
+    func setShowNextTotpCode(_ value: Bool) async {
+        showNextTotpCode = value
     }
 
     func setShowWebIcons(_ showWebIcons: Bool) async {

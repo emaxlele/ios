@@ -46,6 +46,12 @@ protocol StateService: AnyObject {
     ///
     func getSecretKey(userId: String?) async throws -> String?
 
+    /// Get whether to show the next TOTP code preview when the current code is about to expire.
+    ///
+    /// - Returns: Whether to show the next TOTP code preview.
+    ///
+    func getShowNextTotpCode() async -> Bool
+
     /// Get whether to show website icons.
     ///
     /// - Returns: Whether to show the website icons.
@@ -82,6 +88,13 @@ protocol StateService: AnyObject {
     ///   - key: The key to set
     ///
     func setSecretKey(_ key: String, userId: String?) async throws
+
+    /// Sets whether to show the next TOTP code preview when the current code is about to expire.
+    ///
+    /// - Parameters:
+    ///   - value: Whether to show the next TOTP code preview.
+    ///
+    func setShowNextTotpCode(_ value: Bool) async
 
     /// Set whether to show the website icons.
     ///
@@ -215,6 +228,10 @@ actor DefaultStateService:
         return appSettingsStore.serverConfig(userId: userId)
     }
 
+    func getShowNextTotpCode() async -> Bool {
+        appSettingsStore.showNextTotpCode
+    }
+
     func getShowWebIcons() async -> Bool {
         !appSettingsStore.disableWebIcons
     }
@@ -252,6 +269,10 @@ actor DefaultStateService:
     func setServerConfig(_ config: ServerConfig?, userId: String?) async throws {
         let userId = try userId ?? getActiveAccountUserId()
         appSettingsStore.setServerConfig(config, userId: userId)
+    }
+
+    func setShowNextTotpCode(_ value: Bool) async {
+        appSettingsStore.showNextTotpCode = value
     }
 
     func setShowWebIcons(_ showWebIcons: Bool) async {

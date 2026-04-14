@@ -22,6 +22,7 @@ final class ItemListProcessor: StateProcessor<ItemListState, ItemListAction, Ite
         & HasFlightRecorder
         & HasNotificationCenterService
         & HasPasteboardService
+        & HasStateService
         & HasTOTPExpirationManagerFactory
         & HasTOTPService
         & HasTimeProvider
@@ -80,7 +81,7 @@ final class ItemListProcessor: StateProcessor<ItemListState, ItemListAction, Ite
         case .addItemPressed:
             await setupTotp()
         case .appeared:
-            state.showNextTotpCode = services.appSettingsStore.showNextTotpCode
+            state.showNextTotpCode = await services.stateService.getShowNextTotpCode()
             await determineItemListCardState()
             await streamItemList()
         case let .closeCard(card):

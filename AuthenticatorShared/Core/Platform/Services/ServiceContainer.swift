@@ -334,12 +334,12 @@ public class ServiceContainer: Services {
 
         let authenticatorItemRepository = DefaultAuthenticatorItemRepository(
             application: application,
-            appSettingsStore: appSettingsStore,
             authenticatorItemService: authenticatorItemService,
             configService: configService,
             cryptographyService: cryptographyService,
             errorReporter: errorReporter,
             sharedItemService: sharedItemService,
+            stateService: stateService,
             timeProvider: timeProvider,
             totpService: totpService,
         )

@@ -23,6 +23,7 @@ class ItemListProcessorTests: BitwardenTestCase { // swiftlint:disable:this type
     var flightRecorder: MockFlightRecorder!
     var notificationCenterService: MockNotificationCenterService!
     var pasteboardService: MockPasteboardService!
+    var stateService: MockStateService!
     var totpService: MockTOTPService!
     var subject: ItemListProcessor!
     var totpExpirationManagerForItems: MockTOTPExpirationManager!
@@ -44,6 +45,7 @@ class ItemListProcessorTests: BitwardenTestCase { // swiftlint:disable:this type
         flightRecorder = MockFlightRecorder()
         notificationCenterService = MockNotificationCenterService()
         pasteboardService = MockPasteboardService()
+        stateService = MockStateService()
         totpService = MockTOTPService()
 
         totpExpirationManagerForItems = MockTOTPExpirationManager()
@@ -64,6 +66,7 @@ class ItemListProcessorTests: BitwardenTestCase { // swiftlint:disable:this type
             flightRecorder: flightRecorder,
             notificationCenterService: notificationCenterService,
             pasteboardService: pasteboardService,
+            stateService: stateService,
             totpExpirationManagerFactory: totpExpirationManagerFactory,
             totpService: totpService,
         )
@@ -87,6 +90,7 @@ class ItemListProcessorTests: BitwardenTestCase { // swiftlint:disable:this type
         flightRecorder = nil
         notificationCenterService = nil
         pasteboardService = nil
+        stateService = nil
         totpService = nil
         coordinator = nil
         subject = nil
@@ -172,10 +176,10 @@ class ItemListProcessorTests: BitwardenTestCase { // swiftlint:disable:this type
         XCTAssertEqual(subject.state.loadingState, .data([resultSection]))
     }
 
-    /// `perform(_:)` with `.appeared` sets `showNextTotpCode` from the store when the value is `true`.
+    /// `perform(_:)` with `.appeared` sets `showNextTotpCode` from the state service when the value is `true`.
     @MainActor
     func test_perform_appeared_setsShowNextTotpCode_true() {
-        appSettingsStore.showNextTotpCode = true
+        stateService.showNextTotpCode = true
 
         let task = Task {
             await subject.perform(.appeared)
@@ -187,11 +191,11 @@ class ItemListProcessorTests: BitwardenTestCase { // swiftlint:disable:this type
         XCTAssertTrue(subject.state.showNextTotpCode)
     }
 
-    /// `perform(_:)` with `.appeared` sets `showNextTotpCode` from the store when the value is `false`.
+    /// `perform(_:)` with `.appeared` sets `showNextTotpCode` from the state service when the value is `false`.
     @MainActor
     func test_perform_appeared_setsShowNextTotpCode_false() {
         subject.state.showNextTotpCode = true
-        appSettingsStore.showNextTotpCode = false
+        stateService.showNextTotpCode = false
 
         let task = Task {
             await subject.perform(.appeared)

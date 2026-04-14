@@ -16,6 +16,7 @@ class SettingsProcessorTests: BitwardenTestCase {
     var coordinator: MockCoordinator<SettingsRoute, SettingsEvent>!
     var flightRecorder: MockFlightRecorder!
     var pasteboardService: MockPasteboardService!
+    var stateService: MockStateService!
     var subject: SettingsProcessor!
 
     // MARK: Setup & Teardown
@@ -31,6 +32,7 @@ class SettingsProcessorTests: BitwardenTestCase {
         coordinator = MockCoordinator()
         flightRecorder = MockFlightRecorder()
         pasteboardService = MockPasteboardService()
+        stateService = MockStateService()
 
         biometricsRepository.getBiometricUnlockStatusReturnValue = .notAvailable
 
@@ -44,6 +46,7 @@ class SettingsProcessorTests: BitwardenTestCase {
                 configService: configService,
                 flightRecorder: flightRecorder,
                 pasteboardService: pasteboardService,
+                stateService: stateService,
             ),
             state: SettingsState(),
         )
@@ -60,6 +63,7 @@ class SettingsProcessorTests: BitwardenTestCase {
         coordinator = nil
         flightRecorder = nil
         pasteboardService = nil
+        stateService = nil
         subject = nil
     }
 
@@ -263,7 +267,7 @@ class SettingsProcessorTests: BitwardenTestCase {
         await subject.perform(.toggleShowNextTotpCode(false))
 
         XCTAssertFalse(subject.state.showNextTotpCode)
-        XCTAssertFalse(appSettingsStore.showNextTotpCode)
+        XCTAssertFalse(stateService.showNextTotpCode)
     }
 
     /// `perform(_:)` with `.toggleShowNextTotpCode(true)` updates the state and persists the value.
@@ -274,24 +278,24 @@ class SettingsProcessorTests: BitwardenTestCase {
         await subject.perform(.toggleShowNextTotpCode(true))
 
         XCTAssertTrue(subject.state.showNextTotpCode)
-        XCTAssertTrue(appSettingsStore.showNextTotpCode)
+        XCTAssertTrue(stateService.showNextTotpCode)
     }
 
-    /// `perform(_:)` with `.loadData` loads the `showNextTotpCode` value from the store.
+    /// `perform(_:)` with `.loadData` loads the `showNextTotpCode` value from the state service.
     @MainActor
     func test_perform_loadData_showNextTotpCode_true() async throws {
-        appSettingsStore.showNextTotpCode = true
+        stateService.showNextTotpCode = true
 
         await subject.perform(.loadData)
 
         XCTAssertTrue(subject.state.showNextTotpCode)
     }
 
-    /// `perform(_:)` with `.loadData` loads the `showNextTotpCode` value from the store.
+    /// `perform(_:)` with `.loadData` loads the `showNextTotpCode` value from the state service.
     @MainActor
     func test_perform_loadData_showNextTotpCode_false() async throws {
         subject.state.showNextTotpCode = true
-        appSettingsStore.showNextTotpCode = false
+        stateService.showNextTotpCode = false
 
         await subject.perform(.loadData)
 
