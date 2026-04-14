@@ -337,7 +337,8 @@ extension DefaultAuthenticatorItemRepository: AuthenticatorItemRepository {
     }
 
     func refreshTotpCodes(for items: [ItemListItem]) async throws -> [ItemListItem] {
-        try await items.asyncMap { item in
+        let showNextTOTPCode = await totpItemDisplayStateService.getShowNextTOTPCode()
+        return try await items.asyncMap { item in
             let keyModel: TOTPKeyModel?
             switch item.itemType {
             case let .sharedTotp(model):
@@ -357,7 +358,7 @@ extension DefaultAuthenticatorItemRepository: AuthenticatorItemRepository {
                 return item
             }
             let code = try await totpService.getTotpCode(for: keyModel)
-            let nextCode = await totpItemDisplayStateService.getShowNextTOTPCode()
+            let nextCode = showNextTOTPCode
                 ? try await totpService.getNextTOTPCode(for: keyModel)
                 : nil
             return item.with(newTotpModel: code, nextTotpModel: nextCode)
