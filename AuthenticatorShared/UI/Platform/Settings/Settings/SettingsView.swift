@@ -124,8 +124,8 @@ struct SettingsView: View {
                 BitwardenToggle(
                     Localizations.showNextCode,
                     isOn: store.bindingAsync(
-                        get: \.showNextTotpCode,
-                        perform: SettingsEffect.toggleShowNextTotpCode,
+                        get: \.showNextTOTPCode,
+                        perform: SettingsEffect.toggleShowNextTOTPCode,
                     ),
                 )
                 .accessibilityIdentifier("ShowNextCodeSwitch")

@@ -22,7 +22,7 @@ class MockAppSettingsStore: AppSettingsStore {
     var preAuthServerConfig: ServerConfig?
     var rememberedEmail: String?
     var rememberedOrgIdentifier: String?
-    var showNextTotpCode = false
+    var showNextTOTPCode = false
 
     var approveLoginRequestsByUserId = [String: Bool]()
     var biometricAuthenticationEnabled = [String: Bool?]()

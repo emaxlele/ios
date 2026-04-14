@@ -252,12 +252,12 @@ actor DefaultStateService:
 // MARK: TOTPItemDisplayStateService
 
 extension DefaultStateService: TOTPItemDisplayStateService {
-    func getShowNextTotpCode() async -> Bool {
-        appSettingsStore.showNextTotpCode
+    func getShowNextTOTPCode() async -> Bool {
+        appSettingsStore.showNextTOTPCode
     }
 
-    func setShowNextTotpCode(_ value: Bool) async {
-        appSettingsStore.showNextTotpCode = value
+    func setShowNextTOTPCode(_ value: Bool) async {
+        appSettingsStore.showNextTOTPCode = value
     }
 
     func getShowWebIcons() async -> Bool {

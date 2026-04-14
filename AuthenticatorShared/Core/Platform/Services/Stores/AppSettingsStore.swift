@@ -41,7 +41,7 @@ protocol AppSettingsStore: AnyObject {
     var preAuthServerConfig: ServerConfig? { get set }
 
     /// Whether to show the next TOTP code when the current code is about to expire.
-    var showNextTotpCode: Bool { get set }
+    var showNextTOTPCode: Bool { get set }
 
     /// Gets the closed state for the given card.
     ///
@@ -304,7 +304,7 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
         case preAuthServerConfig
         case secretKey(userId: String)
         case serverConfig(userId: String)
-        case showNextTotpCode
+        case showNextTOTPCode
         case vaultTimeout(userId: String)
 
         /// Returns the key used to store the data under for retrieving it later.
@@ -344,7 +344,7 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
                 "secretKey_\(userId)"
             case let .serverConfig(userId):
                 "serverConfig_\(userId)"
-            case .showNextTotpCode:
+            case .showNextTOTPCode:
                 "showNextTotpCode"
             case let .vaultTimeout(userId):
                 "vaultTimeout_\(userId)"
@@ -403,9 +403,9 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
         set { store(newValue, for: .preAuthServerConfig) }
     }
 
-    var showNextTotpCode: Bool {
-        get { fetch(for: .showNextTotpCode) }
-        set { store(newValue, for: .showNextTotpCode) }
+    var showNextTOTPCode: Bool {
+        get { fetch(for: .showNextTOTPCode) }
+        set { store(newValue, for: .showNextTOTPCode) }
     }
 
     func cardClosedState(card: ItemListCard) -> Bool {

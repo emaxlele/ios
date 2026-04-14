@@ -130,7 +130,7 @@ struct ItemListItemRowView: View {
                 Text(model.displayCode)
                     .styleGuide(.bodyMonospaced, weight: .regular, monoSpacedDigit: true)
                     .foregroundColor(Asset.Colors.textPrimary.swiftUIColor)
-                if remaining <= Constants.nextTOTPCodePreviewThreshold, let nextCode, store.state.showNextTotpCode {
+                if remaining <= Constants.nextTOTPCodePreviewThreshold, let nextCode, store.state.showNextTOTPCode {
                     Text(nextCode.displayCode)
                         .styleGuide(.caption2Monospaced, monoSpacedDigit: true)
                         .foregroundColor(Asset.Colors.textSecondary.swiftUIColor)
@@ -168,7 +168,7 @@ struct ItemListItemRowView: View {
                         ),
                     ),
                     hasDivider: true,
-                    showNextTotpCode: true,
+                    showNextTOTPCode: true,
                     showWebIcons: true,
                 ),
             ),
@@ -198,7 +198,7 @@ struct ItemListItemRowView: View {
                         ),
                     ),
                     hasDivider: true,
-                    showNextTotpCode: true,
+                    showNextTOTPCode: true,
                     showWebIcons: true,
                 ),
             ),
@@ -228,7 +228,7 @@ struct ItemListItemRowView: View {
                         ),
                     ),
                     hasDivider: true,
-                    showNextTotpCode: true,
+                    showNextTOTPCode: true,
                     showWebIcons: true,
                 ),
             ),
@@ -263,7 +263,7 @@ struct ItemListItemRowView: View {
                         ),
                     ),
                     hasDivider: true,
-                    showNextTotpCode: true,
+                    showNextTOTPCode: true,
                     showWebIcons: true,
                 ),
             ),
@@ -284,7 +284,7 @@ struct ItemListItemRowView: View {
                             state: ItemListItemRowState(
                                 item: item,
                                 hasDivider: true,
-                                showNextTotpCode: true,
+                                showNextTOTPCode: true,
                                 showWebIcons: true,
                             ),
                         ),
@@ -306,7 +306,7 @@ struct ItemListItemRowView: View {
                             state: ItemListItemRowState(
                                 item: item,
                                 hasDivider: true,
-                                showNextTotpCode: true,
+                                showNextTOTPCode: true,
                                 showWebIcons: true,
                             ),
                         ),

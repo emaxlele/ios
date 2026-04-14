@@ -267,20 +267,20 @@ class AppSettingsStoreTests: BitwardenTestCase {
         XCTAssertEqual(subject.migrationVersion, 2)
     }
 
-    /// `showNextTotpCode` returns `false` if there isn't a previously stored value.
-    func test_showNextTotpCode_isInitiallyFalse() {
-        XCTAssertFalse(subject.showNextTotpCode)
+    /// `showNextTOTPCode` returns `false` if there isn't a previously stored value.
+    func test_showNextTOTPCode_isInitiallyFalse() {
+        XCTAssertFalse(subject.showNextTOTPCode)
     }
 
-    /// `showNextTotpCode` can be used to get and set the persisted value in user defaults.
-    func test_showNextTotpCode_withValue() {
-        subject.showNextTotpCode = true
-        XCTAssertTrue(subject.showNextTotpCode)
-        XCTAssertTrue(userDefaults.bool(forKey: "bwaPreferencesStorage:showNextTotpCode"))
+    /// `showNextTOTPCode` can be used to get and set the persisted value in user defaults.
+    func test_showNextTOTPCode_withValue() {
+        subject.showNextTOTPCode = true
+        XCTAssertTrue(subject.showNextTOTPCode)
+        XCTAssertTrue(userDefaults.bool(forKey: "bwaPreferencesStorage:showNextTOTPCode"))
 
-        subject.showNextTotpCode = false
-        XCTAssertFalse(subject.showNextTotpCode)
-        XCTAssertFalse(userDefaults.bool(forKey: "bwaPreferencesStorage:showNextTotpCode"))
+        subject.showNextTOTPCode = false
+        XCTAssertFalse(subject.showNextTOTPCode)
+        XCTAssertFalse(userDefaults.bool(forKey: "bwaPreferencesStorage:showNextTOTPCode"))
     }
 
     /// `.vaultTimeout(userId:)` returns the correct vault timeout value.

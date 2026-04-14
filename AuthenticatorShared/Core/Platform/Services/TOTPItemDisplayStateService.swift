@@ -12,13 +12,13 @@ protocol TOTPItemDisplayStateService: AnyObject { // sourcery: AutoMockable
     ///
     /// - Returns: Whether to show the next TOTP code preview.
     ///
-    func getShowNextTotpCode() async -> Bool
+    func getShowNextTOTPCode() async -> Bool
 
     /// Sets whether to show the next TOTP code preview when the current code is about to expire.
     ///
     /// - Parameter value: Whether to show the next TOTP code preview.
     ///
-    func setShowNextTotpCode(_ value: Bool) async
+    func setShowNextTOTPCode(_ value: Bool) async
 
     // MARK: Show Web Icons
 

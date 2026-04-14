@@ -35,10 +35,10 @@ class ItemListItemRowViewTests: BitwardenTestCase {
 
     // MARK: Tests
 
-    /// Snapshot: next code hidden when `showNextTotpCode` is `false`, even with a next code available
+    /// Snapshot: next code hidden when `showNextTOTPCode` is `false`, even with a next code available
     /// and time remaining below the preview threshold.
     @MainActor
-    func disabletest_snapshot_showNextTotpCode_hidden() {
+    func disabletest_snapshot_showNextTOTPCode_hidden() {
         let state = ItemListItemRowState(
             item: ItemListItem(
                 id: "1",
@@ -61,7 +61,7 @@ class ItemListItemRowViewTests: BitwardenTestCase {
                 ),
             ),
             hasDivider: false,
-            showNextTotpCode: false,
+            showNextTOTPCode: false,
             showWebIcons: false,
         )
         processor = MockProcessor(state: state)
@@ -72,9 +72,9 @@ class ItemListItemRowViewTests: BitwardenTestCase {
         assertSnapshot(of: subject, as: .defaultPortrait)
     }
 
-    /// Snapshot: next code visible when `showNextTotpCode` is `true` and time remaining is below the preview threshold.
+    /// Snapshot: next code visible when `showNextTOTPCode` is `true` and time remaining is below the preview threshold.
     @MainActor
-    func disabletest_snapshot_showNextTotpCode_visible() {
+    func disabletest_snapshot_showNextTOTPCode_visible() {
         let state = ItemListItemRowState(
             item: ItemListItem(
                 id: "1",
@@ -97,7 +97,7 @@ class ItemListItemRowViewTests: BitwardenTestCase {
                 ),
             ),
             hasDivider: false,
-            showNextTotpCode: true,
+            showNextTOTPCode: true,
             showWebIcons: false,
         )
         processor = MockProcessor(state: state)

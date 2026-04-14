@@ -20,7 +20,7 @@ enum SettingsEffect: Equatable {
     case streamFlightRecorderLog
 
     /// The show next TOTP code toggle was changed.
-    case toggleShowNextTotpCode(Bool)
+    case toggleShowNextTOTPCode(Bool)
 
     /// Unlock with Biometrics was toggled.
     case toggleUnlockWithBiometrics(Bool)

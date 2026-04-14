@@ -111,7 +111,7 @@ class DefaultAuthenticatorItemRepository {
     /// Service to interface with the application.
     private let application: Application
 
-    /// Service for managing TOTP item display state, used to read settings such as `showNextTotpCode`.
+    /// Service for managing TOTP item display state, used to read settings such as `showNextTOTPCode`.
     private let totpItemDisplayStateService: TOTPItemDisplayStateService
 
     /// Service from which to fetch locally stored Authenticator items.
@@ -357,7 +357,7 @@ extension DefaultAuthenticatorItemRepository: AuthenticatorItemRepository {
                 return item
             }
             let code = try await totpService.getTotpCode(for: keyModel)
-            let nextCode = await totpItemDisplayStateService.getShowNextTotpCode()
+            let nextCode = await totpItemDisplayStateService.getShowNextTOTPCode()
                 ? try await totpService.getNextTotpCode(for: keyModel)
                 : nil
             return item.with(newTotpModel: code, nextTotpModel: nextCode)

@@ -29,7 +29,7 @@ struct SettingsState: Equatable {
     var sessionTimeoutValue: SessionTimeoutValue = .never
 
     /// Whether to show the next TOTP code preview.
-    var showNextTotpCode = false
+    var showNextTOTPCode = false
 
     /// A flag to indicate if we should show the default save option menu.
     var shouldShowDefaultSaveOption = false

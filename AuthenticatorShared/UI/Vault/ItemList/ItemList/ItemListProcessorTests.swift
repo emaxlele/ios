@@ -49,7 +49,7 @@ class ItemListProcessorTests: BitwardenTestCase { // swiftlint:disable:this type
         pasteboardService = MockPasteboardService()
         stateService = MockStateService()
         totpItemDisplayStateService = MockTOTPItemDisplayStateService()
-        totpItemDisplayStateService.getShowNextTotpCodeReturnValue = false
+        totpItemDisplayStateService.getShowNextTOTPCodeReturnValue = false
         totpService = MockTOTPService()
 
         totpExpirationManagerForItems = MockTOTPExpirationManager()
@@ -182,35 +182,35 @@ class ItemListProcessorTests: BitwardenTestCase { // swiftlint:disable:this type
         XCTAssertEqual(subject.state.loadingState, .data([resultSection]))
     }
 
-    /// `perform(_:)` with `.appeared` sets `showNextTotpCode` from the state service when the value is `true`.
+    /// `perform(_:)` with `.appeared` sets `showNextTOTPCode` from the state service when the value is `true`.
     @MainActor
-    func test_perform_appeared_setsShowNextTotpCode_true() {
-        totpItemDisplayStateService.getShowNextTotpCodeReturnValue = true
+    func test_perform_appeared_setsShowNextTOTPCode_true() {
+        totpItemDisplayStateService.getShowNextTOTPCodeReturnValue = true
 
         let task = Task {
             await subject.perform(.appeared)
         }
 
-        waitFor(subject.state.showNextTotpCode == true)
+        waitFor(subject.state.showNextTOTPCode == true)
         task.cancel()
 
-        XCTAssertTrue(subject.state.showNextTotpCode)
+        XCTAssertTrue(subject.state.showNextTOTPCode)
     }
 
-    /// `perform(_:)` with `.appeared` sets `showNextTotpCode` from the state service when the value is `false`.
+    /// `perform(_:)` with `.appeared` sets `showNextTOTPCode` from the state service when the value is `false`.
     @MainActor
-    func test_perform_appeared_setsShowNextTotpCode_false() {
-        subject.state.showNextTotpCode = true
-        totpItemDisplayStateService.getShowNextTotpCodeReturnValue = false
+    func test_perform_appeared_setsShowNextTOTPCode_false() {
+        subject.state.showNextTOTPCode = true
+        totpItemDisplayStateService.getShowNextTOTPCodeReturnValue = false
 
         let task = Task {
             await subject.perform(.appeared)
         }
 
-        waitFor(subject.state.showNextTotpCode == false)
+        waitFor(subject.state.showNextTOTPCode == false)
         task.cancel()
 
-        XCTAssertFalse(subject.state.showNextTotpCode)
+        XCTAssertFalse(subject.state.showNextTOTPCode)
     }
 
     /// `perform(_:)` with `.appeared` records any errors.

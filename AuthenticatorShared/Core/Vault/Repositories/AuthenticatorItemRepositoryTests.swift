@@ -197,7 +197,7 @@ class AuthenticatorItemRepositoryTests: BitwardenTestCase { // swiftlint:disable
             codeGenerationDate: timeProvider.presentTime,
             period: 30,
         )
-        totpItemDisplayStateService.getShowNextTotpCodeReturnValue = true
+        totpItemDisplayStateService.getShowNextTOTPCodeReturnValue = true
         totpService.getTotpCodeResult = .success(newCodeModel)
         totpService.getNextTotpCodeResult = .success(nextCodeModel)
 
@@ -227,14 +227,14 @@ class AuthenticatorItemRepositoryTests: BitwardenTestCase { // swiftlint:disable
         XCTAssertTrue(errorReporter.errors.isEmpty)
     }
 
-    /// `refreshTOTPCodes(on:)` skips next-code generation when `showNextTotpCode` is disabled.
-    func test_refreshTOTPCodes_showNextTotpCode_disabled() async throws {
+    /// `refreshTOTPCodes(on:)` skips next-code generation when `showNextTOTPCode` is disabled.
+    func test_refreshTOTPCodes_showNextTOTPCode_disabled() async throws {
         let newCodeModel = TOTPCodeModel(
             code: "987654",
             codeGenerationDate: timeProvider.presentTime,
             period: 30,
         )
-        totpItemDisplayStateService.getShowNextTotpCodeReturnValue = false
+        totpItemDisplayStateService.getShowNextTOTPCodeReturnValue = false
         totpService.getTotpCodeResult = .success(newCodeModel)
 
         let item = ItemListItem.fixture()

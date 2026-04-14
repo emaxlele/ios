@@ -26,20 +26,20 @@ struct StateServiceTOTPItemDisplayStateServiceTests {
 
     // MARK: Tests - showNextTOTPCode
 
-    /// `getShowNextTotpCode()` returns `false` when no value has been set.
+    /// `getShowNextTOTPCode()` returns `false` when no value has been set.
     @Test
-    func getShowNextTotpCode_defaultsFalse() async {
-        let result = await subject.getShowNextTotpCode()
+    func getShowNextTOTPCode_defaultsFalse() async {
+        let result = await subject.getShowNextTOTPCode()
         #expect(result == false)
     }
 
-    /// `setShowNextTotpCode(_:)` persists the value through `AppSettingsStore`.
+    /// `setShowNextTOTPCode(_:)` persists the value through `AppSettingsStore`.
     @Test
-    func setShowNextTotpCode_persistsToAppSettingsStore() async {
-        await subject.setShowNextTotpCode(true)
-        #expect(appSettingsStore.showNextTotpCode == true)
+    func setShowNextTOTPCode_persistsToAppSettingsStore() async {
+        await subject.setShowNextTOTPCode(true)
+        #expect(appSettingsStore.showNextTOTPCode == true)
 
-        let result = await subject.getShowNextTotpCode()
+        let result = await subject.getShowNextTOTPCode()
         #expect(result == true)
     }
 
