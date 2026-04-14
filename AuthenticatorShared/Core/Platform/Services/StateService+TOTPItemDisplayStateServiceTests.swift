@@ -1,3 +1,5 @@
+// swiftlint:disable:this file_name
+
 import BitwardenKit
 import BitwardenKitMocks
 import Testing
@@ -22,7 +24,7 @@ struct StateServiceTOTPItemDisplayStateServiceTests {
         )
     }
 
-    // MARK: Tests
+    // MARK: Tests - showNextTOTPCode
 
     /// `getShowNextTotpCode()` returns `false` when no value has been set.
     @Test
@@ -40,6 +42,8 @@ struct StateServiceTOTPItemDisplayStateServiceTests {
         let result = await subject.getShowNextTotpCode()
         #expect(result == true)
     }
+
+    // MARK: Tests - showWebIcons
 
     /// `getShowWebIcons()` returns `true` when no value has been set (web icons enabled by default).
     @Test
