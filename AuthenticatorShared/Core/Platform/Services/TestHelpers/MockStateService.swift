@@ -10,20 +10,20 @@ class MockStateService: StateService {
     var activeAccountId: String = "localtest"
     var appId: String = "mockAppId"
     var appLanguage: LanguageOption = .default
-    var hasSeenWelcomeTutorial: Bool = false
     var appTheme: AppTheme?
     var clearClipboardValues = [String: ClearClipboardValue]()
     var clearClipboardResult: Result<Void, Error> = .success(())
     var getSecretKeyResult: Result<String, Error> = .success("qwerty")
+    var hasSeenWelcomeTutorial: Bool = false
     var flightRecorderData: FlightRecorderData?
     var preAuthServerConfig: ServerConfig?
     var secretKeyValues = [String: String]()
     var serverConfig = [String: ServerConfig]()
     var setSecretKeyResult: Result<Void, Error> = .success(())
-    var timeProvider = MockTimeProvider(.currentTime)
     var showNextTotpCode = false
     var showWebIcons = true
     var showWebIconsSubject = CurrentValueSubject<Bool, Never>(true)
+    var timeProvider = MockTimeProvider(.currentTime)
     var vaultTimeout = SessionTimeoutValue.never
 
     lazy var appThemeSubject = CurrentValueSubject<AppTheme, Never>(self.appTheme ?? .default)
