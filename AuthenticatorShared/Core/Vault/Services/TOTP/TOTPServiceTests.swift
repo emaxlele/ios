@@ -44,25 +44,31 @@ struct TOTPServiceTests {
         #expect(result.codeGenerationDate == expectedDate)
     }
 
-    /// `getTOTPConfiguration(key:)` succeeds when given a base32-encoded key.
+    /// `getTOTPConfiguration(key:)` parses a base32-encoded key into a standard 6-digit, 30-second config.
     @Test
     func getTOTPConfiguration_base32_succeeds() throws {
         let config = try subject.getTOTPConfiguration(key: .base32Key)
-        #expect(config != nil)
+        #expect(config.rawAuthenticatorKey == .base32Key)
+        #expect(config.digits == 6)
+        #expect(config.period == 30)
     }
 
-    /// `getTOTPConfiguration(key:)` succeeds when given a complete OTP auth URI.
+    /// `getTOTPConfiguration(key:)` parses an OTP auth URI, extracting issuer, algorithm, digits, and period.
     @Test
     func getTOTPConfiguration_otpAuthUri_succeeds() throws {
         let config = try subject.getTOTPConfiguration(key: .otpAuthUriKeyComplete)
-        #expect(config != nil)
+        #expect(config.issuer == "Example")
+        #expect(config.algorithm == .sha256)
+        #expect(config.digits == 6)
+        #expect(config.period == 30)
     }
 
-    /// `getTOTPConfiguration(key:)` succeeds when given a Steam URI key.
+    /// `getTOTPConfiguration(key:)` parses a Steam URI key into a 5-digit, 30-second config.
     @Test
     func getTOTPConfiguration_steamUri_succeeds() throws {
         let config = try subject.getTOTPConfiguration(key: .steamUriKey)
-        #expect(config != nil)
+        #expect(config.digits == 5)
+        #expect(config.period == 30)
     }
 
     /// `getTOTPConfiguration(key:)` throws `.invalidKeyFormat` for an unrecognized key string.
