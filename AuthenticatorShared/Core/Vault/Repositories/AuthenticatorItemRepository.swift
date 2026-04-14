@@ -111,9 +111,6 @@ class DefaultAuthenticatorItemRepository {
     /// Service to interface with the application.
     private let application: Application
 
-    /// Service for managing TOTP item display state, used to read settings such as `showNextTOTPCode`.
-    private let totpItemDisplayStateService: TOTPItemDisplayStateService
-
     /// Service from which to fetch locally stored Authenticator items.
     private let authenticatorItemService: AuthenticatorItemService
 
@@ -134,6 +131,9 @@ class DefaultAuthenticatorItemRepository {
 
     /// A protocol wrapping the present time.
     private let timeProvider: TimeProvider
+
+    /// Service for managing TOTP item display state, used to read settings such as `showNextTOTPCode`.
+    private let totpItemDisplayStateService: TOTPItemDisplayStateService
 
     /// A service for refreshing TOTP codes.
     private let totpService: TOTPService
