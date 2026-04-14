@@ -195,22 +195,6 @@ class AppSettingsStoreTests: BitwardenTestCase {
         XCTAssertFalse(userDefaults.bool(forKey: "bwaPreferencesStorage:disableFavicon"))
     }
 
-    /// `showNextTotpCode` returns `false` if there isn't a previously stored value.
-    func test_showNextTotpCode_isInitiallyFalse() {
-        XCTAssertFalse(subject.showNextTotpCode)
-    }
-
-    /// `showNextTotpCode` can be used to get and set the persisted value in user defaults.
-    func test_showNextTotpCode_withValue() {
-        subject.showNextTotpCode = true
-        XCTAssertTrue(subject.showNextTotpCode)
-        XCTAssertTrue(userDefaults.bool(forKey: "bwaPreferencesStorage:showNextTotpCode"))
-
-        subject.showNextTotpCode = false
-        XCTAssertFalse(subject.showNextTotpCode)
-        XCTAssertFalse(userDefaults.bool(forKey: "bwaPreferencesStorage:showNextTotpCode"))
-    }
-
     /// `hasSyncedAccount(name:)` can be used to get and set if the user has synced previously with a given account.
     /// Account names should be hashed so as to not appear in plaintext.
     func test_hasSyncedAccount_withValue() {
@@ -281,6 +265,22 @@ class AppSettingsStoreTests: BitwardenTestCase {
         subject.migrationVersion = 2
         XCTAssertEqual(userDefaults.integer(forKey: "bwaPreferencesStorage:migrationVersion"), 2)
         XCTAssertEqual(subject.migrationVersion, 2)
+    }
+
+    /// `showNextTotpCode` returns `false` if there isn't a previously stored value.
+    func test_showNextTotpCode_isInitiallyFalse() {
+        XCTAssertFalse(subject.showNextTotpCode)
+    }
+
+    /// `showNextTotpCode` can be used to get and set the persisted value in user defaults.
+    func test_showNextTotpCode_withValue() {
+        subject.showNextTotpCode = true
+        XCTAssertTrue(subject.showNextTotpCode)
+        XCTAssertTrue(userDefaults.bool(forKey: "bwaPreferencesStorage:showNextTotpCode"))
+
+        subject.showNextTotpCode = false
+        XCTAssertFalse(subject.showNextTotpCode)
+        XCTAssertFalse(userDefaults.bool(forKey: "bwaPreferencesStorage:showNextTotpCode"))
     }
 
     /// `.vaultTimeout(userId:)` returns the correct vault timeout value.
