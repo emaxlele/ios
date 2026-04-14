@@ -42,15 +42,12 @@ final class TOTPServiceTests: BitwardenTestCase {
     // MARK: Tests
 
     func test_getNextTOTPCode_usesNextPeriodDate() async throws {
-        // Arrange
         let fixedTime = Date(timeIntervalSinceReferenceDate: 1_000_000)
         timeProvider.timeConfig = .mockTime(fixedTime)
         let key = try subject.getTOTPConfiguration(key: .base32Key)
 
-        // Act
         let result = try await subject.getNextTOTPCode(for: key)
 
-        // Assert
         let expectedDate = fixedTime.addingTimeInterval(Double(key.period))
         XCTAssertEqual(result.codeGenerationDate, expectedDate)
     }
