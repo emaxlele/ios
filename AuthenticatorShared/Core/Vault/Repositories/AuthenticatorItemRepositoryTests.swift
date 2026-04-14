@@ -199,7 +199,7 @@ class AuthenticatorItemRepositoryTests: BitwardenTestCase { // swiftlint:disable
         )
         totpItemDisplayStateService.getShowNextTOTPCodeReturnValue = true
         totpService.getTotpCodeResult = .success(newCodeModel)
-        totpService.getNextTotpCodeResult = .success(nextCodeModel)
+        totpService.getNextTOTPCodeResult = .success(nextCodeModel)
 
         let item = ItemListItem.fixture()
         let sharedItem = ItemListItem.fixtureShared()
@@ -243,7 +243,7 @@ class AuthenticatorItemRepositoryTests: BitwardenTestCase { // swiftlint:disable
         let actual = try XCTUnwrap(result[0])
         XCTAssertEqual(actual.totpCodeModel, newCodeModel)
         XCTAssertNil(actual.nextTotpCodeModel)
-        XCTAssertNil(totpService.getNextTotpCodeKey)
+        XCTAssertNil(totpService.getNextTOTPCodeKey)
     }
 
     /// `saveTemporarySharedItem(_)` saves a temporary item into the Authenticator Bridge shared store.

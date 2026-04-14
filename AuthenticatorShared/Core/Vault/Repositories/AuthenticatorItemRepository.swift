@@ -358,7 +358,7 @@ extension DefaultAuthenticatorItemRepository: AuthenticatorItemRepository {
             }
             let code = try await totpService.getTotpCode(for: keyModel)
             let nextCode = await totpItemDisplayStateService.getShowNextTOTPCode()
-                ? try await totpService.getNextTotpCode(for: keyModel)
+                ? try await totpService.getNextTOTPCode(for: keyModel)
                 : nil
             return item.with(newTotpModel: code, nextTotpModel: nextCode)
         }
