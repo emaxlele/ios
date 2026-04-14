@@ -131,6 +131,27 @@ class SettingsProcessorTests: BitwardenTestCase { // swiftlint:disable:this type
         XCTAssertEqual(subject.state.defaultSaveOption, .saveToBitwarden)
     }
 
+    /// `perform(_:)` with `.loadData` loads the `showNextTOTPCode` value from the state service.
+    @MainActor
+    func test_perform_loadData_showNextTOTPCode_true() async throws {
+        totpItemDisplayStateService.getShowNextTOTPCodeReturnValue = true
+
+        await subject.perform(.loadData)
+
+        XCTAssertTrue(subject.state.showNextTOTPCode)
+    }
+
+    /// `perform(_:)` with `.loadData` loads the `showNextTOTPCode` value from the state service.
+    @MainActor
+    func test_perform_loadData_showNextTOTPCode_false() async throws {
+        subject.state.showNextTOTPCode = true
+        totpItemDisplayStateService.getShowNextTOTPCodeReturnValue = false
+
+        await subject.perform(.loadData)
+
+        XCTAssertFalse(subject.state.showNextTOTPCode)
+    }
+
     /// Performing `.loadData` sets the sync related flags correctly when the sync is off.
     @MainActor
     func test_perform_loadData_syncFlagEnabled_syncOff() async throws {
@@ -236,6 +257,28 @@ class SettingsProcessorTests: BitwardenTestCase { // swiftlint:disable:this type
         XCTAssertNil(subject.state.flightRecorderState.activeLog)
     }
 
+    /// `perform(_:)` with `.toggleShowNextTOTPCode(false)` updates the state and persists the value.
+    @MainActor
+    func test_perform_toggleShowNextTOTPCode_false() async {
+        subject.state.showNextTOTPCode = true
+
+        await subject.perform(.toggleShowNextTOTPCode(false))
+
+        XCTAssertFalse(subject.state.showNextTOTPCode)
+        XCTAssertEqual(totpItemDisplayStateService.setShowNextTOTPCodeReceivedValue, false)
+    }
+
+    /// `perform(_:)` with `.toggleShowNextTOTPCode(true)` updates the state and persists the value.
+    @MainActor
+    func test_perform_toggleShowNextTOTPCode_true() async {
+        subject.state.showNextTOTPCode = false
+
+        await subject.perform(.toggleShowNextTOTPCode(true))
+
+        XCTAssertTrue(subject.state.showNextTOTPCode)
+        XCTAssertEqual(totpItemDisplayStateService.setShowNextTOTPCodeReceivedValue, true)
+    }
+
     /// Performing `.toggleUnlockWithBiometrics` with a `false` value disables biometric unlock and resets the
     /// session timeout to `.never`
     @MainActor
@@ -263,49 +306,6 @@ class SettingsProcessorTests: BitwardenTestCase { // swiftlint:disable:this type
 
         XCTAssertNotNil(biometricsRepository.setBiometricUnlockKeyReceivedArguments?.authKey)
         XCTAssertEqual(subject.state.sessionTimeoutValue, .onAppRestart)
-    }
-
-    /// `perform(_:)` with `.toggleShowNextTOTPCode(false)` updates the state and persists the value.
-    @MainActor
-    func test_perform_toggleShowNextTOTPCode_false() async {
-        subject.state.showNextTOTPCode = true
-
-        await subject.perform(.toggleShowNextTOTPCode(false))
-
-        XCTAssertFalse(subject.state.showNextTOTPCode)
-        XCTAssertEqual(totpItemDisplayStateService.setShowNextTOTPCodeReceivedValue, false)
-    }
-
-    /// `perform(_:)` with `.toggleShowNextTOTPCode(true)` updates the state and persists the value.
-    @MainActor
-    func test_perform_toggleShowNextTOTPCode_true() async {
-        subject.state.showNextTOTPCode = false
-
-        await subject.perform(.toggleShowNextTOTPCode(true))
-
-        XCTAssertTrue(subject.state.showNextTOTPCode)
-        XCTAssertEqual(totpItemDisplayStateService.setShowNextTOTPCodeReceivedValue, true)
-    }
-
-    /// `perform(_:)` with `.loadData` loads the `showNextTOTPCode` value from the state service.
-    @MainActor
-    func test_perform_loadData_showNextTOTPCode_true() async throws {
-        totpItemDisplayStateService.getShowNextTOTPCodeReturnValue = true
-
-        await subject.perform(.loadData)
-
-        XCTAssertTrue(subject.state.showNextTOTPCode)
-    }
-
-    /// `perform(_:)` with `.loadData` loads the `showNextTOTPCode` value from the state service.
-    @MainActor
-    func test_perform_loadData_showNextTOTPCode_false() async throws {
-        subject.state.showNextTOTPCode = true
-        totpItemDisplayStateService.getShowNextTOTPCodeReturnValue = false
-
-        await subject.perform(.loadData)
-
-        XCTAssertFalse(subject.state.showNextTOTPCode)
     }
 
     /// Receiving `.backupTapped` shows an alert for the backup information.
