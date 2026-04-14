@@ -1,24 +1,23 @@
 import BitwardenKit
 import BitwardenKitMocks
-import XCTest
+import Foundation
+import Testing
 
 @testable import AuthenticatorShared
 
 // MARK: - TOTPServiceTests
 
-final class TOTPServiceTests: BitwardenTestCase {
+struct TOTPServiceTests {
     // MARK: Properties
 
-    var clientService: MockClientService!
-    var errorReporter: MockErrorReporter!
-    var timeProvider: MockTimeProvider!
-    var subject: DefaultTOTPService!
+    let clientService: MockClientService
+    let errorReporter: MockErrorReporter
+    let timeProvider: MockTimeProvider
+    let subject: DefaultTOTPService
 
-    // MARK: Setup & Teardown
+    // MARK: Initialization
 
-    override func setUp() {
-        super.setUp()
-
+    init() {
         clientService = MockClientService()
         errorReporter = MockErrorReporter()
         timeProvider = MockTimeProvider(.currentTime)
@@ -30,18 +29,11 @@ final class TOTPServiceTests: BitwardenTestCase {
         )
     }
 
-    override func tearDown() {
-        super.tearDown()
-
-        clientService = nil
-        errorReporter = nil
-        timeProvider = nil
-        subject = nil
-    }
-
     // MARK: Tests
 
-    func test_getNextTOTPCode_usesNextPeriodDate() async throws {
+    /// `getNextTOTPCode(for:)` generates a code dated one period in the future from the current time.
+    @Test
+    func getNextTOTPCode_usesNextPeriodDate() async throws {
         let fixedTime = Date(timeIntervalSinceReferenceDate: 1_000_000)
         timeProvider.timeConfig = .mockTime(fixedTime)
         let key = try subject.getTOTPConfiguration(key: .base32Key)
@@ -49,35 +41,32 @@ final class TOTPServiceTests: BitwardenTestCase {
         let result = try await subject.getNextTOTPCode(for: key)
 
         let expectedDate = fixedTime.addingTimeInterval(Double(key.period))
-        XCTAssertEqual(result.codeGenerationDate, expectedDate)
+        #expect(result.codeGenerationDate == expectedDate)
     }
 
-    func test_default_getTOTPConfiguration_base32() throws {
-        let config = try subject
-            .getTOTPConfiguration(key: .base32Key)
-        XCTAssertNotNil(config)
+    /// `getTOTPConfiguration(key:)` succeeds when given a base32-encoded key.
+    @Test
+    func getTOTPConfiguration_base32_succeeds() throws {
+        _ = try subject.getTOTPConfiguration(key: .base32Key)
     }
 
-    func test_default_getTOTPConfiguration_otp() throws {
-        let config = try subject
-            .getTOTPConfiguration(key: .otpAuthUriKeyComplete)
-        XCTAssertNotNil(config)
+    /// `getTOTPConfiguration(key:)` succeeds when given a complete OTP auth URI.
+    @Test
+    func getTOTPConfiguration_otpAuthUri_succeeds() throws {
+        _ = try subject.getTOTPConfiguration(key: .otpAuthUriKeyComplete)
     }
 
-    func test_default_getTOTPConfiguration_steam() throws {
-        let config = try subject
-            .getTOTPConfiguration(key: .steamUriKey)
-        XCTAssertNotNil(config)
+    /// `getTOTPConfiguration(key:)` succeeds when given a Steam URI key.
+    @Test
+    func getTOTPConfiguration_steamUri_succeeds() throws {
+        _ = try subject.getTOTPConfiguration(key: .steamUriKey)
     }
 
-    func test_default_getTOTPConfiguration_failure() {
-        XCTAssertThrowsError(
-            try subject.getTOTPConfiguration(key: "1234"),
-        ) { error in
-            XCTAssertEqual(
-                error as? TOTPKeyError,
-                .invalidKeyFormat,
-            )
+    /// `getTOTPConfiguration(key:)` throws `.invalidKeyFormat` for an unrecognized key string.
+    @Test
+    func getTOTPConfiguration_invalidKey_throwsInvalidKeyFormat() {
+        #expect(throws: TOTPKeyError.invalidKeyFormat) {
+            try subject.getTOTPConfiguration(key: "1234")
         }
     }
 }
