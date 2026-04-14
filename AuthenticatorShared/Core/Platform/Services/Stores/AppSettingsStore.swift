@@ -345,7 +345,7 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
             case let .serverConfig(userId):
                 "serverConfig_\(userId)"
             case .showNextTOTPCode:
-                "showNextTotpCode"
+                "showNextTOTPCode"
             case let .vaultTimeout(userId):
                 "vaultTimeout_\(userId)"
             }
