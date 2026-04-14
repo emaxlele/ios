@@ -13,6 +13,7 @@ import Testing
 struct BillingAPIServiceTests {
     // MARK: Properties
 
+    var activeAccountStateProvider: MockActiveAccountStateProvider!
     var client: MockHTTPClient!
     var stateService: MockStateService!
     var subject: BillingAPIService!
@@ -20,9 +21,14 @@ struct BillingAPIServiceTests {
     // MARK: Initialization
 
     init() {
+        activeAccountStateProvider = MockActiveAccountStateProvider()
         client = MockHTTPClient()
         stateService = MockStateService()
-        subject = APIService(client: client, stateService: stateService)
+        subject = APIService(
+            activeAccountStateProvider: activeAccountStateProvider,
+            client: client,
+            stateService: stateService,
+        )
     }
 
     // MARK: Tests
