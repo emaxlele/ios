@@ -47,19 +47,22 @@ struct TOTPServiceTests {
     /// `getTOTPConfiguration(key:)` succeeds when given a base32-encoded key.
     @Test
     func getTOTPConfiguration_base32_succeeds() throws {
-        _ = try subject.getTOTPConfiguration(key: .base32Key)
+        let config = try subject.getTOTPConfiguration(key: .base32Key)
+        #expect(config != nil)
     }
 
     /// `getTOTPConfiguration(key:)` succeeds when given a complete OTP auth URI.
     @Test
     func getTOTPConfiguration_otpAuthUri_succeeds() throws {
-        _ = try subject.getTOTPConfiguration(key: .otpAuthUriKeyComplete)
+        let config = try subject.getTOTPConfiguration(key: .otpAuthUriKeyComplete)
+        #expect(config != nil)
     }
 
     /// `getTOTPConfiguration(key:)` succeeds when given a Steam URI key.
     @Test
     func getTOTPConfiguration_steamUri_succeeds() throws {
-        _ = try subject.getTOTPConfiguration(key: .steamUriKey)
+        let config = try subject.getTOTPConfiguration(key: .steamUriKey)
+        #expect(config != nil)
     }
 
     /// `getTOTPConfiguration(key:)` throws `.invalidKeyFormat` for an unrecognized key string.
