@@ -19,8 +19,8 @@ class AuthenticatorItemRepositoryTests: BitwardenTestCase { // swiftlint:disable
     var cryptographyService: MockCryptographyService!
     var errorReporter: MockErrorReporter!
     var sharedItemService: MockAuthenticatorBridgeItemService!
-    var stateService: MockStateService!
     var subject: DefaultAuthenticatorItemRepository!
+    var totpItemDisplayStateService: MockTOTPItemDisplayStateService!
     var timeProvider: MockTimeProvider!
     var totpService: MockTOTPService!
 
@@ -36,8 +36,8 @@ class AuthenticatorItemRepositoryTests: BitwardenTestCase { // swiftlint:disable
         cryptographyService = MockCryptographyService()
         errorReporter = MockErrorReporter()
         sharedItemService = MockAuthenticatorBridgeItemService()
-        stateService = MockStateService()
         timeProvider = MockTimeProvider(.mockTime(Date()))
+        totpItemDisplayStateService = MockTOTPItemDisplayStateService()
         totpService = MockTOTPService()
 
         subject = DefaultAuthenticatorItemRepository(
@@ -47,8 +47,8 @@ class AuthenticatorItemRepositoryTests: BitwardenTestCase { // swiftlint:disable
             cryptographyService: cryptographyService,
             errorReporter: errorReporter,
             sharedItemService: sharedItemService,
-            stateService: stateService,
             timeProvider: timeProvider,
+            totpItemDisplayStateService: totpItemDisplayStateService,
             totpService: totpService,
         )
     }
@@ -61,8 +61,8 @@ class AuthenticatorItemRepositoryTests: BitwardenTestCase { // swiftlint:disable
         authenticatorItemService = nil
         cryptographyService = nil
         sharedItemService = nil
-        stateService = nil
         subject = nil
+        totpItemDisplayStateService = nil
         timeProvider = nil
     }
 
@@ -196,7 +196,7 @@ class AuthenticatorItemRepositoryTests: BitwardenTestCase { // swiftlint:disable
             codeGenerationDate: timeProvider.presentTime,
             period: 30,
         )
-        stateService.showNextTotpCode = true
+        totpItemDisplayStateService.showNextTotpCode = true
         totpService.getTotpCodeResult = .success(newCodeModel)
         totpService.getNextTotpCodeResult = .success(nextCodeModel)
 
@@ -233,7 +233,7 @@ class AuthenticatorItemRepositoryTests: BitwardenTestCase { // swiftlint:disable
             codeGenerationDate: timeProvider.presentTime,
             period: 30,
         )
-        stateService.showNextTotpCode = false
+        totpItemDisplayStateService.showNextTotpCode = false
         totpService.getTotpCodeResult = .success(newCodeModel)
 
         let item = ItemListItem.fixture()

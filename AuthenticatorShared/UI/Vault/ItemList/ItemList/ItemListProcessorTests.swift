@@ -24,6 +24,7 @@ class ItemListProcessorTests: BitwardenTestCase { // swiftlint:disable:this type
     var notificationCenterService: MockNotificationCenterService!
     var pasteboardService: MockPasteboardService!
     var stateService: MockStateService!
+    var totpItemDisplayStateService: MockTOTPItemDisplayStateService!
     var totpService: MockTOTPService!
     var subject: ItemListProcessor!
     var totpExpirationManagerForItems: MockTOTPExpirationManager!
@@ -46,6 +47,7 @@ class ItemListProcessorTests: BitwardenTestCase { // swiftlint:disable:this type
         notificationCenterService = MockNotificationCenterService()
         pasteboardService = MockPasteboardService()
         stateService = MockStateService()
+        totpItemDisplayStateService = MockTOTPItemDisplayStateService()
         totpService = MockTOTPService()
 
         totpExpirationManagerForItems = MockTOTPExpirationManager()
@@ -68,6 +70,7 @@ class ItemListProcessorTests: BitwardenTestCase { // swiftlint:disable:this type
             pasteboardService: pasteboardService,
             stateService: stateService,
             totpExpirationManagerFactory: totpExpirationManagerFactory,
+            totpItemDisplayStateService: totpItemDisplayStateService,
             totpService: totpService,
         )
 
@@ -91,6 +94,7 @@ class ItemListProcessorTests: BitwardenTestCase { // swiftlint:disable:this type
         notificationCenterService = nil
         pasteboardService = nil
         stateService = nil
+        totpItemDisplayStateService = nil
         totpService = nil
         coordinator = nil
         subject = nil
@@ -179,7 +183,7 @@ class ItemListProcessorTests: BitwardenTestCase { // swiftlint:disable:this type
     /// `perform(_:)` with `.appeared` sets `showNextTotpCode` from the state service when the value is `true`.
     @MainActor
     func test_perform_appeared_setsShowNextTotpCode_true() {
-        stateService.showNextTotpCode = true
+        totpItemDisplayStateService.showNextTotpCode = true
 
         let task = Task {
             await subject.perform(.appeared)
@@ -195,7 +199,7 @@ class ItemListProcessorTests: BitwardenTestCase { // swiftlint:disable:this type
     @MainActor
     func test_perform_appeared_setsShowNextTotpCode_false() {
         subject.state.showNextTotpCode = true
-        stateService.showNextTotpCode = false
+        totpItemDisplayStateService.showNextTotpCode = false
 
         let task = Task {
             await subject.perform(.appeared)

@@ -111,8 +111,8 @@ class DefaultAuthenticatorItemRepository {
     /// Service to interface with the application.
     private let application: Application
 
-    /// Service for accessing app-wide state, used to read settings such as `showNextTotpCode`.
-    private let stateService: StateService
+    /// Service for managing TOTP item display state, used to read settings such as `showNextTotpCode`.
+    private let totpItemDisplayStateService: TOTPItemDisplayStateService
 
     /// Service from which to fetch locally stored Authenticator items.
     private let authenticatorItemService: AuthenticatorItemService
@@ -150,8 +150,8 @@ class DefaultAuthenticatorItemRepository {
     ///   - sharedItemService: Service to fetch items from the shared CoreData store - shared from
     ///     the main Bitwarden PM app.
     ///   - errorReporter: Error Reporter for any errors encountered
-    ///   - stateService: Service for accessing app-wide state.
     ///   - timeProvider: A protocol wrapping the present time.
+    ///   - totpItemDisplayStateService: Service for managing TOTP item display state.
     ///   - totpService: A service for refreshing TOTP codes.
     init(
         application: Application,
@@ -160,8 +160,8 @@ class DefaultAuthenticatorItemRepository {
         cryptographyService: CryptographyService,
         errorReporter: ErrorReporter,
         sharedItemService: AuthenticatorBridgeItemService,
-        stateService: StateService,
         timeProvider: TimeProvider,
+        totpItemDisplayStateService: TOTPItemDisplayStateService,
         totpService: TOTPService,
     ) {
         self.application = application
@@ -170,8 +170,8 @@ class DefaultAuthenticatorItemRepository {
         self.cryptographyService = cryptographyService
         self.errorReporter = errorReporter
         self.sharedItemService = sharedItemService
-        self.stateService = stateService
         self.timeProvider = timeProvider
+        self.totpItemDisplayStateService = totpItemDisplayStateService
         self.totpService = totpService
     }
 
@@ -357,7 +357,7 @@ extension DefaultAuthenticatorItemRepository: AuthenticatorItemRepository {
                 return item
             }
             let code = try await totpService.getTotpCode(for: keyModel)
-            let nextCode = await stateService.getShowNextTotpCode()
+            let nextCode = await totpItemDisplayStateService.getShowNextTotpCode()
                 ? try await totpService.getNextTotpCode(for: keyModel)
                 : nil
             return item.with(newTotpModel: code, nextTotpModel: nextCode)

@@ -20,9 +20,6 @@ class MockStateService: StateService {
     var secretKeyValues = [String: String]()
     var serverConfig = [String: ServerConfig]()
     var setSecretKeyResult: Result<Void, Error> = .success(())
-    var showNextTotpCode = false
-    var showWebIcons = true
-    var showWebIconsSubject = CurrentValueSubject<Bool, Never>(true)
     var timeProvider = MockTimeProvider(.currentTime)
     var vaultTimeout = SessionTimeoutValue.never
 
@@ -55,14 +52,6 @@ class MockStateService: StateService {
         return serverConfig[userId]
     }
 
-    func getShowNextTotpCode() async -> Bool {
-        showNextTotpCode
-    }
-
-    func getShowWebIcons() async -> Bool {
-        showWebIcons
-    }
-
     func getVaultTimeout() async -> SessionTimeoutValue {
         vaultTimeout
     }
@@ -79,14 +68,6 @@ class MockStateService: StateService {
 
     func setFlightRecorderData(_ data: FlightRecorderData?) async {
         flightRecorderData = data
-    }
-
-    func setShowNextTotpCode(_ value: Bool) async {
-        showNextTotpCode = value
-    }
-
-    func setShowWebIcons(_ showWebIcons: Bool) async {
-        self.showWebIcons = showWebIcons
     }
 
     func appThemePublisher() async -> AnyPublisher<AppTheme, Never> {
@@ -109,10 +90,6 @@ class MockStateService: StateService {
     func setServerConfig(_ config: ServerConfig?, userId: String?) async throws {
         let userId = try unwrapUserId(userId)
         serverConfig[userId] = config
-    }
-
-    func showWebIconsPublisher() async -> AnyPublisher<Bool, Never> {
-        showWebIconsSubject.eraseToAnyPublisher()
     }
 
     /// Attempts to convert a possible user id into a known account id.

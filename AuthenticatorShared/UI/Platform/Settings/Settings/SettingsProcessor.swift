@@ -20,6 +20,7 @@ final class SettingsProcessor: StateProcessor<SettingsState, SettingsAction, Set
         & HasFlightRecorder
         & HasPasteboardService
         & HasStateService
+        & HasTOTPItemDisplayStateService
 
     // MARK: Private Properties
 
@@ -81,7 +82,7 @@ final class SettingsProcessor: StateProcessor<SettingsState, SettingsAction, Set
             await streamFlightRecorderLog()
         case let .toggleShowNextTotpCode(isOn):
             state.showNextTotpCode = isOn
-            await services.stateService.setShowNextTotpCode(isOn)
+            await services.totpItemDisplayStateService.setShowNextTotpCode(isOn)
         case let .toggleUnlockWithBiometrics(isOn):
             await setBiometricAuth(isOn)
         }
@@ -164,7 +165,7 @@ final class SettingsProcessor: StateProcessor<SettingsState, SettingsAction, Set
         state.sessionTimeoutValue = loadTimeoutValue(biometricsEnabled: state.biometricUnlockStatus.isEnabled)
         state.shouldShowDefaultSaveOption = await services.authenticatorItemRepository.isPasswordManagerSyncActive()
         state.defaultSaveOption = services.appSettingsStore.defaultSaveOption
-        state.showNextTotpCode = await services.stateService.getShowNextTotpCode()
+        state.showNextTotpCode = await services.totpItemDisplayStateService.getShowNextTotpCode()
     }
 
     /// Load the Session Timeout Value.
