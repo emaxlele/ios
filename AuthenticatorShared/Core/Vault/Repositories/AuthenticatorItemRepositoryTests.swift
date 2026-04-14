@@ -1,6 +1,5 @@
 import AuthenticatorBridgeKit
 import AuthenticatorBridgeKitMocks
-import AuthenticatorSharedMocks
 import BitwardenKit
 import BitwardenKitMocks
 import BitwardenResources
@@ -9,6 +8,7 @@ import TestHelpers
 import XCTest
 
 @testable import AuthenticatorShared
+@testable import AuthenticatorSharedMocks
 
 class AuthenticatorItemRepositoryTests: BitwardenTestCase { // swiftlint:disable:this type_body_length
     // MARK: Properties
@@ -197,7 +197,7 @@ class AuthenticatorItemRepositoryTests: BitwardenTestCase { // swiftlint:disable
             codeGenerationDate: timeProvider.presentTime,
             period: 30,
         )
-        totpItemDisplayStateService.showNextTotpCode = true
+        totpItemDisplayStateService.getShowNextTotpCodeReturnValue = true
         totpService.getTotpCodeResult = .success(newCodeModel)
         totpService.getNextTotpCodeResult = .success(nextCodeModel)
 
@@ -234,7 +234,7 @@ class AuthenticatorItemRepositoryTests: BitwardenTestCase { // swiftlint:disable
             codeGenerationDate: timeProvider.presentTime,
             period: 30,
         )
-        totpItemDisplayStateService.showNextTotpCode = false
+        totpItemDisplayStateService.getShowNextTotpCodeReturnValue = false
         totpService.getTotpCodeResult = .success(newCodeModel)
 
         let item = ItemListItem.fixture()

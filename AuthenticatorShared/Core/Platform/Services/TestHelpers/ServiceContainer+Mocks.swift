@@ -1,10 +1,10 @@
-import AuthenticatorSharedMocks
 import BitwardenKit
 import BitwardenKitMocks
 import BitwardenSdk
 import Networking
 
 @testable import AuthenticatorShared
+@testable import AuthenticatorSharedMocks
 
 extension ServiceContainer {
     static func withMocks(

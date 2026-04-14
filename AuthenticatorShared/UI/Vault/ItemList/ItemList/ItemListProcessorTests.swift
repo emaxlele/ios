@@ -1,4 +1,3 @@
-import AuthenticatorSharedMocks
 import BitwardenKit
 import BitwardenKitMocks
 import BitwardenResources
@@ -8,6 +7,7 @@ import XCTest
 // swiftlint:disable file_length
 
 @testable import AuthenticatorShared
+@testable import AuthenticatorSharedMocks
 
 // MARK: - ItemListProcessorTests
 
@@ -49,6 +49,7 @@ class ItemListProcessorTests: BitwardenTestCase { // swiftlint:disable:this type
         pasteboardService = MockPasteboardService()
         stateService = MockStateService()
         totpItemDisplayStateService = MockTOTPItemDisplayStateService()
+        totpItemDisplayStateService.getShowNextTotpCodeReturnValue = false
         totpService = MockTOTPService()
 
         totpExpirationManagerForItems = MockTOTPExpirationManager()
@@ -184,7 +185,7 @@ class ItemListProcessorTests: BitwardenTestCase { // swiftlint:disable:this type
     /// `perform(_:)` with `.appeared` sets `showNextTotpCode` from the state service when the value is `true`.
     @MainActor
     func test_perform_appeared_setsShowNextTotpCode_true() {
-        totpItemDisplayStateService.showNextTotpCode = true
+        totpItemDisplayStateService.getShowNextTotpCodeReturnValue = true
 
         let task = Task {
             await subject.perform(.appeared)
@@ -200,7 +201,7 @@ class ItemListProcessorTests: BitwardenTestCase { // swiftlint:disable:this type
     @MainActor
     func test_perform_appeared_setsShowNextTotpCode_false() {
         subject.state.showNextTotpCode = true
-        totpItemDisplayStateService.showNextTotpCode = false
+        totpItemDisplayStateService.getShowNextTotpCodeReturnValue = false
 
         let task = Task {
             await subject.perform(.appeared)

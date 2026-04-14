@@ -1,10 +1,10 @@
-import AuthenticatorSharedMocks
 import BitwardenKit
 import BitwardenKitMocks
 import BitwardenResources
 import XCTest
 
 @testable import AuthenticatorShared
+@testable import AuthenticatorSharedMocks
 
 class SettingsProcessorTests: BitwardenTestCase { // swiftlint:disable:this type_body_length
     // MARK: Properties
@@ -36,6 +36,7 @@ class SettingsProcessorTests: BitwardenTestCase { // swiftlint:disable:this type
         pasteboardService = MockPasteboardService()
         stateService = MockStateService()
         totpItemDisplayStateService = MockTOTPItemDisplayStateService()
+        totpItemDisplayStateService.getShowNextTotpCodeReturnValue = false
 
         biometricsRepository.getBiometricUnlockStatusReturnValue = .notAvailable
 
@@ -272,7 +273,7 @@ class SettingsProcessorTests: BitwardenTestCase { // swiftlint:disable:this type
         await subject.perform(.toggleShowNextTotpCode(false))
 
         XCTAssertFalse(subject.state.showNextTotpCode)
-        XCTAssertFalse(totpItemDisplayStateService.showNextTotpCode)
+        XCTAssertEqual(totpItemDisplayStateService.setShowNextTotpCodeReceivedValue, false)
     }
 
     /// `perform(_:)` with `.toggleShowNextTotpCode(true)` updates the state and persists the value.
@@ -283,13 +284,13 @@ class SettingsProcessorTests: BitwardenTestCase { // swiftlint:disable:this type
         await subject.perform(.toggleShowNextTotpCode(true))
 
         XCTAssertTrue(subject.state.showNextTotpCode)
-        XCTAssertTrue(totpItemDisplayStateService.showNextTotpCode)
+        XCTAssertEqual(totpItemDisplayStateService.setShowNextTotpCodeReceivedValue, true)
     }
 
     /// `perform(_:)` with `.loadData` loads the `showNextTotpCode` value from the state service.
     @MainActor
     func test_perform_loadData_showNextTotpCode_true() async throws {
-        totpItemDisplayStateService.showNextTotpCode = true
+        totpItemDisplayStateService.getShowNextTotpCodeReturnValue = true
 
         await subject.perform(.loadData)
 
@@ -300,7 +301,7 @@ class SettingsProcessorTests: BitwardenTestCase { // swiftlint:disable:this type
     @MainActor
     func test_perform_loadData_showNextTotpCode_false() async throws {
         subject.state.showNextTotpCode = true
-        totpItemDisplayStateService.showNextTotpCode = false
+        totpItemDisplayStateService.getShowNextTotpCodeReturnValue = false
 
         await subject.perform(.loadData)
 
