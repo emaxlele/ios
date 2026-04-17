@@ -113,7 +113,7 @@ extension BitwardenSdk.MakeCredentialRequest: @retroactive CustomDebugStringConv
     public var debugDescription: String {
         let rpName = rp.name ?? "nil"
         let excludeList = excludeList?.description ?? "nil"
-        let extensions = extensions?.description ?? "nil"
+        let extensions = /*extensions?.description ??*/ "nil"
 
         return [
             "ClientDataHash: \(clientDataHash.asHexString())",

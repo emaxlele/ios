@@ -107,7 +107,7 @@ extension BitwardenSdk.ServerCommunicationConfig: @retroactive Codable {
                 SsoCookieVendorConfig(
                     idpLoginUrl: bootstrap.idpLoginUrl,
                     cookieName: bootstrap.cookieName,
-                    cookieDomain: bootstrap.cookieDomain,
+                    cookieDomain: bootstrap.cookieDomain, vaultUrl: nil,
                     cookieValue: nil,
                 ),
             ),
@@ -136,7 +136,7 @@ extension BitwardenSdk.ServerCommunicationConfig: @retroactive Codable {
                 SsoCookieVendorConfig(
                     idpLoginUrl: currentCookieConfig.idpLoginUrl,
                     cookieName: currentCookieConfig.cookieName,
-                    cookieDomain: currentCookieConfig.cookieDomain,
+                    cookieDomain: currentCookieConfig.cookieDomain, vaultUrl: nil,
                     cookieValue: fromSSOCookieConfig.cookieValue,
                 ),
             ),
@@ -163,7 +163,7 @@ extension BitwardenSdk.SsoCookieVendorConfig: @retroactive Codable {
         self.init(
             idpLoginUrl: idpLoginUrl,
             cookieName: cookieName,
-            cookieDomain: cookieDomain,
+            cookieDomain: cookieDomain, vaultUrl: nil,
             cookieValue: cookieValue,
         )
     }

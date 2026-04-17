@@ -50,7 +50,7 @@ final actor DefaultServerCommunicationConfigAPIService: ServerCommunicationConfi
         self.notificationCenterService = notificationCenterService
     }
 
-    func acquireCookies(hostname: String) async -> [BitwardenSdk.AcquiredCookie]? {
+    func acquireCookies(vaultUrl hostname: String) async -> [BitwardenSdk.AcquiredCookie]? {
         // Drop concurrent calls: an acquisition is already in flight.
         guard acquireCookiesContinuation == nil else {
             return nil

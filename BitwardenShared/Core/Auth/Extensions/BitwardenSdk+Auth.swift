@@ -14,6 +14,11 @@ extension BitwardenSdk.InitUserCryptoMethod {
             "Device Key"
         case .keyConnector:
             "Key Connector"
+        case .keyConnectorUrl(
+            url: let url,
+            keyConnectorKeyWrappedUserKey: let keyConnectorKeyWrappedUserKey
+        ):
+            "Key Connector Url"
         case .masterPasswordUnlock:
             "Master Password Unlock"
         case .pin:

@@ -1,8 +1,7 @@
 import BitwardenKit
 import BitwardenSdk
 
-/// `CipherRepository` implementation to be used on SDK client-managed state.
-final class SdkCipherRepository: BitwardenSdk.CipherRepository {
+final class SdkLocalUserDataKeyStateRepository: LocalUserDataKeyStateRepository {
     /// The data store for managing the persisted ciphers for the user.
     let cipherDataStore: CipherDataStore
     /// The service used by the application to report non-fatal errors.
@@ -24,44 +23,55 @@ final class SdkCipherRepository: BitwardenSdk.CipherRepository {
         self.errorReporter = errorReporter
         self.userId = userId
     }
-
+    
+    func get(id: String) async throws -> BitwardenSdk.LocalUserDataKeyState? {
+        try await cipherDataStore.fetchCipher(withId: id, userId: userId)
+    }
     func get(id: String) async throws -> BitwardenSdk.Cipher? {
         try await cipherDataStore.fetchCipher(withId: id, userId: userId)
     }
-
-    func has(id: String) async throws -> Bool {
-        let cipher = try await cipherDataStore.fetchCipher(withId: id, userId: userId)
-        return cipher != nil
-    }
-
-    func list() async throws -> [BitwardenSdk.Cipher] {
+    
+    func list() async throws -> [BitwardenSdk.LocalUserDataKeyState] {
         try await cipherDataStore.fetchAllCiphers(userId: userId)
+
+    }
+    
+    func set(id: String, value: BitwardenSdk.LocalUserDataKeyState) async throws {
+        guard id == value.id else {
+            throw BitwardenError.dataError("CipherRepository: Trying to update a cipher with mismatch IDs")
+        }
+        try await cipherDataStore.upsertCipher(value, userId: userId)
+
     }
 
-    func remove(id: String) async throws {
-        try await cipherDataStore.deleteCipher(id: id, userId: userId)
-    }
-
-    func setBulk(values: [String:BitwardenSdk.Cipher]) async throws {
+    func setBulk(values: [String : BitwardenSdk.LocalUserDataKeyState]) async throws {
         await values.asyncForEach { (id: String, value: Cipher) in
             try? await set(id: id, value: value)
         }
     }
+    
+    func remove(id: String) async throws {
+        try await cipherDataStore.deleteCipher(id: id, userId: userId)
+    }
 
+    
     func removeBulk(keys: [String]) async throws {
         await keys.asyncForEach { key in
             try? await remove(id: key)
         }
     }
+    
 
+    
     func removeAll() async throws {
         try await cipherDataStore.deleteAllCiphers(userId: userId)
     }
 
-    func set(id: String, value: BitwardenSdk.Cipher) async throws {
-        guard id == value.id else {
-            throw BitwardenError.dataError("CipherRepository: Trying to update a cipher with mismatch IDs")
-        }
-        try await cipherDataStore.upsertCipher(value, userId: userId)
+    
+    func has(id: String) async throws -> Bool {
+        let cipher = try await cipherDataStore.fetchCipher(withId: id, userId: userId)
+        return cipher != nil
     }
+    
+
 }

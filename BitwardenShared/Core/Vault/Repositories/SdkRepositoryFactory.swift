@@ -3,11 +3,11 @@ import BitwardenSdk
 
 /// A factory to create SDK repositories.
 protocol SdkRepositoryFactory { // sourcery: AutoMockable
-    /// Makes a `BitwardenSdk.CipherRepository` for the given `userId`.
+    /// Makes a `BitwardenSdk.Repositories` for the given `userId`.
     /// - Parameter userId: The user ID to use in the repository which belongs to the SDK instance
     /// the repository will be registered in.
     /// - Returns: The repository for the given `userId`.
-    func makeCipherRepository(userId: String) -> BitwardenSdk.CipherRepository
+    func makeCipherRepositories(userId: String?) -> BitwardenSdk.Repositories
 
     /// Makes a `BitwardenSdk.ServerCommunicationConfigRepository`.
     /// - Returns: The repository to use for server communication config.
@@ -46,12 +46,17 @@ struct DefaultSdkRepositoryFactory: SdkRepositoryFactory {
 
     // MARK: Methods
 
-    func makeCipherRepository(userId: String) -> BitwardenSdk.CipherRepository {
-        SdkCipherRepository(
+    func makeCipherRepositories(userId: String?) -> BitwardenSdk.Repositories {
+        let cipher = SdkCipherRepository(
             cipherDataStore: cipherDataStore,
             errorReporter: errorReporter,
-            userId: userId,
+            userId: userId ?? "",
         )
+        Repositories(cipher: cipher,
+                     folder: nil,
+                     userKeyState: nil,
+                     localUserDataKeyState: BitwardenSdk.LocalUserDataKeyStateRepository(userId: userId),
+                     ephemeralPinEnvelopeState: nil)
     }
 
     func makeServerCommunicationConfigRepository() -> BitwardenSdk.ServerCommunicationConfigRepository {

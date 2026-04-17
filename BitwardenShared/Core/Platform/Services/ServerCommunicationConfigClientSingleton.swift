@@ -143,7 +143,7 @@ actor DefaultServerCommunicationConfigClientSingleton: ServerCommunicationConfig
 
             try await client().setCommunicationType(
                 hostname: hostname,
-                config: commSettings,
+                request: SetCommunicationTypeRequest(bootstrap: .direct),
             )
         } catch {
             errorReporter.log(error: error)

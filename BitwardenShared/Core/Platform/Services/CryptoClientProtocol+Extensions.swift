@@ -29,7 +29,7 @@ extension CryptoClientProtocol {
                 kdfParams: account.kdf.sdkKdf,
                 email: account.profile.email,
                 accountCryptographicState: accountCryptographicState,
-                method: method,
+                method: method, upgradeToken: nil,
             ),
         )
     }
