@@ -215,6 +215,13 @@ protocol AppSettingsStore: AnyObject {
     ///
     func lastSyncTime(userId: String) -> Date?
 
+    /// Gets the local user data key states for the user ID.
+    ///
+    /// - Parameter userId: The user ID associated with the key states.
+    /// - Returns: A dictionary mapping key ID to encrypted wrapped key string.
+    ///
+    func localUserDataKeyStates(userId: String) -> [String: String]?
+
     /// Gets whether the account belonging to the user Id has been manually locked.
     /// - Parameter userId: The user ID associated with the account.
     /// - Returns: `true` if manually locked, `false` otherwise.
@@ -437,6 +444,14 @@ protocol AppSettingsStore: AnyObject {
     ///   - userId: The user ID associated with the last sync time.
     ///
     func setLastSyncTime(_ date: Date?, userId: String)
+
+    /// Sets the local user data key states for a user ID.
+    ///
+    /// - Parameters:
+    ///   - states: A dictionary mapping key ID to encrypted wrapped key string, or `nil` to clear.
+    ///   - userId: The user ID associated with the key states.
+    ///
+    func setLocalUserDataKeyStates(_ states: [String: String]?, userId: String)
 
     /// Sets whether the account belonging to the user Id has been manually locked.
     /// - Parameters
@@ -767,6 +782,7 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
         case learnNewLoginActionCardStatus
         case lastRequestToTurnOnCredentialProvider
         case lastSync(userId: String)
+        case localUserDataKeyStates(userId: String)
         case lastUserShouldConnectToWatch
         case learnGeneratorActionCardStatus
         case loginRequest
@@ -858,6 +874,8 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
                 "lastRequestToTurnOnCredentialProvider"
             case let .lastSync(userId):
                 "lastSync_\(userId)"
+            case let .localUserDataKeyStates(userId):
+                "localUserDataKeyStates_\(userId)"
             case .learnGeneratorActionCardStatus:
                 "learnGeneratorActionCardStatus"
             case .lastUserShouldConnectToWatch:
@@ -1107,6 +1125,10 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
         fetch(for: .lastSync(userId: userId)).map { Date(timeIntervalSince1970: $0) }
     }
 
+    func localUserDataKeyStates(userId: String) -> [String: String]? {
+        fetch(for: .localUserDataKeyStates(userId: userId))
+    }
+
     func manuallyLockedAccount(userId: String) -> Bool {
         fetch(for: .manuallyLockedAccount(userId: userId))
     }
@@ -1227,6 +1249,10 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
 
     func setLastSyncTime(_ date: Date?, userId: String) {
         store(date?.timeIntervalSince1970, for: .lastSync(userId: userId))
+    }
+
+    func setLocalUserDataKeyStates(_ states: [String: String]?, userId: String) {
+        store(states, for: .localUserDataKeyStates(userId: userId))
     }
 
     func setManuallyLockedAccount(_ isLocked: Bool, userId: String) {

@@ -51,6 +51,7 @@ class MockAppSettingsStore: AppSettingsStore { // swiftlint:disable:this type_bo
     var lastActiveTime = [String: Date]()
     var lastRequestToTurnOnCredentialProviderDate: Date? // swiftlint:disable:this identifier_name
     var lastSyncTimeByUserId = [String: Date]()
+    var localUserDataKeyStatesByUserId = [String: [String: String]]()
     var manuallyLockedAccounts = [String: Bool]()
     var masterPasswordHashes = [String: String]()
     var notificationsLastRegistrationDates = [String: Date]()
@@ -160,6 +161,10 @@ class MockAppSettingsStore: AppSettingsStore { // swiftlint:disable:this type_bo
 
     func lastSyncTime(userId: String) -> Date? {
         lastSyncTimeByUserId[userId]
+    }
+
+    func localUserDataKeyStates(userId: String) -> [String: String]? {
+        localUserDataKeyStatesByUserId[userId]
     }
 
     func manuallyLockedAccount(userId: String) -> Bool {
@@ -301,6 +306,10 @@ class MockAppSettingsStore: AppSettingsStore { // swiftlint:disable:this type_bo
 
     func setLastSyncTime(_ date: Date?, userId: String) {
         lastSyncTimeByUserId[userId] = date
+    }
+
+    func setLocalUserDataKeyStates(_ states: [String: String]?, userId: String) {
+        localUserDataKeyStatesByUserId[userId] = states
     }
 
     func setManuallyLockedAccount(_ isLocked: Bool, userId: String) {

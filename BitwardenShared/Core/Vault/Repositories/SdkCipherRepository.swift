@@ -42,7 +42,7 @@ final class SdkCipherRepository: BitwardenSdk.CipherRepository {
         try await cipherDataStore.deleteCipher(id: id, userId: userId)
     }
 
-    func setBulk(values: [String:BitwardenSdk.Cipher]) async throws {
+    func setBulk(values: [String: BitwardenSdk.Cipher]) async throws {
         await values.asyncForEach { (id: String, value: Cipher) in
             try? await set(id: id, value: value)
         }

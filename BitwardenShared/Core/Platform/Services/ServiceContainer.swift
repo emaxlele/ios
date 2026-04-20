@@ -593,6 +593,7 @@ public class ServiceContainer: Services { // swiftlint:disable:this type_body_le
             tokenProvider: tokenService,
         )
         let sdkRepositoryFactory = DefaultSdkRepositoryFactory(
+            appSettingsStore: appSettingsStore,
             cipherDataStore: dataStore,
             errorReporter: errorReporter,
             serverCommunicationConfigStateService: stateService,
@@ -1073,6 +1074,7 @@ public class ServiceContainer: Services { // swiftlint:disable:this type_body_le
             configService: configService,
             errorReporter: errorReporter,
             sdkRepositoryFactory: DefaultSdkRepositoryFactory(
+                appSettingsStore: appSettingsStore,
                 cipherDataStore: dataStore,
                 errorReporter: errorReporter,
                 serverCommunicationConfigStateService: stateService,

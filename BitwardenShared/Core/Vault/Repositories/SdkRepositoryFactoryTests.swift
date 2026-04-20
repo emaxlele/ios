@@ -9,6 +9,7 @@ import XCTest
 class SdkRepositoryFactoryTests: BitwardenTestCase {
     // MARK: Properties
 
+    var appSettingsStore: MockAppSettingsStore!
     var cipherDataStore: MockCipherDataStore!
     var errorReporter: MockErrorReporter!
     var serverCommunicationConfigStateService: MockServerCommunicationConfigStateService!
@@ -19,10 +20,12 @@ class SdkRepositoryFactoryTests: BitwardenTestCase {
     override func setUp() {
         super.setUp()
 
+        appSettingsStore = MockAppSettingsStore()
         cipherDataStore = MockCipherDataStore()
         errorReporter = MockErrorReporter()
         serverCommunicationConfigStateService = MockServerCommunicationConfigStateService()
         subject = DefaultSdkRepositoryFactory(
+            appSettingsStore: appSettingsStore,
             cipherDataStore: cipherDataStore,
             errorReporter: errorReporter,
             serverCommunicationConfigStateService: serverCommunicationConfigStateService,
@@ -32,6 +35,7 @@ class SdkRepositoryFactoryTests: BitwardenTestCase {
     override func tearDown() {
         super.tearDown()
 
+        appSettingsStore = nil
         cipherDataStore = nil
         errorReporter = nil
         serverCommunicationConfigStateService = nil
@@ -40,10 +44,14 @@ class SdkRepositoryFactoryTests: BitwardenTestCase {
 
     // MARK: Tests
 
-    /// `makeCipherRepository(userId:)` makes a cipher repository for the given user ID.
-    func test_makeCipherRepository() {
-        let repository = subject.makeCipherRepository(userId: "1")
-        XCTAssertTrue(repository is SdkCipherRepository)
+    /// `makeCipherRepositories(userId:)` returns repositories with a cipher and local user data key state repository.
+    func test_makeCipherRepositories() {
+        let repositories = subject.makeCipherRepositories(userId: "1")
+        XCTAssertNotNil(repositories.cipher)
+        XCTAssertNil(repositories.folder)
+        XCTAssertNil(repositories.userKeyState)
+        XCTAssertNotNil(repositories.localUserDataKeyState)
+        XCTAssertNil(repositories.ephemeralPinEnvelopeState)
     }
 
     /// `makeServerCommunicationConfigRepository()` makes a server communication config repository.

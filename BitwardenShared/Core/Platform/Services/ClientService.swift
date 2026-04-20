@@ -290,8 +290,8 @@ actor DefaultClientService: ClientService {
     ///   - client: The SDK client to configure.
     ///   - userId: The user ID the SDK client instance belongs to.
     func configureNewClient(_ client: BitwardenSdkClient, for userId: String) async {
-        client.platform().state().registerCipherRepository(
-            repository: sdkRepositoryFactory.makeCipherRepository(userId: userId),
+        client.platform().state().registerClientManagedRepositories(
+            repositories: sdkRepositoryFactory.makeCipherRepositories(userId: userId),
         )
 
         // Get the current config and load the flags.
@@ -323,7 +323,7 @@ actor DefaultClientService: ClientService {
             )
             let enableCipherKeyEncryption = cipherKeyEncryptionFlagEnabled && config.supportsCipherKeyEncryption()
 
-            try client.platform().loadFlags([
+            try await client.platform().loadFlags([
                 FeatureFlag.enableCipherKeyEncryption.rawValue: enableCipherKeyEncryption,
             ])
         } catch {

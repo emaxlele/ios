@@ -4,10 +4,6 @@ import BitwardenSdk
 
 /// A stub implementation of `ServerCommunicationConfigClientProtocol`.
 public final class StubServerCommunicationConfigClientProtocol: ServerCommunicationConfigClientProtocol {
-    public func setCommunicationType(hostname: String, request: BitwardenSdk.SetCommunicationTypeRequest) async throws {
-        
-    }
-    
     public init() {}
 
     public func acquireCookie(hostname: String) async throws {
@@ -27,6 +23,10 @@ public final class StubServerCommunicationConfigClientProtocol: ServerCommunicat
     }
 
     public func setCommunicationType(hostname: String, config: BitwardenSdk.ServerCommunicationConfig) async throws {
+        // no-op
+    }
+
+    public func setCommunicationType(hostname: String, request: BitwardenSdk.SetCommunicationTypeRequest) async throws {
         // no-op
     }
 }
