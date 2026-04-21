@@ -64,6 +64,7 @@ class StateServiceServerCommunicationConfigTests: BitwardenTestCase {
                     idpLoginUrl: "https://idp.example.com",
                     cookieName: "bwauth",
                     cookieDomain: "example.com",
+                    vaultUrl: nil,
                     cookieValue: [AcquiredCookie(name: "session", value: "token")],
                 ),
             ),

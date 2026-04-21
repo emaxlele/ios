@@ -131,20 +131,8 @@ actor DefaultServerCommunicationConfigClientSingleton: ServerCommunicationConfig
         }
 
         do {
-            var commSettings = ServerCommunicationConfig(communicationSettings: communicationSettings)
-            let localConfig = try await serverCommunicationConfigStateService.getServerCommunicationConfig(
-                hostname: hostname,
-            )
-            if let localConfig,
-               case .ssoCookieVendor = commSettings.bootstrap,
-               case .ssoCookieVendor = localConfig.bootstrap {
-                commSettings = commSettings.updateCookieValue(from: localConfig)
-            }
-
-            try await client().setCommunicationType(
-                hostname: hostname,
-                request: SetCommunicationTypeRequest(bootstrap: .direct),
-            )
+            let request = SetCommunicationTypeRequest(communicationSettings: communicationSettings)
+            try await client().setCommunicationType(hostname: hostname, request: request)
         } catch {
             errorReporter.log(error: error)
         }

@@ -65,6 +65,7 @@ class SsoCookieVendorConfigCodableTests: BitwardenTestCase {
             idpLoginUrl: "https://idp.example.com",
             cookieName: "bwauth",
             cookieDomain: "example.com",
+            vaultUrl: nil,
             cookieValue: [AcquiredCookie(name: "n", value: "v")],
         )
         let data = try encoder.encode(config)
@@ -81,6 +82,7 @@ class SsoCookieVendorConfigCodableTests: BitwardenTestCase {
             idpLoginUrl: nil,
             cookieName: nil,
             cookieDomain: nil,
+            vaultUrl: nil,
             cookieValue: nil,
         )
         let data = try encoder.encode(config)
@@ -142,6 +144,7 @@ class BootstrapConfigCodableTests: BitwardenTestCase {
             idpLoginUrl: "https://idp.example.com",
             cookieName: nil,
             cookieDomain: nil,
+            vaultUrl: nil,
             cookieValue: nil,
         )
         let data = try encoder.encode(BootstrapConfig.ssoCookieVendor(config))
@@ -198,6 +201,7 @@ class BootstrapConfigCodableTests: BitwardenTestCase {
             idpLoginUrl: "https://idp.example.com",
             cookieName: "bwauth",
             cookieDomain: "example.com",
+            vaultUrl: nil,
             cookieValue: nil,
         )
         let original = BootstrapConfig.ssoCookieVendor(config)
@@ -234,6 +238,7 @@ class ServerCommunicationConfigCodableTests: BitwardenTestCase {
             idpLoginUrl: "https://idp.example.com",
             cookieName: nil,
             cookieDomain: nil,
+            vaultUrl: nil,
             cookieValue: nil,
         )
         let subject = ServerCommunicationConfig(bootstrap: .ssoCookieVendor(config))
@@ -338,12 +343,14 @@ class ServerCommunicationConfigCodableTests: BitwardenTestCase {
             idpLoginUrl: "https://self-idp.com",
             cookieName: "selfCookie",
             cookieDomain: "self.com",
+            vaultUrl: nil,
             cookieValue: nil,
         )
         let fromConfig = SsoCookieVendorConfig(
             idpLoginUrl: "https://from-idp.com",
             cookieName: "fromCookie",
             cookieDomain: "from.com",
+            vaultUrl: nil,
             cookieValue: [AcquiredCookie(name: "acquired", value: "tokenValue")],
         )
         let selfComm = ServerCommunicationConfig(bootstrap: .ssoCookieVendor(selfConfig))
@@ -371,6 +378,7 @@ class ServerCommunicationConfigCodableTests: BitwardenTestCase {
             idpLoginUrl: "https://from-idp.com",
             cookieName: nil,
             cookieDomain: nil,
+            vaultUrl: nil,
             cookieValue: [AcquiredCookie(name: "n", value: "v")],
         )
         let fromComm = ServerCommunicationConfig(bootstrap: .ssoCookieVendor(fromConfig))
@@ -390,6 +398,7 @@ class ServerCommunicationConfigCodableTests: BitwardenTestCase {
             idpLoginUrl: "https://self-idp.com",
             cookieName: nil,
             cookieDomain: nil,
+            vaultUrl: nil,
             cookieValue: nil,
         )
         let selfComm = ServerCommunicationConfig(bootstrap: .ssoCookieVendor(selfConfig))
@@ -413,6 +422,7 @@ class ServerCommunicationConfigSSOCookieVendorConfigTests: BitwardenTestCase {
             idpLoginUrl: "https://idp.example.com",
             cookieName: "auth",
             cookieDomain: "example.com",
+            vaultUrl: nil,
             cookieValue: nil,
         )
         let subject = ServerCommunicationConfig(bootstrap: .ssoCookieVendor(ssoConfig))
