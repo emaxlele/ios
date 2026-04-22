@@ -14,7 +14,7 @@ class MockPlatformClientService: PlatformClientService {
         try fingerprintResult.get()
     }
 
-    func loadFlags(_ flags: [String: Bool]) throws {
+    func loadFlags(_ flags: [String: Bool]) async throws {
         if let loadFlagsError {
             throw loadFlagsError
         }

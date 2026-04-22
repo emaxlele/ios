@@ -35,6 +35,7 @@ class MockAppSettingsStore: AppSettingsStore {
     var hasSyncedAccountValues = [String: Bool]()
     var lastActiveTime = [String: Date]()
     var lastSyncTimeByUserId = [String: Date]()
+    var localUserDataKeyStatesByUserId = [String: [String: String]]()
     var masterPasswordHashes = [String: String]()
     var notificationsLastRegistrationDates = [String: Date]()
     var pinKeyEncryptedUserKey = [String: String]()
@@ -67,6 +68,10 @@ class MockAppSettingsStore: AppSettingsStore {
         lastActiveTime[userId]
     }
 
+    func localUserDataKeyStates(userId: String) -> [String: String]? {
+        localUserDataKeyStatesByUserId[userId]
+    }
+
     func overrideDebugFeatureFlag(name: String, value: Bool?) {
         overrideDebugFeatureFlagCalled = true
         featureFlags[name] = value
@@ -94,6 +99,10 @@ class MockAppSettingsStore: AppSettingsStore {
 
     func setLastActiveTime(_ date: Date?, userId: String) {
         lastActiveTime[userId] = date
+    }
+
+    func setLocalUserDataKeyStates(_ states: [String: String]?, userId: String) {
+        localUserDataKeyStatesByUserId[userId] = states
     }
 
     func setSecretKey(_ key: String, userId: String) {

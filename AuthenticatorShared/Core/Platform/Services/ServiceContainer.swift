@@ -273,10 +273,12 @@ public class ServiceContainer: Services {
         configServiceHolder = configService
 
         let clientBuilder = DefaultClientBuilder(errorReporter: errorReporter)
+        let sdkRepositoryFactory = DefaultSdkRepositoryFactory(appSettingsStore: appSettingsStore)
         let clientService = DefaultClientService(
             clientBuilder: clientBuilder,
             configService: configService,
             errorReporter: errorReporter,
+            sdkRepositoryFactory: sdkRepositoryFactory,
             stateService: stateService,
         )
 

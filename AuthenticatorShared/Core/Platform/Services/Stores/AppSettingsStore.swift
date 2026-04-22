@@ -84,6 +84,13 @@ protocol AppSettingsStore: AnyObject {
     ///
     func lastActiveTime(userId: String) -> Date?
 
+    /// Gets the local user data key states for the user ID.
+    ///
+    /// - Parameter userId: The user ID associated with the key states.
+    /// - Returns: A dictionary mapping key ID to encrypted wrapped key string.
+    ///
+    func localUserDataKeyStates(userId: String) -> [String: String]?
+
     /// Gets the user's secret encryption key.
     ///
     /// - Parameters:
@@ -137,6 +144,14 @@ protocol AppSettingsStore: AnyObject {
     ///   - userId: The user ID associated with the last active time within the app.
     ///
     func setLastActiveTime(_ date: Date?, userId: String)
+
+    /// Sets the local user data key states for a user ID.
+    ///
+    /// - Parameters:
+    ///   - states: A dictionary mapping key ID to encrypted wrapped key string, or `nil` to clear.
+    ///   - userId: The user ID associated with the key states.
+    ///
+    func setLocalUserDataKeyStates(_ states: [String: String]?, userId: String)
 
     /// Sets the user's secret encryption key.
     ///
@@ -297,6 +312,7 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
         case hasSeenWelcomeTutorial
         case hasSyncedAccount(name: String)
         case lastActiveTime(userId: String)
+        case localUserDataKeyStates(userId: String)
         case migrationVersion
         case preAuthServerConfig
         case secretKey(userId: String)
@@ -332,6 +348,8 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
                 "hasSyncedAccount_\(name)"
             case let .lastActiveTime(userId):
                 "lastActiveTime_\(userId)"
+            case let .localUserDataKeyStates(userId):
+                "localUserDataKeyStates_\(userId)"
             case .migrationVersion:
                 "migrationVersion"
             case .preAuthServerConfig:
@@ -425,6 +443,10 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
         fetch(for: .lastActiveTime(userId: userId)).map { Date(timeIntervalSince1970: $0) }
     }
 
+    func localUserDataKeyStates(userId: String) -> [String: String]? {
+        fetch(for: .localUserDataKeyStates(userId: userId))
+    }
+
     func overrideDebugFeatureFlag(name: String, value: Bool?) {
         store(value, for: .debugFeatureFlag(name: name))
     }
@@ -455,6 +477,10 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
 
     func setLastActiveTime(_ date: Date?, userId: String) {
         store(date?.timeIntervalSince1970, for: .lastActiveTime(userId: userId))
+    }
+
+    func setLocalUserDataKeyStates(_ states: [String: String]?, userId: String) {
+        store(states, for: .localUserDataKeyStates(userId: userId))
     }
 
     func setSecretKey(_ key: String, userId: String) {

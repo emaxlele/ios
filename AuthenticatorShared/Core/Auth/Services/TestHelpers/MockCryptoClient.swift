@@ -3,6 +3,10 @@ import BitwardenSdk
 @testable import AuthenticatorShared
 
 class MockCryptoClient: CryptoClientProtocol {
+    func getUpgradedUserKey(upgradeToken: BitwardenSdk.V2UpgradeToken?) throws -> BitwardenSdk.B64 {
+        <#code#>
+    }
+    
     var deriveKeyConnectorRequest: DeriveKeyConnectorRequest?
     var deriveKeyConnectorResult: Result<String, Error> = .success("key")
 
