@@ -47,6 +47,9 @@ struct TOTPCountdownTimerView: View {
                     value: timer.remainingFraction,
                 )
         }
+        .onAppear {
+            isNearExpiration?.wrappedValue = timer.secondsRemaining < 10
+        }
         .onChange(of: timer.secondsRemaining) { newValue in
             isNearExpiration?.wrappedValue = newValue < 10
         }
