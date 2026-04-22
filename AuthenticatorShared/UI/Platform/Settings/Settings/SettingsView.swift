@@ -120,6 +120,22 @@ struct SettingsView: View {
                 if store.state.shouldShowDefaultSaveOption {
                     defaultSaveOption
                 }
+
+                BitwardenToggle(
+                    isOn: store.binding(
+                        get: \.showNextCode,
+                        send: SettingsAction.showNextCodeToggled,
+                    ),
+                    accessibilityIdentifier: "ShowNextCodeSwitch",
+                    accessibilityLabel: Localizations.showNextCode,
+                ) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(Localizations.showNextCode)
+                        Text(Localizations.showNextCodeDescription)
+                            .styleGuide(.subheadline)
+                            .foregroundColor(Asset.Colors.textSecondary.swiftUIColor)
+                    }
+                }
             }
         }
     }

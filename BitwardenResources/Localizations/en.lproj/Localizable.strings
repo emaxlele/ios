@@ -241,6 +241,9 @@
 "ZipPostalCode" = "Zip / Postal code";
 "Address" = "Address";
 "Expiration" = "Expiration";
+"NextVerificationCode" = "Next verification code";
+"ShowNextCode" = "Show next code";
+"ShowNextCodeDescription" = "See incoming codes in the list";
 "ShowWebsiteIcons" = "Show website icons";
 "ShowWebsiteIconsDescription" = "Show a recognizable image next to each login.";
 "IconsUrl" = "Icons server URL";

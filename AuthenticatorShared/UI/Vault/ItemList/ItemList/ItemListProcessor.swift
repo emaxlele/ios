@@ -80,6 +80,7 @@ final class ItemListProcessor: StateProcessor<ItemListState, ItemListAction, Ite
         case .addItemPressed:
             await setupTotp()
         case .appeared:
+            state.showNextCode = services.appSettingsStore.showNextCode
             await determineItemListCardState()
             await streamItemList()
         case let .closeCard(card):

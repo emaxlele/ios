@@ -55,10 +55,12 @@ public extension ItemListTotpItem {
             codeGenerationDate: Date(),
             period: 30,
         ),
+        nextTotpCode: TOTPCodeModel? = nil,
     ) -> ItemListTotpItem {
         ItemListTotpItem(
             itemView: itemView,
             totpCode: totpCode,
+            nextTotpCode: nextTotpCode,
         )
     }
 }
@@ -71,10 +73,12 @@ public extension ItemListSharedTotpItem {
             codeGenerationDate: Date(),
             period: 30,
         ),
+        nextTotpCode: TOTPCodeModel? = nil,
     ) -> ItemListSharedTotpItem {
         ItemListSharedTotpItem(
             itemView: itemView,
             totpCode: totpCode,
+            nextTotpCode: nextTotpCode,
         )
     }
 }

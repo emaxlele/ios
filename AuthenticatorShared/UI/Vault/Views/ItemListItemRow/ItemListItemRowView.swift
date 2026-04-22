@@ -19,6 +19,14 @@ struct ItemListItemRowView: View {
     /// The `TimeProvider` used to calculate TOTP expiration.
     var timeProvider: any TimeProvider
 
+    // MARK: Private Properties
+
+    /// The remaining-seconds threshold at which the next code becomes visible.
+    private let nextCodeThreshold = 10
+
+    /// Whether the next TOTP code should currently be shown based on remaining time.
+    @State private var showNextCode = false
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 16) {
@@ -51,6 +59,17 @@ struct ItemListItemRowView: View {
                 Divider()
                     .padding(.leading, 22 + 16 + 16)
             }
+        }
+        .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { _ in
+            guard store.state.showNextCode,
+                  let model = store.state.item.totpCodeModel else { return }
+            showNextCode = TOTPExpirationCalculator.remainingSeconds(
+                for: timeProvider.presentTime,
+                using: Int(model.period),
+            ) <= nextCodeThreshold
+        }
+        .onChange(of: store.state.item.totpCodeModel) { _ in
+            showNextCode = false
         }
     }
 
@@ -105,9 +124,17 @@ struct ItemListItemRowView: View {
             totpCode: model,
             onExpiration: nil,
         )
-        Text(model.displayCode)
-            .styleGuide(.bodyMonospaced, weight: .regular, monoSpacedDigit: true)
-            .foregroundColor(Asset.Colors.textPrimary.swiftUIColor)
+        VStack(alignment: .trailing, spacing: 0) {
+            Text(model.displayCode)
+                .styleGuide(.bodyMonospaced, weight: .regular, monoSpacedDigit: true)
+                .foregroundColor(Asset.Colors.textPrimary.swiftUIColor)
+            if showNextCode, let nextCode = store.state.item.nextTotpCodeModel {
+                Text(nextCode.displayCode)
+                    .styleGuide(.subheadline, weight: .regular, monoSpacedDigit: true)
+                    .foregroundColor(Asset.Colors.textSecondary.swiftUIColor)
+                    .accessibilityLabel(Localizations.nextVerificationCode + ": " + nextCode.displayCode)
+            }
+        }
     }
 }
 
