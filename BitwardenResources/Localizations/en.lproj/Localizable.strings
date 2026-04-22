@@ -767,6 +767,7 @@
 "UnableToMoveTheSelectedItemPleaseTryAgain" = "Unable to move the selected item. Please try again.";
 "Done" = "Done";
 "Next" = "Next";
+"NextCode" = "Next code";
 "CopyPublicKey" = "Copy public key";
 "CopyPrivateKey" = "Copy private key";
 "CopyFingerprint" = "Copy fingerprint";
@@ -831,6 +832,8 @@
 "LoggingDuration" = "Logging duration";
 "LogsWillBeAutomaticallyDeletedAfter30DaysDescriptionLong" = "Logs will be automatically deleted after 30 days. Bitwarden is only able to access your log data when you share it.";
 "ForDetailsOnWhatIsAndIsntLoggedVisitTheBitwardenHelpCenter" = "For details on what is and isn’t logged, visit the **[Bitwarden help center](%1$@)**.";
+"SeeIncomingCodesInTheList" = "See incoming codes in the list";
+"ShowNextCode" = "Show next code";
 "ShowMore" = "Show more";
 "ShowLess" = "Show less";
 "ItemNameX" = "Item name, %1$@";

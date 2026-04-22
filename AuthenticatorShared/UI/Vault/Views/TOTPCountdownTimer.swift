@@ -13,6 +13,10 @@ class TOTPCountdownTimer: ObservableObject {
     ///
     @Published var displayTime: String?
 
+    /// A `@Published` integer representing the whole seconds remaining for a TOTP code.
+    ///
+    @Published private(set) var secondsRemaining: Int
+
     /// A closure to call on expiration
     ///
     var onExpiration: (() -> Void)?
@@ -54,12 +58,6 @@ class TOTPCountdownTimer: ObservableObject {
         Int(totpCodeMode.period)
     }
 
-    /// The countdown remainder calculated relative to the current time.
-    ///
-    private var secondsRemaining: Int {
-        TOTPExpirationCalculator.remainingSeconds(for: timeProvider.presentTime, using: period)
-    }
-
     /// Initializes a new countdown timer
     ///
     /// - Parameters
@@ -78,6 +76,10 @@ class TOTPCountdownTimer: ObservableObject {
         totpCodeMode = totpCode
         self.timeProvider = timeProvider
         self.onExpiration = onExpiration
+        secondsRemaining = TOTPExpirationCalculator.remainingSeconds(
+            for: timeProvider.presentTime,
+            using: Int(totpCode.period),
+        )
         displayTime = "\(secondsRemaining)"
         timer = Timer.scheduledTimer(
             withTimeInterval: timerInterval,
@@ -114,6 +116,7 @@ class TOTPCountdownTimer: ObservableObject {
     /// Updates the countdown timer value.
     ///
     private func updateCountdown() {
+        secondsRemaining = TOTPExpirationCalculator.remainingSeconds(for: timeProvider.presentTime, using: period)
         displayTime = "\(secondsRemaining)"
         withAnimation {
             remainingFraction = CGFloat(durationFractionRemaining)

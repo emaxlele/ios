@@ -15,6 +15,9 @@ struct ItemListItemRowState {
     /// A flag indicating if this row should display a divider on the bottom edge.
     var hasDivider: Bool
 
+    /// Whether to show the next TOTP code when the current code is about to expire.
+    var showNextCode: Bool = false
+
     /// Whether to show the special web icons.
     var showWebIcons: Bool
 }

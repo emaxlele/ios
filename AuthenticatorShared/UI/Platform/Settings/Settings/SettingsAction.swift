@@ -33,6 +33,9 @@ enum SettingsAction: Equatable {
     /// The privacy policy button was tapped.
     case privacyPolicyTapped
 
+    /// The show next code toggle was changed.
+    case showNextCodeToggled(Bool)
+
     /// The sync with bitwarden app button was tapped.
     case syncWithBitwardenAppTapped
 

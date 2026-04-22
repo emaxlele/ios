@@ -117,6 +117,9 @@ final class SettingsProcessor: StateProcessor<SettingsState, SettingsAction, Set
             coordinator.showAlert(.privacyPolicyAlert {
                 self.state.url = ExternalLinksConstants.privacyPolicy
             })
+        case let .showNextCodeToggled(isOn):
+            state.showNextCode = isOn
+            services.appSettingsStore.showNextCode = isOn
         case .syncWithBitwardenAppTapped:
             if services.application?.canOpenURL(ExternalLinksConstants.passwordManagerScheme) ?? false {
                 state.url = ExternalLinksConstants.passwordManagerSettings
@@ -161,6 +164,7 @@ final class SettingsProcessor: StateProcessor<SettingsState, SettingsAction, Set
         state.sessionTimeoutValue = loadTimeoutValue(biometricsEnabled: state.biometricUnlockStatus.isEnabled)
         state.shouldShowDefaultSaveOption = await services.authenticatorItemRepository.isPasswordManagerSyncActive()
         state.defaultSaveOption = services.appSettingsStore.defaultSaveOption
+        state.showNextCode = services.appSettingsStore.showNextCode
     }
 
     /// Load the Session Timeout Value.

@@ -9,12 +9,22 @@ class MockTOTPService: TOTPService {
     )
     var getTotpCodeConfig: TOTPKeyModel?
 
+    var getTotpCodeForDateResult: Result<TOTPCodeModel, Error> = .success(
+        TOTPCodeModel(code: "654321", codeGenerationDate: .now, period: 30),
+    )
+    var getTotpCodeForDateConfig: (TOTPKeyModel, Date)?
+
     var capturedKey: String?
     var getTOTPConfigResult: Result<TOTPKeyModel, Error> = .failure(TOTPKeyError.invalidKeyFormat)
 
     func getTotpCode(for key: TOTPKeyModel) async throws -> TOTPCodeModel {
         getTotpCodeConfig = key
         return try getTotpCodeResult.get()
+    }
+
+    func getTotpCode(for key: TOTPKeyModel, date: Date) async throws -> TOTPCodeModel {
+        getTotpCodeForDateConfig = (key, date)
+        return try getTotpCodeForDateResult.get()
     }
 
     func getTOTPConfiguration(key: String?) throws -> TOTPKeyModel {

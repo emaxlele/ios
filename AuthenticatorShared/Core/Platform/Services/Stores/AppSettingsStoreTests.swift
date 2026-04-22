@@ -195,6 +195,22 @@ class AppSettingsStoreTests: BitwardenTestCase {
         XCTAssertFalse(userDefaults.bool(forKey: "bwaPreferencesStorage:disableFavicon"))
     }
 
+    /// `showNextCode` returns `false` if there isn't a previously stored value.
+    func test_showNextCode_isInitiallyFalse() {
+        XCTAssertFalse(subject.showNextCode)
+    }
+
+    /// `showNextCode` can be used to get and set the persisted value in user defaults.
+    func test_showNextCode_withValue() {
+        subject.showNextCode = true
+        XCTAssertTrue(subject.showNextCode)
+        XCTAssertTrue(userDefaults.bool(forKey: "bwaPreferencesStorage:showNextCode"))
+
+        subject.showNextCode = false
+        XCTAssertFalse(subject.showNextCode)
+        XCTAssertFalse(userDefaults.bool(forKey: "bwaPreferencesStorage:showNextCode"))
+    }
+
     /// `hasSyncedAccount(name:)` can be used to get and set if the user has synced previously with a given account.
     /// Account names should be hashed so as to not appear in plaintext.
     func test_hasSyncedAccount_withValue() {

@@ -4,12 +4,20 @@ import Foundation
 
 /// Protocol defining the functionality of a TOTP (Time-based One-Time Password) service.
 protocol TOTPService {
-    /// Calculates the TOTP code for a given key
+    /// Calculates the TOTP code for a given key using the current time.
     ///
     /// - Parameters:
     ///   - key: The `TOTPKeyModel` to generate a code for
     ///
     func getTotpCode(for key: TOTPKeyModel) async throws -> TOTPCodeModel
+
+    /// Calculates the TOTP code for a given key at a specific date.
+    ///
+    /// - Parameters:
+    ///   - key: The `TOTPKeyModel` to generate a code for
+    ///   - date: The date for which to generate the code
+    ///
+    func getTotpCode(for key: TOTPKeyModel, date: Date) async throws -> TOTPCodeModel
 
     /// Retrieves the TOTP configuration for a given key.
     ///
@@ -57,6 +65,13 @@ extension DefaultTOTPService: TOTPService {
         try await clientService.vault().generateTOTPCode(
             for: key.rawAuthenticatorKey,
             date: timeProvider.presentTime,
+        )
+    }
+
+    func getTotpCode(for key: TOTPKeyModel, date: Date) async throws -> TOTPCodeModel {
+        try await clientService.vault().generateTOTPCode(
+            for: key.rawAuthenticatorKey,
+            date: date,
         )
     }
 

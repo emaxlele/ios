@@ -19,6 +19,9 @@ struct ItemListItemRowView: View {
     /// The `TimeProvider` used to calculate TOTP expiration.
     var timeProvider: any TimeProvider
 
+    /// Whether the countdown is in the final 10 seconds, used to show the next code preview.
+    @State private var isNearExpiration = false
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 16) {
@@ -103,11 +106,23 @@ struct ItemListItemRowView: View {
         TOTPCountdownTimerView(
             timeProvider: timeProvider,
             totpCode: model,
+            isNearExpiration: $isNearExpiration,
             onExpiration: nil,
         )
-        Text(model.displayCode)
-            .styleGuide(.bodyMonospaced, weight: .regular, monoSpacedDigit: true)
-            .foregroundColor(Asset.Colors.textPrimary.swiftUIColor)
+        VStack(alignment: .trailing, spacing: 0) {
+            Text(model.displayCode)
+                .styleGuide(.bodyMonospaced, weight: .regular, monoSpacedDigit: true)
+                .foregroundColor(Asset.Colors.textPrimary.swiftUIColor)
+                .accessibilityLabel("\(Localizations.verificationCode): \(model.displayCode)")
+            if store.state.showNextCode,
+               isNearExpiration,
+               let nextCode = store.state.item.nextTotpCodeModel {
+                Text(nextCode.displayCode)
+                    .styleGuide(.bodyMonospaced, weight: .regular, monoSpacedDigit: true)
+                    .foregroundColor(Asset.Colors.textSecondary.swiftUIColor)
+                    .accessibilityLabel("\(Localizations.nextCode): \(nextCode.displayCode)")
+            }
+        }
     }
 }
 

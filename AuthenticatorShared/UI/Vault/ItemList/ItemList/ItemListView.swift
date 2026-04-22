@@ -325,6 +325,7 @@ private struct SearchableItemListView: View { // swiftlint:disable:this type_bod
                         iconBaseURL: state.iconBaseURL,
                         item: item,
                         hasDivider: !isLastInSection,
+                        showNextCode: state.showNextCode,
                         showWebIcons: state.showWebIcons,
                     )
                 },

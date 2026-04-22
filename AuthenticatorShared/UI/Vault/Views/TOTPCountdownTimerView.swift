@@ -18,6 +18,10 @@ struct TOTPCountdownTimerView: View {
     ///
     let totpCode: TOTPCodeModel
 
+    /// A binding updated to reflect whether the countdown is in the final 10 seconds.
+    ///
+    var isNearExpiration: Binding<Bool>?
+
     /// The `TOTPCountdownTimer`responsible for updating the view state.
     ///
     @ObservedObject private(set) var timer: TOTPCountdownTimer
@@ -43,6 +47,9 @@ struct TOTPCountdownTimerView: View {
                     value: timer.remainingFraction,
                 )
         }
+        .onChange(of: timer.secondsRemaining) { newValue in
+            isNearExpiration?.wrappedValue = newValue < 10
+        }
     }
 
     /// Initializes the view for a TOTPCodeModel and a timer expiration handler.
@@ -51,14 +58,18 @@ struct TOTPCountdownTimerView: View {
     ///   - timeProvider: A protocol providing the present time as a `Date`.
     ///         Used to calculate time remaining for a present TOTP code.
     ///   - totpCode: The code that the timer represents.
+    ///   - isNearExpiration: An optional binding updated when the countdown enters or exits
+    ///     the final 10 seconds.
     ///   - onExpiration: A closure called when the code expires.
     ///
     init(
         timeProvider: any TimeProvider,
         totpCode: TOTPCodeModel,
+        isNearExpiration: Binding<Bool>? = nil,
         onExpiration: (() -> Void)?,
     ) {
         self.totpCode = totpCode
+        self.isNearExpiration = isNearExpiration
         timer = .init(
             timeProvider: timeProvider,
             timerInterval: TOTPCountdownTimerView.timerInterval,

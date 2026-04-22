@@ -662,6 +662,29 @@ class ItemListProcessorTests: BitwardenTestCase { // swiftlint:disable:this type
         XCTAssertTrue(subject.state.showMoveToBitwarden)
     }
 
+    /// `perform(_:)` with `.streamItemList` reads `showNextCode` from `appSettingsStore` and sets it in state.
+    @MainActor
+    func test_perform_streamItemList_showNextCode() {
+        appSettingsStore.showNextCode = true
+        let totpCode = TOTPCodeModel(code: "654321",
+                                     codeGenerationDate: Date(year: 2023, month: 12, day: 31),
+                                     period: 30)
+        let results = [ItemListItem.fixture(totp: .fixture(totpCode: totpCode))]
+        let resultSection = ItemListSection(id: "", items: results, name: "")
+
+        authItemRepository.itemListSubject.send([resultSection])
+        authItemRepository.refreshTotpCodesResult = .success(results)
+
+        let task = Task {
+            await subject.perform(.streamItemList)
+        }
+        defer { task.cancel() }
+
+        waitFor(subject.state.loadingState != .loading(nil))
+
+        XCTAssertTrue(subject.state.showNextCode)
+    }
+
     /// `.receive` with `.clearURL` sets the `state.url` to `nil`.
     @MainActor
     func test_receive_clearURL() throws {

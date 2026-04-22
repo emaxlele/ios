@@ -99,9 +99,9 @@ struct SettingsView: View {
             .frame(maxWidth: .infinity)
     }
 
-    /// The data section containing import, export, backup, and sync options.
+    /// The vault section containing import, export, backup, sync, and code display options.
     @ViewBuilder private var dataSection: some View {
-        SectionView(Localizations.data) {
+        SectionView(Localizations.vault) {
             ContentBlock(dividerLeadingPadding: 16) {
                 SettingsListItem(Localizations.import) {
                     store.send(.importItemsTapped)
@@ -120,6 +120,16 @@ struct SettingsView: View {
                 if store.state.shouldShowDefaultSaveOption {
                     defaultSaveOption
                 }
+
+                BitwardenToggle(
+                    Localizations.showNextCode,
+                    footer: Localizations.seeIncomingCodesInTheList,
+                    isOn: store.binding(
+                        get: \.showNextCode,
+                        send: SettingsAction.showNextCodeToggled,
+                    ),
+                )
+                .accessibilityIdentifier("ShowNextCodeToggle")
             }
         }
     }

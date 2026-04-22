@@ -350,8 +350,14 @@ extension DefaultAuthenticatorItemRepository: AuthenticatorItemRepository {
                 }
                 return item
             }
-            let code = try await totpService.getTotpCode(for: keyModel)
-            return item.with(newTotpModel: code)
+            let currentCode = try await totpService.getTotpCode(for: keyModel)
+            let timeRemaining = TOTPExpirationCalculator.timeRemaining(
+                for: timeProvider.presentTime,
+                using: TimeInterval(currentCode.period),
+            )
+            let nextPeriodDate = timeProvider.presentTime.addingTimeInterval(timeRemaining)
+            let nextCode = try? await totpService.getTotpCode(for: keyModel, date: nextPeriodDate)
+            return item.with(newTotpModel: currentCode).with(newNextTotpModel: nextCode)
         }
     }
 

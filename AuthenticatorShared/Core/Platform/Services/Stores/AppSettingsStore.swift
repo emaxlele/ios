@@ -19,6 +19,9 @@ protocol AppSettingsStore: AnyObject {
     /// Whether to disable the website icons.
     var disableWebIcons: Bool { get set }
 
+    /// Whether to show the next TOTP code in the item list when the current code is about to expire.
+    var showNextCode: Bool { get set }
+
     /// The default save location for new keys.
     var defaultSaveOption: DefaultSaveOption { get set }
 
@@ -293,6 +296,7 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
         case debugFeatureFlag(name: String)
         case defaultSaveOption
         case disableWebIcons
+        case showNextCode
         case flightRecorderData
         case hasSeenWelcomeTutorial
         case hasSyncedAccount(name: String)
@@ -324,6 +328,8 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
                 "defaultSaveOption"
             case .disableWebIcons:
                 "disableFavicon"
+            case .showNextCode:
+                "showNextCode"
             case .flightRecorderData:
                 "flightRecorderData"
             case .hasSeenWelcomeTutorial:
@@ -360,6 +366,11 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
     var disableWebIcons: Bool {
         get { fetch(for: .disableWebIcons) }
         set { store(newValue, for: .disableWebIcons) }
+    }
+
+    var showNextCode: Bool {
+        get { fetch(for: .showNextCode) }
+        set { store(newValue, for: .showNextCode) }
     }
 
     var defaultSaveOption: DefaultSaveOption {
