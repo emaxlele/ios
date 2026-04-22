@@ -7,6 +7,11 @@ import SwiftUI
 ///     Used to manage the state for a `TOTPCountdownTimerView`.
 ///
 class TOTPCountdownTimer: ObservableObject {
+    // MARK: Static Properties
+
+    /// The number of seconds remaining on the current code at which the next code preview is revealed.
+    static let nextCodeRevealThreshold = 10
+
     // MARK: Public Properties
 
     /// A `@Published` string representing the number of seconds remaining for a TOTP code.

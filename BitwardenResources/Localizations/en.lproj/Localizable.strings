@@ -241,7 +241,9 @@
 "ZipPostalCode" = "Zip / Postal code";
 "Address" = "Address";
 "Expiration" = "Expiration";
+"ShowNextCode" = "Show next code";
 "ShowWebsiteIcons" = "Show website icons";
+"SeeIncomingCodesInTheList" = "See incoming codes in the list";
 "ShowWebsiteIconsDescription" = "Show a recognizable image next to each login.";
 "IconsUrl" = "Icons server URL";
 "AutofillWithBitwarden" = "Autofill with Bitwarden";

@@ -9,6 +9,9 @@ import SwiftUI
 struct ItemListItemRowView: View {
     // MARK: Properties
 
+    /// Whether the next code preview should currently be visible based on the countdown timer.
+    @State private var shouldShowNextCode = false
+
     /// The `Store` for this view.
     var store: Store<
         ItemListItemRowState,
@@ -105,9 +108,38 @@ struct ItemListItemRowView: View {
             totpCode: model,
             onExpiration: nil,
         )
-        Text(model.displayCode)
-            .styleGuide(.bodyMonospaced, weight: .regular, monoSpacedDigit: true)
-            .foregroundColor(Asset.Colors.textPrimary.swiftUIColor)
+        codeColumn(model: model)
+    }
+
+    /// A vertical stack showing the current code and, when conditions are met, the next code preview.
+    @ViewBuilder
+    private func codeColumn(model: TOTPCodeModel) -> some View {
+        VStack(alignment: .trailing, spacing: 2) {
+            Text(model.displayCode)
+                .styleGuide(.bodyMonospaced, weight: .regular, monoSpacedDigit: true)
+                .foregroundColor(Asset.Colors.textPrimary.swiftUIColor)
+            if store.state.showNextCode,
+               shouldShowNextCode,
+               let nextCode = store.state.item.nextTotpCodeModel {
+                Text(nextCode.displayCode)
+                    .styleGuide(.subheadline, monoSpacedDigit: true)
+                    .foregroundColor(Asset.Colors.textSecondary.swiftUIColor)
+                    .accessibilityLabel(
+                        Localizations.showNextCode + ": "
+                            + nextCode.code.map(String.init).joined(separator: " "),
+                    )
+            }
+        }
+        .task(id: model.codeGenerationDate) {
+            while !Task.isCancelled {
+                let seconds = TOTPExpirationCalculator.remainingSeconds(
+                    for: timeProvider.presentTime,
+                    using: Int(model.period),
+                )
+                shouldShowNextCode = seconds <= TOTPCountdownTimer.nextCodeRevealThreshold
+                try? await Task.sleep(nanoseconds: 500_000_000)
+            }
+        }
     }
 }
 
@@ -133,6 +165,7 @@ struct ItemListItemRowView: View {
                         ),
                     ),
                     hasDivider: true,
+                    showNextCode: false,
                     showWebIcons: true,
                 ),
             ),
@@ -162,6 +195,7 @@ struct ItemListItemRowView: View {
                         ),
                     ),
                     hasDivider: true,
+                    showNextCode: false,
                     showWebIcons: true,
                 ),
             ),
@@ -191,6 +225,7 @@ struct ItemListItemRowView: View {
                         ),
                     ),
                     hasDivider: true,
+                    showNextCode: false,
                     showWebIcons: true,
                 ),
             ),
@@ -210,6 +245,7 @@ struct ItemListItemRow_Previews: PreviewProvider {
                                 state: ItemListItemRowState(
                                     item: item,
                                     hasDivider: true,
+                                    showNextCode: false,
                                     showWebIcons: true,
                                 ),
                             ),
@@ -230,6 +266,7 @@ struct ItemListItemRow_Previews: PreviewProvider {
                                 state: ItemListItemRowState(
                                     item: item,
                                     hasDivider: true,
+                                    showNextCode: false,
                                     showWebIcons: true,
                                 ),
                             ),

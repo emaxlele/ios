@@ -46,6 +46,18 @@ extension ItemListItem {
     /// so that `code` is non-optional and always has a value.
     private static let defaultTotpCode = "123456"
 
+    /// The next `TOTPCodeModel` for the next period, if available.
+    var nextTotpCodeModel: TOTPCodeModel? {
+        switch itemType {
+        case let .sharedTotp(model):
+            model.nextTotpCode
+        case .syncError:
+            nil
+        case let .totp(model):
+            model.nextTotpCode
+        }
+    }
+
     /// The associated `TOTPCodeModel` if this item is an `itemType` with an associated code (i.e. `.totp`
     /// and `.sharedTotp`) or `nil` if there is no associated code (i.e. `.syncError`)
     var totpCodeModel: TOTPCodeModel? {
@@ -130,17 +142,20 @@ extension ItemListItem {
         )
     }
 
-    /// Make a new `ItemListItem` that is a copy of the existing one, but with an updated `TOTPCodeModel`.
+    /// Make a new `ItemListItem` that is a copy of the existing one, but with updated TOTP code models.
     ///
-    /// - Parameter newTotpModel: the new `TOTPCodeModel` to insert in this ItemListItem
+    /// - Parameters:
+    ///   - newTotpModel: The new current `TOTPCodeModel` to insert in this ItemListItem.
+    ///   - nextTotpModel: The next `TOTPCodeModel` for the upcoming period. Defaults to `nil`.
     /// - Returns: An exact copy of the data in the existing `ItemListItem`, but with the new
-    ///     `TOTPCodeModel` inserted into the itemType's model.
+    ///     TOTP code models inserted into the itemType's model.
     ///
-    public func with(newTotpModel: TOTPCodeModel) -> ItemListItem {
+    public func with(newTotpModel: TOTPCodeModel, nextTotpModel: TOTPCodeModel? = nil) -> ItemListItem {
         switch itemType {
         case let .sharedTotp(oldModel):
             var updatedModel = oldModel
             updatedModel.totpCode = newTotpModel
+            updatedModel.nextTotpCode = nextTotpModel
             return ItemListItem(
                 id: id,
                 name: name,
@@ -152,6 +167,7 @@ extension ItemListItem {
         case let .totp(oldModel):
             var updatedModel = oldModel
             updatedModel.totpCode = newTotpModel
+            updatedModel.nextTotpCode = nextTotpModel
             return ItemListItem(
                 id: id,
                 name: name,
@@ -192,6 +208,9 @@ public struct ItemListTotpItem: Equatable {
     /// The `AuthenticatorItemView` used to populate the view
     let itemView: AuthenticatorItemView
 
+    /// The next TOTP code for the item, valid for the period immediately after `totpCode` expires.
+    var nextTotpCode: TOTPCodeModel?
+
     /// The current TOTP code for the item
     var totpCode: TOTPCodeModel
 }
@@ -201,6 +220,9 @@ public struct ItemListTotpItem: Equatable {
 public struct ItemListSharedTotpItem: Equatable {
     /// The `AuthenticatorBridgeItemDataView` used to populate the view
     let itemView: AuthenticatorBridgeItemDataView
+
+    /// The next TOTP code for the item, valid for the period immediately after `totpCode` expires.
+    var nextTotpCode: TOTPCodeModel?
 
     /// The current TOTP code for the item
     var totpCode: TOTPCodeModel

@@ -117,6 +117,8 @@ struct SettingsView: View {
 
                 syncWithPasswordManagerRow
 
+                showNextCodeRow
+
                 if store.state.shouldShowDefaultSaveOption {
                     defaultSaveOption
                 }
@@ -192,6 +194,19 @@ struct SettingsView: View {
         default:
             EmptyView()
         }
+    }
+
+    /// The toggle row for showing the next TOTP code in the item list.
+    private var showNextCodeRow: some View {
+        BitwardenToggle(
+            Localizations.showNextCode,
+            footer: Localizations.seeIncomingCodesInTheList,
+            isOn: store.binding(
+                get: \.showNextCode,
+                send: SettingsAction.showNextCodeToggled,
+            ),
+            accessibilityIdentifier: "ShowNextCodeToggle",
+        )
     }
 
     /// The settings row for syncing with the Password Manager app.

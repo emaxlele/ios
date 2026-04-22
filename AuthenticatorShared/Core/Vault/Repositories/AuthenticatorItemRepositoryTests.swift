@@ -213,6 +213,49 @@ class AuthenticatorItemRepositoryTests: BitwardenTestCase { // swiftlint:disable
         XCTAssertTrue(errorReporter.errors.isEmpty)
     }
 
+    /// `refreshTOTPCodes(on:)` populates the next TOTP code on successfully refreshed items.
+    func test_refreshTOTPCodes_populatesNextTotpCode() async throws {
+        let currentCodeModel = TOTPCodeModel(
+            code: "111111",
+            codeGenerationDate: timeProvider.presentTime,
+            period: 30,
+        )
+        let nextCodeModel = TOTPCodeModel(
+            code: "222222",
+            codeGenerationDate: timeProvider.presentTime.addingTimeInterval(30),
+            period: 30,
+        )
+        totpService.getTotpCodeResult = .success(currentCodeModel)
+        totpService.getNextTotpCodeResult = .success(nextCodeModel)
+
+        let item = ItemListItem.fixture()
+        let result = try await subject.refreshTOTPCodes(for: [item])
+        let actual = try XCTUnwrap(result.first)
+
+        XCTAssertEqual(actual.totpCodeModel, currentCodeModel)
+        XCTAssertEqual(actual.nextTotpCodeModel, nextCodeModel)
+    }
+
+    /// `refreshTOTPCodes(on:)` still returns the current code when next code generation fails,
+    /// and `nextTotpCodeModel` is `nil`.
+    func test_refreshTOTPCodes_nextCodeFailure_doesNotBlockCurrentCode() async throws {
+        let currentCodeModel = TOTPCodeModel(
+            code: "333333",
+            codeGenerationDate: timeProvider.presentTime,
+            period: 30,
+        )
+        totpService.getTotpCodeResult = .success(currentCodeModel)
+        totpService.getNextTotpCodeResult = .failure(BitwardenTestError.example)
+
+        let item = ItemListItem.fixture()
+        let result = try await subject.refreshTOTPCodes(for: [item])
+        let actual = try XCTUnwrap(result.first)
+
+        XCTAssertEqual(actual.totpCodeModel, currentCodeModel)
+        XCTAssertNil(actual.nextTotpCodeModel)
+        XCTAssertTrue(errorReporter.errors.isEmpty)
+    }
+
     /// `saveTemporarySharedItem(_)` saves a temporary item into the Authenticator Bridge shared store.
     func test_saveTemporarySharedItem_success() async throws {
         let totpKey = "TOTP Key"

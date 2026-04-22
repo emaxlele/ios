@@ -28,6 +28,9 @@ struct SettingsState: Equatable {
     /// The current default save option.
     var sessionTimeoutValue: SessionTimeoutValue = .never
 
+    /// Whether to show the next TOTP code in the item list.
+    var showNextCode: Bool = false
+
     /// A flag to indicate if we should show the default save option menu.
     var shouldShowDefaultSaveOption = false
 

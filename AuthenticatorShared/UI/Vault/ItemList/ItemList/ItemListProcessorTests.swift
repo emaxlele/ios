@@ -1293,4 +1293,30 @@ class ItemListProcessorTests: BitwardenTestCase { // swiftlint:disable:this type
 
         XCTAssertEqual(subject.state.itemListCardState, .none)
     }
+
+    /// `perform(_:)` with `.appeared` sets `showNextCode` to `true` when enabled in app settings.
+    @MainActor
+    func test_perform_appeared_showNextCode_true() {
+        appSettingsStore.showNextCode = true
+        let task = Task {
+            await self.subject.perform(.appeared)
+        }
+        waitFor(subject.state.loadingState != .loading(nil))
+        task.cancel()
+
+        XCTAssertTrue(subject.state.showNextCode)
+    }
+
+    /// `perform(_:)` with `.appeared` sets `showNextCode` to `false` when disabled in app settings.
+    @MainActor
+    func test_perform_appeared_showNextCode_false() {
+        appSettingsStore.showNextCode = false
+        let task = Task {
+            await self.subject.perform(.appeared)
+        }
+        waitFor(subject.state.loadingState != .loading(nil))
+        task.cancel()
+
+        XCTAssertFalse(subject.state.showNextCode)
+    }
 }

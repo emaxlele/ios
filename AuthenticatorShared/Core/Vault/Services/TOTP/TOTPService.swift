@@ -11,6 +11,14 @@ protocol TOTPService {
     ///
     func getTotpCode(for key: TOTPKeyModel) async throws -> TOTPCodeModel
 
+    /// Calculates the TOTP code for the period immediately following `currentCode`.
+    ///
+    /// - Parameters:
+    ///   - key: The `TOTPKeyModel` to generate a code for.
+    ///   - currentCode: The currently active code, used to determine the next period's start date.
+    ///
+    func getNextTotpCode(for key: TOTPKeyModel, currentCode: TOTPCodeModel) async throws -> TOTPCodeModel
+
     /// Retrieves the TOTP configuration for a given key.
     ///
     /// - Parameter key: A string representing the TOTP key.
@@ -57,6 +65,14 @@ extension DefaultTOTPService: TOTPService {
         try await clientService.vault().generateTOTPCode(
             for: key.rawAuthenticatorKey,
             date: timeProvider.presentTime,
+        )
+    }
+
+    func getNextTotpCode(for key: TOTPKeyModel, currentCode: TOTPCodeModel) async throws -> TOTPCodeModel {
+        let nextPeriodDate = timeProvider.presentTime.addingTimeInterval(Double(currentCode.period))
+        return try await clientService.vault().generateTOTPCode(
+            for: key.rawAuthenticatorKey,
+            date: nextPeriodDate,
         )
     }
 

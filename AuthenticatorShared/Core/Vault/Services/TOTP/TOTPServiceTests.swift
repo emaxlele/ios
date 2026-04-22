@@ -69,4 +69,31 @@ final class TOTPServiceTests: BitwardenTestCase {
             )
         }
     }
+
+    /// `getNextTotpCode(for:currentCode:)` passes a date equal to `presentTime + period` to the SDK.
+    func test_getNextTotpCode_usesNextPeriodDate() async throws {
+        let fixedTime = Date(timeIntervalSince1970: 1000)
+        timeProvider.timeConfig = .mockTime(fixedTime)
+
+        let keyModel = try subject.getTOTPConfiguration(key: .base32Key)
+        let currentCode = TOTPCodeModel(code: "123456", codeGenerationDate: fixedTime, period: 30)
+
+        let result = try await subject.getNextTotpCode(for: keyModel, currentCode: currentCode)
+
+        XCTAssertEqual(result.codeGenerationDate, fixedTime.addingTimeInterval(30))
+    }
+
+    /// `getNextTotpCode(for:currentCode:)` respects non-standard periods.
+    func test_getNextTotpCode_usesNextPeriodDate_nonStandardPeriod() async throws {
+        let fixedTime = Date(timeIntervalSince1970: 2000)
+        timeProvider.timeConfig = .mockTime(fixedTime)
+        clientService.mockVault.totpPeriod = 60
+
+        let keyModel = try subject.getTOTPConfiguration(key: .base32Key)
+        let currentCode = TOTPCodeModel(code: "123456", codeGenerationDate: fixedTime, period: 60)
+
+        let result = try await subject.getNextTotpCode(for: keyModel, currentCode: currentCode)
+
+        XCTAssertEqual(result.codeGenerationDate, fixedTime.addingTimeInterval(60))
+    }
 }
