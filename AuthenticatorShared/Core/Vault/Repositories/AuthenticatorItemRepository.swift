@@ -357,7 +357,13 @@ extension DefaultAuthenticatorItemRepository: AuthenticatorItemRepository {
                     using: Double(keyModel.period),
                 ),
             )
-            let nextCode = try? await totpService.getTotpCode(for: keyModel, date: nextPeriodDate)
+            let nextCode: TOTPCodeModel?
+            do {
+                nextCode = try await totpService.getTotpCode(for: keyModel, date: nextPeriodDate)
+            } catch {
+                errorReporter.log(error: error)
+                nextCode = nil
+            }
             return item.with(newTotpModel: code, nextTotpModel: nextCode)
         }
     }

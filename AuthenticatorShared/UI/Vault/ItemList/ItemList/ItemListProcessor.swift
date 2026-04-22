@@ -107,6 +107,7 @@ final class ItemListProcessor: StateProcessor<ItemListState, ItemListAction, Ite
             guard case let .totp(model) = item.itemType else { return }
             await moveItemToBitwarden(item: model.itemView)
         case .refresh:
+            state.showNextCode = services.appSettingsStore.showNextCode
             await determineItemListCardState()
             await streamItemList()
         case let .search(text):

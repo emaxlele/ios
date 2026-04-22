@@ -184,10 +184,10 @@ class AuthenticatorItemRepositoryTests: BitwardenTestCase { // swiftlint:disable
         let currentCode = "123456"
         let nextCode = "654321"
         totpService.getTotpCodeResult = .success(
-            TOTPCodeModel(code: currentCode, codeGenerationDate: timeProvider.presentTime, period: 30)
+            TOTPCodeModel(code: currentCode, codeGenerationDate: timeProvider.presentTime, period: 30),
         )
         totpService.getTotpCodeAtDateResult = .success(
-            TOTPCodeModel(code: nextCode, codeGenerationDate: timeProvider.presentTime, period: 30)
+            TOTPCodeModel(code: nextCode, codeGenerationDate: timeProvider.presentTime, period: 30),
         )
 
         let item = ItemListItem.fixture()
@@ -202,7 +202,7 @@ class AuthenticatorItemRepositoryTests: BitwardenTestCase { // swiftlint:disable
     /// `refreshTOTPCodes(for:)` returns items with only the current code when next-code generation fails.
     func test_refreshTOTPCodes_nextCodeFails_returnsCurrentCodeOnly() async throws {
         totpService.getTotpCodeResult = .success(
-            TOTPCodeModel(code: "123456", codeGenerationDate: timeProvider.presentTime, period: 30)
+            TOTPCodeModel(code: "123456", codeGenerationDate: timeProvider.presentTime, period: 30),
         )
         totpService.getTotpCodeAtDateResult = .failure(TOTPServiceError.unableToGenerateCode("next code error"))
 
@@ -212,7 +212,7 @@ class AuthenticatorItemRepositoryTests: BitwardenTestCase { // swiftlint:disable
 
         XCTAssertNotNil(actual.totpCodeModel)
         XCTAssertNil(actual.nextTotpCodeModel)
-        XCTAssertTrue(errorReporter.errors.isEmpty)
+        XCTAssertFalse(errorReporter.errors.isEmpty)
     }
 
     /// `refreshTOTPCodes(on:)` updates the TOTP codes on items.

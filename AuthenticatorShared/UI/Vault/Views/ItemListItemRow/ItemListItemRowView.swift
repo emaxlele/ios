@@ -22,10 +22,10 @@ struct ItemListItemRowView: View {
     // MARK: Private Properties
 
     /// The remaining-seconds threshold at which the next code becomes visible.
-    private let nextCodeThreshold = 10
+    private static let nextCodeThreshold = 10
 
     /// Whether the next TOTP code should currently be shown based on remaining time.
-    @State private var showNextCode = false
+    @State private var nextCodeVisible = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -63,13 +63,13 @@ struct ItemListItemRowView: View {
         .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { _ in
             guard store.state.showNextCode,
                   let model = store.state.item.totpCodeModel else { return }
-            showNextCode = TOTPExpirationCalculator.remainingSeconds(
+            nextCodeVisible = TOTPExpirationCalculator.remainingSeconds(
                 for: timeProvider.presentTime,
                 using: Int(model.period),
-            ) <= nextCodeThreshold
+            ) <= Self.nextCodeThreshold
         }
         .onChange(of: store.state.item.totpCodeModel) { _ in
-            showNextCode = false
+            nextCodeVisible = false
         }
     }
 
@@ -128,7 +128,7 @@ struct ItemListItemRowView: View {
             Text(model.displayCode)
                 .styleGuide(.bodyMonospaced, weight: .regular, monoSpacedDigit: true)
                 .foregroundColor(Asset.Colors.textPrimary.swiftUIColor)
-            if showNextCode, let nextCode = store.state.item.nextTotpCodeModel {
+            if nextCodeVisible, let nextCode = store.state.item.nextTotpCodeModel {
                 Text(nextCode.displayCode)
                     .styleGuide(.subheadline, weight: .regular, monoSpacedDigit: true)
                     .foregroundColor(Asset.Colors.textSecondary.swiftUIColor)
