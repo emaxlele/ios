@@ -144,6 +144,22 @@ class ItemListProcessorTests: BitwardenTestCase { // swiftlint:disable:this type
         XCTAssertEqual(coordinator.routes, [.setupTotpManual])
     }
 
+    /// `perform(_:)` with `.appeared` loads the `showNextCode` setting from `AppSettingsStore`.
+    @MainActor
+    func test_perform_appeared_loadsShowNextCodeSetting() {
+        appSettingsStore.showNextCode = true
+        authItemRepository.itemListSubject.send([])
+
+        let task = Task {
+            await subject.perform(.appeared)
+        }
+
+        waitFor(subject.state.loadingState != .loading(nil))
+        task.cancel()
+
+        XCTAssertTrue(subject.state.showNextCode)
+    }
+
     /// `perform(_:)` with `.appeared` starts streaming vault items.
     @MainActor
     func test_perform_appeared() {

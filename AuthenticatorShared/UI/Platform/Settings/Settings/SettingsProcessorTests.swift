@@ -311,4 +311,36 @@ class SettingsProcessorTests: BitwardenTestCase {
 
         XCTAssertEqual(subject.state.url, ExternalLinksConstants.passwordManagerLink)
     }
+
+    /// Performing `.loadData` loads the current `showNextCode` value from `AppSettingsStore`.
+    @MainActor
+    func test_perform_loadData_loadsShowNextCode() async {
+        appSettingsStore.showNextCode = true
+        await subject.perform(.loadData)
+
+        XCTAssertTrue(subject.state.showNextCode)
+    }
+
+    /// Receiving `.showNextCodeToggled(true)` updates both state and the settings store.
+    @MainActor
+    func test_receive_showNextCodeToggled_updatesStateAndStore() {
+        XCTAssertFalse(subject.state.showNextCode)
+
+        subject.receive(.showNextCodeToggled(true))
+
+        XCTAssertTrue(subject.state.showNextCode)
+        XCTAssertTrue(appSettingsStore.showNextCode)
+    }
+
+    /// Receiving `.showNextCodeToggled(false)` turns the setting off.
+    @MainActor
+    func test_receive_showNextCodeToggled_off() {
+        appSettingsStore.showNextCode = true
+        subject.state.showNextCode = true
+
+        subject.receive(.showNextCodeToggled(false))
+
+        XCTAssertFalse(subject.state.showNextCode)
+        XCTAssertFalse(appSettingsStore.showNextCode)
+    }
 }

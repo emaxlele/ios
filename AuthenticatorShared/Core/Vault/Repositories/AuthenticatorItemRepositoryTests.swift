@@ -179,6 +179,42 @@ class AuthenticatorItemRepositoryTests: BitwardenTestCase { // swiftlint:disable
         XCTAssertEqual(actual.accountName, item.accountName)
     }
 
+    /// `refreshTOTPCodes(for:)` returns items with both the current and next TOTP codes populated.
+    func test_refreshTOTPCodes_success_includesNextCode() async throws {
+        let currentCode = "123456"
+        let nextCode = "654321"
+        totpService.getTotpCodeResult = .success(
+            TOTPCodeModel(code: currentCode, codeGenerationDate: timeProvider.presentTime, period: 30)
+        )
+        totpService.getTotpCodeAtDateResult = .success(
+            TOTPCodeModel(code: nextCode, codeGenerationDate: timeProvider.presentTime, period: 30)
+        )
+
+        let item = ItemListItem.fixture()
+        let result = try await subject.refreshTOTPCodes(for: [item])
+        let actual = try XCTUnwrap(result[0])
+
+        XCTAssertEqual(actual.totpCodeModel?.code, currentCode)
+        XCTAssertEqual(actual.nextTotpCodeModel?.code, nextCode)
+        XCTAssertNotNil(totpService.capturedDate)
+    }
+
+    /// `refreshTOTPCodes(for:)` returns items with only the current code when next-code generation fails.
+    func test_refreshTOTPCodes_nextCodeFails_returnsCurrentCodeOnly() async throws {
+        totpService.getTotpCodeResult = .success(
+            TOTPCodeModel(code: "123456", codeGenerationDate: timeProvider.presentTime, period: 30)
+        )
+        totpService.getTotpCodeAtDateResult = .failure(TOTPServiceError.unableToGenerateCode("next code error"))
+
+        let item = ItemListItem.fixture()
+        let result = try await subject.refreshTOTPCodes(for: [item])
+        let actual = try XCTUnwrap(result[0])
+
+        XCTAssertNotNil(actual.totpCodeModel)
+        XCTAssertNil(actual.nextTotpCodeModel)
+        XCTAssertTrue(errorReporter.errors.isEmpty)
+    }
+
     /// `refreshTOTPCodes(on:)` updates the TOTP codes on items.
     func test_refreshTOTPCodes_success() async throws {
         let newCode = "987654"

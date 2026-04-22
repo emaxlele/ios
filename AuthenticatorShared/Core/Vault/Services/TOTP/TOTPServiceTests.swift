@@ -69,4 +69,16 @@ final class TOTPServiceTests: BitwardenTestCase {
             )
         }
     }
+
+    /// `getTotpCode(for:date:)` generates a code using the provided date, not the current time.
+    func test_getTotpCode_withExplicitDate() async throws {
+        let specificDate = Date(timeIntervalSinceReferenceDate: 1_000_000)
+        clientService.mockVault.generateTOTPCodeResult = .success("654321")
+        let key = try subject.getTOTPConfiguration(key: .base32Key)
+
+        let result = try await subject.getTotpCode(for: key, date: specificDate)
+
+        XCTAssertEqual(result.code, "654321")
+        XCTAssertEqual(result.codeGenerationDate, specificDate)
+    }
 }

@@ -81,4 +81,51 @@ class ItemListItemTests: BitwardenTestCase {
         let newItem = subject.with(newTotpModel: newModel)
         XCTAssertEqual(newItem.totpCodeModel, newModel)
     }
+
+    /// `nextTotpCodeModel` returns the next code for a `.sharedTotp` item.
+    func test_nextTotpCodeModel_sharedTotp() {
+        let nextCode = TOTPCodeModel(code: "654321", codeGenerationDate: .now, period: 30)
+        subject = .fixtureShared(totp: .fixture(nextTotpCode: nextCode))
+
+        XCTAssertEqual(subject.nextTotpCodeModel, nextCode)
+    }
+
+    /// `nextTotpCodeModel` returns the next code for a `.totp` item.
+    func test_nextTotpCodeModel_totp() {
+        let nextCode = TOTPCodeModel(code: "654321", codeGenerationDate: .now, period: 30)
+        subject = .fixture(totp: .fixture(nextTotpCode: nextCode))
+
+        XCTAssertEqual(subject.nextTotpCodeModel, nextCode)
+    }
+
+    /// `nextTotpCodeModel` returns `nil` when no next code is set.
+    func test_nextTotpCodeModel_nil() {
+        subject = .fixture()
+
+        XCTAssertNil(subject.nextTotpCodeModel)
+    }
+
+    /// `with(newTotpModel:nextTotpModel:)` updates both the current and next TOTP codes.
+    func test_with_updatesNextTotpModel() {
+        subject = .fixture()
+        let newModel = TOTPCodeModel(code: "111111", codeGenerationDate: Date(), period: 30)
+        let nextModel = TOTPCodeModel(code: "222222", codeGenerationDate: Date(), period: 30)
+
+        let newItem = subject.with(newTotpModel: newModel, nextTotpModel: nextModel)
+
+        XCTAssertEqual(newItem.totpCodeModel, newModel)
+        XCTAssertEqual(newItem.nextTotpCodeModel, nextModel)
+    }
+
+    /// `with(newTotpModel:)` leaves `nextTotpCodeModel` nil when `nextTotpModel` is omitted.
+    func test_with_nextTotpModelDefaultsToNil() {
+        let nextCode = TOTPCodeModel(code: "654321", codeGenerationDate: .now, period: 30)
+        subject = .fixture(totp: .fixture(nextTotpCode: nextCode))
+        let newModel = TOTPCodeModel(code: "111111", codeGenerationDate: Date(), period: 30)
+
+        let newItem = subject.with(newTotpModel: newModel)
+
+        XCTAssertEqual(newItem.totpCodeModel, newModel)
+        XCTAssertNil(newItem.nextTotpCodeModel)
+    }
 }
