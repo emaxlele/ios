@@ -61,8 +61,8 @@ class MockAuthClient: AuthClientProtocol {
     var passwordStrengthPassword: String?
     var passwordStrengthEmail: String?
     var passwordStrengthAdditionalInputs: [String]?
-    
-    var registrationClientResult: BitwardenSdk.RegistrationClient?
+
+    var registrationClientResult: BitwardenSdk.RegistrationClient = RegistrationClient(noHandle: .init())
 
     var satisfiesPolicyPassword: String?
     var satisfiesPolicyStrength: UInt8?

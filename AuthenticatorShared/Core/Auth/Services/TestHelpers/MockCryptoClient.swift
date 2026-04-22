@@ -3,10 +3,9 @@ import BitwardenSdk
 @testable import AuthenticatorShared
 
 class MockCryptoClient: CryptoClientProtocol {
-    func getUpgradedUserKey(upgradeToken: BitwardenSdk.V2UpgradeToken?) throws -> BitwardenSdk.B64 {
-        <#code#>
-    }
-    
+    var getUpgradedUserKeyUpgradeToken: V2UpgradeToken?
+    var getUpgradedUserKeyResult: Result<B64, Error> = .success("UPGRADED_USER_KEY")
+
     var deriveKeyConnectorRequest: DeriveKeyConnectorRequest?
     var deriveKeyConnectorResult: Result<String, Error> = .success("key")
 
@@ -90,6 +89,11 @@ class MockCryptoClient: CryptoClientProtocol {
     func deriveKeyConnector(request: DeriveKeyConnectorRequest) throws -> String {
         deriveKeyConnectorRequest = request
         return try deriveKeyConnectorResult.get()
+    }
+
+    func getUpgradedUserKey(upgradeToken: BitwardenSdk.V2UpgradeToken?) throws -> BitwardenSdk.B64 {
+        getUpgradedUserKeyUpgradeToken = upgradeToken
+        return try getUpgradedUserKeyResult.get()
     }
 
     func derivePinKey(pin: String) throws -> DerivePinKeyResponse {
