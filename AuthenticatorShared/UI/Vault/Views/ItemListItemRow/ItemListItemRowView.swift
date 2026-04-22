@@ -103,12 +103,6 @@ struct ItemListItemRowView: View {
             }
         }
         Spacer()
-        TOTPCountdownTimerView(
-            timeProvider: timeProvider,
-            totpCode: model,
-            isNearExpiration: $isNearExpiration,
-            onExpiration: nil,
-        )
         VStack(alignment: .trailing, spacing: 0) {
             Text(model.displayCode)
                 .styleGuide(.bodyMonospaced, weight: .regular, monoSpacedDigit: true)
@@ -118,11 +112,17 @@ struct ItemListItemRowView: View {
                isNearExpiration,
                let nextCode = store.state.item.nextTotpCodeModel {
                 Text(nextCode.displayCode)
-                    .styleGuide(.bodyMonospaced, weight: .regular, monoSpacedDigit: true)
+                    .styleGuide(.caption2Monospaced, weight: .regular, monoSpacedDigit: true)
                     .foregroundColor(Asset.Colors.textSecondary.swiftUIColor)
                     .accessibilityLabel("\(Localizations.nextCode): \(nextCode.displayCode)")
             }
         }
+        TOTPCountdownTimerView(
+            timeProvider: timeProvider,
+            totpCode: model,
+            isNearExpiration: $isNearExpiration,
+            onExpiration: nil,
+        )
     }
 }
 
