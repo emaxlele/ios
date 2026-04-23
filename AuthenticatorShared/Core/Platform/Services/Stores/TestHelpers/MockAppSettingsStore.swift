@@ -11,6 +11,7 @@ class MockAppSettingsStore: AppSettingsStore {
     var appLocale: String?
     var appTheme: String?
     var disableWebIcons = false
+    var showNextCode = false
     var defaultSaveOption: DefaultSaveOption = .none
     var flightRecorderData: FlightRecorderData?
     var hasSeenDefaultSaveOptionPrompt = false

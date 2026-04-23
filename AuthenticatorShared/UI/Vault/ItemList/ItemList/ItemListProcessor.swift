@@ -382,6 +382,7 @@ final class ItemListProcessor: StateProcessor<ItemListState, ItemListAction, Ite
                     return ItemListSection(id: section.id, items: sortedList, name: section.name)
                 }
                 groupTotpExpirationManager?.configureTOTPRefreshScheduling(for: sectionList.flatMap(\.items))
+                state.showNextCode = services.appSettingsStore.showNextCode
                 state.showMoveToBitwarden = await services.authenticatorItemRepository.isPasswordManagerSyncActive()
                 state.loadingState = .data(sectionList)
                 if showToast {

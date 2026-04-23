@@ -59,6 +59,18 @@ extension ItemListItem {
         }
     }
 
+    /// The associated next `TOTPCodeModel` (one period ahead) if this item has a next code, or `nil`.
+    var nextTotpCodeModel: TOTPCodeModel? {
+        switch itemType {
+        case let .sharedTotp(model):
+            model.nextTotpCode
+        case .syncError:
+            nil
+        case let .totp(model):
+            model.nextTotpCode
+        }
+    }
+
     /// Initialize an `ItemListItem` from an `AuthenticatorItemView`
     ///
     /// - Parameters:
@@ -160,6 +172,37 @@ extension ItemListItem {
             )
         }
     }
+
+    /// Make a new `ItemListItem` that is a copy of the existing one, but with an updated next `TOTPCodeModel`.
+    ///
+    /// - Parameter nextTotpCode: The next `TOTPCodeModel` to insert, or `nil` to clear it.
+    /// - Returns: An exact copy of the data in the existing `ItemListItem`, but with the new
+    ///     next `TOTPCodeModel` inserted into the itemType's model.
+    ///
+    public func with(nextTotpCode: TOTPCodeModel?) -> ItemListItem {
+        switch itemType {
+        case let .sharedTotp(oldModel):
+            var updatedModel = oldModel
+            updatedModel.nextTotpCode = nextTotpCode
+            return ItemListItem(
+                id: id,
+                name: name,
+                accountName: accountName,
+                itemType: .sharedTotp(model: updatedModel),
+            )
+        case .syncError:
+            return self
+        case let .totp(oldModel):
+            var updatedModel = oldModel
+            updatedModel.nextTotpCode = nextTotpCode
+            return ItemListItem(
+                id: id,
+                name: name,
+                accountName: accountName,
+                itemType: .totp(model: updatedModel),
+            )
+        }
+    }
 }
 
 extension ItemListItem {
@@ -194,6 +237,9 @@ public struct ItemListTotpItem: Equatable {
 
     /// The current TOTP code for the item
     var totpCode: TOTPCodeModel
+
+    /// The next TOTP code for the item (one period ahead), used for next-code preview.
+    var nextTotpCode: TOTPCodeModel?
 }
 
 // MARK: - ItemListSharedTotpItem
@@ -204,4 +250,7 @@ public struct ItemListSharedTotpItem: Equatable {
 
     /// The current TOTP code for the item
     var totpCode: TOTPCodeModel
+
+    /// The next TOTP code for the item (one period ahead), used for next-code preview.
+    var nextTotpCode: TOTPCodeModel?
 }

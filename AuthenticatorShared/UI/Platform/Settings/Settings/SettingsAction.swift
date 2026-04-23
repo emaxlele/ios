@@ -36,6 +36,9 @@ enum SettingsAction: Equatable {
     /// The sync with bitwarden app button was tapped.
     case syncWithBitwardenAppTapped
 
+    /// The show next code toggle was changed.
+    case showNextCodeToggled(Bool)
+
     /// The toast was shown or hidden.
     case toastShown(Toast?)
 

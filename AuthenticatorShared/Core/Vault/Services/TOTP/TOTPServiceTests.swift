@@ -69,4 +69,34 @@ final class TOTPServiceTests: BitwardenTestCase {
             )
         }
     }
+
+    /// `getNextTotpCode(for:)` returns the code from the SDK for the next period window.
+    func test_getNextTotpCode_returnsCode() async throws {
+        let keyModel = try XCTUnwrap(TOTPKeyModel(authenticatorKey: .base32Key))
+        let result = try await subject.getNextTotpCode(for: keyModel)
+
+        XCTAssertEqual(result.code, "123456")
+        XCTAssertEqual(result.period, 30)
+    }
+
+    /// `getNextTotpCode(for:)` passes a date one period ahead of the current time to the SDK.
+    func test_getNextTotpCode_usesNextPeriodDate() async throws {
+        let fixedDate = Date(timeIntervalSinceReferenceDate: 1_000_000)
+        timeProvider = MockTimeProvider(.mockTime(fixedDate))
+        subject = DefaultTOTPService(
+            clientService: clientService,
+            errorReporter: errorReporter,
+            timeProvider: timeProvider,
+        )
+        let keyModel = try XCTUnwrap(TOTPKeyModel(authenticatorKey: .base32Key))
+
+        let result = try await subject.getNextTotpCode(for: keyModel)
+
+        // The SDK mock stores the passed date as codeGenerationDate
+        let expectedDate = Date(
+            timeIntervalSinceReferenceDate: fixedDate.timeIntervalSinceReferenceDate
+                + Double(keyModel.period),
+        )
+        XCTAssertEqual(result.codeGenerationDate, expectedDate)
+    }
 }

@@ -701,6 +701,48 @@ class AuthenticatorItemRepositoryTests: BitwardenTestCase { // swiftlint:disable
         )
     }
 
+    /// `refreshTotpCodes(for:)` populates `nextTotpCode` on each refreshed item.
+    @MainActor
+    func test_refreshTotpCodes_setsNextCode() async throws {
+        let currentCode = TOTPCodeModel(code: "111111", codeGenerationDate: timeProvider.presentTime, period: 30)
+        let nextCode = TOTPCodeModel(code: "222222", codeGenerationDate: timeProvider.presentTime, period: 30)
+        totpService.getTotpCodeResult = .success(currentCode)
+        totpService.getNextTotpCodeResult = .success(nextCode)
+
+        let item = ItemListItem.fixture(
+            totp: ItemListTotpItem.fixture(
+                itemView: AuthenticatorItemView.fixture(),
+                totpCode: currentCode,
+            ),
+        )
+
+        let results = try await subject.refreshTotpCodes(for: [item])
+
+        XCTAssertEqual(results.count, 1)
+        XCTAssertEqual(results[0].nextTotpCodeModel?.code, "222222")
+    }
+
+    /// `refreshTotpCodes(for:)` still returns the refreshed current code when `getNextTotpCode` fails.
+    @MainActor
+    func test_refreshTotpCodes_nextCodeFailure_stillReturnsCurrentCode() async throws {
+        let currentCode = TOTPCodeModel(code: "111111", codeGenerationDate: timeProvider.presentTime, period: 30)
+        totpService.getTotpCodeResult = .success(currentCode)
+        totpService.getNextTotpCodeResult = .failure(TOTPKeyError.invalidKeyFormat)
+
+        let item = ItemListItem.fixture(
+            totp: ItemListTotpItem.fixture(
+                itemView: AuthenticatorItemView.fixture(),
+                totpCode: currentCode,
+            ),
+        )
+
+        let results = try await subject.refreshTotpCodes(for: [item])
+
+        XCTAssertEqual(results.count, 1)
+        XCTAssertEqual(results[0].totpCodeModel?.code, "111111")
+        XCTAssertNil(results[0].nextTotpCodeModel)
+    }
+
     /// Convenience method to create an `ItemListItem` from
     /// an `AuthenticatorBridgeItemDataView` using our test fixtures.
     ///

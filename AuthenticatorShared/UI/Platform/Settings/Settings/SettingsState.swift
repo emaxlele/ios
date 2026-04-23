@@ -31,6 +31,9 @@ struct SettingsState: Equatable {
     /// A flag to indicate if we should show the default save option menu.
     var shouldShowDefaultSaveOption = false
 
+    /// Whether to show the next TOTP code in the item list when less than 10 seconds remain.
+    var showNextCode = false
+
     /// A toast message to show in the view.
     var toast: Toast?
 

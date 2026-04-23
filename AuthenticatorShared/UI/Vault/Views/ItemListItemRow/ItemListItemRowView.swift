@@ -38,6 +38,8 @@ struct ItemListItemRowView: View {
                             name: store.state.item.name,
                             accountName: store.state.item.accountName,
                             model: totpCodeModel,
+                            nextCode: store.state.item.nextTotpCodeModel,
+                            showNextCode: store.state.showNextCode,
                         )
                     } else {
                         EmptyView()
@@ -77,7 +79,13 @@ struct ItemListItemRowView: View {
 
     /// The row showing the totp code.
     @ViewBuilder
-    private func totpCodeRow(name: String, accountName: String?, model: TOTPCodeModel) -> some View {
+    private func totpCodeRow(
+        name: String,
+        accountName: String?,
+        model: TOTPCodeModel,
+        nextCode: TOTPCodeModel?,
+        showNextCode: Bool,
+    ) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             if let name = name.nilIfEmpty {
                 Text(name)
@@ -100,14 +108,78 @@ struct ItemListItemRowView: View {
             }
         }
         Spacer()
-        TOTPCountdownTimerView(
+        TotpCodeRowContent(
+            model: model,
+            nextCode: nextCode,
+            showNextCode: showNextCode,
             timeProvider: timeProvider,
+        )
+    }
+}
+
+// MARK: - TotpCodeRowContent
+
+/// A sub-view that owns the TOTP countdown timer and conditionally displays the next code.
+private struct TotpCodeRowContent: View {
+    // MARK: Static Properties
+
+    /// The number of seconds remaining below which the next code is revealed.
+    static let nextCodeVisibilityThreshold = 10
+
+    // MARK: Properties
+
+    /// The current TOTP code model.
+    let model: TOTPCodeModel
+
+    /// The next TOTP code model (one period ahead), or `nil` if unavailable.
+    let nextCode: TOTPCodeModel?
+
+    /// Whether the "show next code" feature is enabled in settings.
+    let showNextCode: Bool
+
+    /// The `TimeProvider` used to drive the countdown timer.
+    let timeProvider: any TimeProvider
+
+    /// The countdown timer that drives the circular progress indicator.
+    @StateObject private var timer: TOTPCountdownTimer
+
+    // MARK: View
+
+    var body: some View {
+        TOTPCountdownTimerView(totpCode: model, timer: timer)
+        VStack(alignment: .trailing, spacing: 0) {
+            Text(model.displayCode)
+                .styleGuide(.bodyMonospaced, weight: .regular, monoSpacedDigit: true)
+                .foregroundColor(Asset.Colors.textPrimary.swiftUIColor)
+            if showNextCode,
+               timer.secondsRemaining < Self.nextCodeVisibilityThreshold,
+               let next = nextCode {
+                Text(next.displayCode)
+                    .styleGuide(.subheadline, monoSpacedDigit: true)
+                    .foregroundColor(Asset.Colors.textSecondary.swiftUIColor)
+                    .accessibilityLabel(Localizations.nextCode(next.displayCode))
+            }
+        }
+    }
+
+    // MARK: Initialization
+
+    init(
+        model: TOTPCodeModel,
+        nextCode: TOTPCodeModel?,
+        showNextCode: Bool,
+        timeProvider: any TimeProvider,
+    ) {
+        self.model = model
+        self.nextCode = nextCode
+        self.showNextCode = showNextCode
+        self.timeProvider = timeProvider
+        _timer = StateObject(wrappedValue: TOTPCountdownTimer(
+            timeProvider: timeProvider,
+            timerInterval: TOTPCountdownTimerView.timerInterval,
             totpCode: model,
             onExpiration: nil,
-        )
-        Text(model.displayCode)
-            .styleGuide(.bodyMonospaced, weight: .regular, monoSpacedDigit: true)
-            .foregroundColor(Asset.Colors.textPrimary.swiftUIColor)
+        ))
     }
 }
 
@@ -133,6 +205,7 @@ struct ItemListItemRowView: View {
                         ),
                     ),
                     hasDivider: true,
+                    showNextCode: false,
                     showWebIcons: true,
                 ),
             ),
@@ -162,6 +235,7 @@ struct ItemListItemRowView: View {
                         ),
                     ),
                     hasDivider: true,
+                    showNextCode: false,
                     showWebIcons: true,
                 ),
             ),
@@ -191,6 +265,7 @@ struct ItemListItemRowView: View {
                         ),
                     ),
                     hasDivider: true,
+                    showNextCode: false,
                     showWebIcons: true,
                 ),
             ),
@@ -210,6 +285,7 @@ struct ItemListItemRow_Previews: PreviewProvider {
                                 state: ItemListItemRowState(
                                     item: item,
                                     hasDivider: true,
+                                    showNextCode: false,
                                     showWebIcons: true,
                                 ),
                             ),
@@ -230,6 +306,7 @@ struct ItemListItemRow_Previews: PreviewProvider {
                                 state: ItemListItemRowState(
                                     item: item,
                                     hasDivider: true,
+                                    showNextCode: false,
                                     showWebIcons: true,
                                 ),
                             ),

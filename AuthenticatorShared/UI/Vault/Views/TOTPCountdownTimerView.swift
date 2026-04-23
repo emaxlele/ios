@@ -66,4 +66,15 @@ struct TOTPCountdownTimerView: View {
             onExpiration: onExpiration,
         )
     }
+
+    /// Initializes the view with an externally-created timer.
+    ///
+    /// - Parameters:
+    ///   - totpCode: The code that the timer represents.
+    ///   - timer: A pre-created `TOTPCountdownTimer` to use for the countdown.
+    ///
+    init(totpCode: TOTPCodeModel, timer: TOTPCountdownTimer) {
+        self.totpCode = totpCode
+        self.timer = timer
+    }
 }

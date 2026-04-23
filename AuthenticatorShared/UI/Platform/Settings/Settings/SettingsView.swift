@@ -117,6 +117,16 @@ struct SettingsView: View {
 
                 syncWithPasswordManagerRow
 
+                BitwardenToggle(
+                    Localizations.showNextCode,
+                    footer: Localizations.seeIncomingCodesInTheList,
+                    isOn: store.binding(
+                        get: \.showNextCode,
+                        send: SettingsAction.showNextCodeToggled,
+                    ),
+                )
+                .accessibilityIdentifier("ShowNextCodeToggle")
+
                 if store.state.shouldShowDefaultSaveOption {
                     defaultSaveOption
                 }

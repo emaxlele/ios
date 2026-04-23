@@ -274,4 +274,20 @@ class AppSettingsStoreTests: BitwardenTestCase {
         XCTAssertEqual(subject.vaultTimeout(userId: "1"), 60)
         XCTAssertEqual(userDefaults.double(forKey: "bwaPreferencesStorage:vaultTimeout_1"), 60)
     }
+
+    /// `showNextCode` defaults to `false` when no value has been stored.
+    func test_showNextCode_defaultsFalse() {
+        XCTAssertFalse(subject.showNextCode)
+    }
+
+    /// `showNextCode` persists and retrieves the value correctly.
+    func test_showNextCode_persistsValue() {
+        subject.showNextCode = true
+        XCTAssertTrue(subject.showNextCode)
+        XCTAssertTrue(userDefaults.bool(forKey: "bwaPreferencesStorage:showNextCode"))
+
+        subject.showNextCode = false
+        XCTAssertFalse(subject.showNextCode)
+        XCTAssertFalse(userDefaults.bool(forKey: "bwaPreferencesStorage:showNextCode"))
+    }
 }

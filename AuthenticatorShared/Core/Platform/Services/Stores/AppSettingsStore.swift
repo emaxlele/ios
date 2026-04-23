@@ -22,6 +22,9 @@ protocol AppSettingsStore: AnyObject {
     /// The default save location for new keys.
     var defaultSaveOption: DefaultSaveOption { get set }
 
+    /// Whether to show the next TOTP code in the item list when less than 10 seconds remain.
+    var showNextCode: Bool { get set }
+
     /// The data used by the flight recorder for the active and any inactive logs.
     var flightRecorderData: FlightRecorderData? { get set }
 
@@ -294,6 +297,7 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
         case defaultSaveOption
         case disableWebIcons
         case flightRecorderData
+        case showNextCode
         case hasSeenWelcomeTutorial
         case hasSyncedAccount(name: String)
         case lastActiveTime(userId: String)
@@ -324,6 +328,8 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
                 "defaultSaveOption"
             case .disableWebIcons:
                 "disableFavicon"
+            case .showNextCode:
+                "showNextCode"
             case .flightRecorderData:
                 "flightRecorderData"
             case .hasSeenWelcomeTutorial:
@@ -360,6 +366,11 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
     var disableWebIcons: Bool {
         get { fetch(for: .disableWebIcons) }
         set { store(newValue, for: .disableWebIcons) }
+    }
+
+    var showNextCode: Bool {
+        get { fetch(for: .showNextCode) }
+        set { store(newValue, for: .showNextCode) }
     }
 
     var defaultSaveOption: DefaultSaveOption {
