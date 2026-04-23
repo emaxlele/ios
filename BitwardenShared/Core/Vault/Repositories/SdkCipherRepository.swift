@@ -43,14 +43,14 @@ final class SdkCipherRepository: BitwardenSdk.CipherRepository {
     }
 
     func setBulk(values: [String: BitwardenSdk.Cipher]) async throws {
-        await values.asyncForEach { (id: String, value: Cipher) in
-            try? await set(id: id, value: value)
+        try await values.asyncForEach { (id: String, value: Cipher) in
+            try await set(id: id, value: value)
         }
     }
 
     func removeBulk(keys: [String]) async throws {
-        await keys.asyncForEach { key in
-            try? await remove(id: key)
+        try await keys.asyncForEach { key in
+            try await remove(id: key)
         }
     }
 

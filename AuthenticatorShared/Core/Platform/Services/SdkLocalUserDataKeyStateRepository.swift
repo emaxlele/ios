@@ -4,14 +4,14 @@ import BitwardenSdk
 /// `LocalUserDataKeyStateRepository` implementation to be used on SDK client-managed state.
 /// Stores the wrapped user key in `AppSettingsStore` (UserDefaults) per user, keyed by the
 /// SDK-assigned id. Never stores unencrypted key material.
-final class SdkLocalUserDataKeyStateRepository: BitwardenSdk.LocalUserDataKeyStateRepository, @unchecked Sendable {
+actor SdkLocalUserDataKeyStateRepository: BitwardenSdk.LocalUserDataKeyStateRepository {
     // MARK: Properties
 
     /// The store for persisting local user data key states.
     private let appSettingsStore: AppSettingsStore
 
     /// The user ID of the SDK instance this repository belongs to.
-    let userId: String
+    nonisolated let userId: String
 
     // MARK: Initialization
 

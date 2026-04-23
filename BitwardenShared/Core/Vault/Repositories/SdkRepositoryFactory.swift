@@ -52,6 +52,12 @@ struct DefaultSdkRepositoryFactory: SdkRepositoryFactory {
     // MARK: Methods
 
     func makeCipherRepositories(userId: String?) -> BitwardenSdk.Repositories {
+        if userId == nil {
+            errorReporter.log(error: BitwardenError.generalError(
+                type: "Missing userId",
+                message: "makeCipherRepositories called with nil userId; repositories keyed to empty string.",
+            ))
+        }
         let resolvedUserId = userId ?? ""
         return Repositories(
             cipher: SdkCipherRepository(
