@@ -243,6 +243,53 @@ class MigrationServiceTests: BitwardenTestCase { // swiftlint:disable:this type_
         XCTAssertEqual(appSettingsStore.migrationVersion, 2)
     }
 
+    /// `performMigrations()` for migration 2 skips setting biometric access control in extension
+    /// context to avoid `errSecInteractionNotAllowed` (-25330).
+    func test_performMigrations_2_inExtensionContext_skipsBiometricAccessControl() async throws {
+        let biometricSubject = DefaultMigrationService(
+            appGroupUserDefaults: appGroupUserDefaults,
+            appContext: .appExtension,
+            appSettingsStore: appSettingsStore,
+            errorReporter: errorReporter,
+            keychainRepository: keychainRepository,
+            keychainService: keychainService,
+            keychainServiceName: testKeychainServiceName,
+            standardUserDefaults: standardUserDefaults,
+            userSessionStateService: userSessionStateService,
+        )
+
+        SecItemAdd(
+            [
+                kSecClass: kSecClassGenericPassword,
+                kSecAttrAccount: "userKeyBiometricUnlock_TEST_USER_ID",
+                kSecAttrService: testKeychainServiceName,
+                kSecAttrGeneric: Data("biometric-key".utf8),
+            ] as CFDictionary,
+            nil,
+        )
+
+        try await biometricSubject.performMigration(version: 2)
+
+        // Data should still be migrated from kSecAttrGeneric to kSecValueData.
+        var copyResult: AnyObject?
+        SecItemCopyMatching(
+            [
+                kSecClass: kSecClassGenericPassword,
+                kSecAttrService: testKeychainServiceName,
+                kSecMatchLimit: kSecMatchLimitOne,
+                kSecReturnData: true,
+                kSecReturnAttributes: true,
+            ] as CFDictionary,
+            &copyResult,
+        )
+        let item = try XCTUnwrap(copyResult as? [CFString: Any])
+        XCTAssertEqual(item[kSecValueData] as? Data, Data("biometric-key".utf8))
+        XCTAssertEqual(item[kSecAttrGeneric] as? Data, Data())
+
+        // The keychainService.accessControl should NOT have been called in extension context.
+        XCTAssertEqual(keychainService.accessControlCallsCount, 0)
+    }
+
     // MARK: Migration 3 (Remove MAUI Biometrics Integrity State)
 
     /// `performMigrations()` for migration 3 removes the integrity state values from MAUI.

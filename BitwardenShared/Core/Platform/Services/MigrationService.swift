@@ -21,6 +21,9 @@ class DefaultMigrationService {
     /// The app's app group UserDefaults instance.
     let appGroupUserDefaults: UserDefaults
 
+    /// The context in which the app is running.
+    let appContext: AppContext
+
     /// The service used by the application to persist app setting values.
     let appSettingsStore: AppSettingsStore
 
@@ -49,6 +52,7 @@ class DefaultMigrationService {
     ///
     /// - Parameters:
     ///   - appGroupUserDefaults: The app's app group UserDefaults instance.
+    ///   - appContext: The context in which the app is running.
     ///   - appSettingsStore: The service used by the application to persist app setting values.
     ///   - errorReporter: The service used by the application to report non-fatal errors.
     ///   - keychainRepository: The repository used to manage keychain items.
@@ -59,6 +63,7 @@ class DefaultMigrationService {
     ///
     init(
         appGroupUserDefaults: UserDefaults = .standard,
+        appContext: AppContext = .mainApp,
         appSettingsStore: AppSettingsStore,
         errorReporter: ErrorReporter,
         keychainRepository: KeychainRepository,
@@ -68,6 +73,7 @@ class DefaultMigrationService {
         userSessionStateService: UserSessionStateService,
     ) {
         self.appGroupUserDefaults = appGroupUserDefaults
+        self.appContext = appContext
         self.appSettingsStore = appSettingsStore
         self.errorReporter = errorReporter
         self.keychainRepository = keychainRepository
@@ -162,7 +168,12 @@ class DefaultMigrationService {
                 }
 
                 // Set access control flags for biometric keys.
-                if let account = itemDictionary[kSecAttrAccount] as? String,
+                // Skip in extension context: SecItemUpdate with kSecAttrAccessControl on a
+                // biometryCurrentSet-protected item requires biometric evaluation before the new
+                // access control can be applied, which is unavailable in extensions and returns
+                // errSecInteractionNotAllowed (-25330). The main app will complete this migration.
+                if appContext != .appExtension,
+                   let account = itemDictionary[kSecAttrAccount] as? String,
                    account.contains("userKeyBiometricUnlock_"),
                    let accessControl = try? keychainService.accessControl(
                        protection: kSecAttrAccessibleWhenUnlockedThisDeviceOnly,
@@ -285,6 +296,11 @@ extension DefaultMigrationService {
 
 extension DefaultMigrationService: MigrationService {
     func performMigrations() async {
+        // Skip all migrations in extension context: keychain operations that require
+        // interactive biometric evaluation are not reliably available in extensions and
+        // cause cascading failures. The main app always runs first and completes migrations.
+        guard appContext != .appExtension else { return }
+
         var migrationVersion = appSettingsStore.migrationVersion
         defer { appSettingsStore.migrationVersion = migrationVersion }
 

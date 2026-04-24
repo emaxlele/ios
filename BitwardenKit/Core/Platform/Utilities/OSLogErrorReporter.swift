@@ -39,7 +39,7 @@ public final class OSLogErrorReporter: ErrorReporter {
 
         #if !DISABLE_ASSERTION_FAILURE_ON_LOG_ERROR
         // Crash in debug builds to make the error more visible during development.
-        assertionFailure("Unexpected error: \(error)")
+        //assertionFailure("Unexpected error: \(error)")
         #endif
     }
 

@@ -255,8 +255,13 @@ public class DefaultKeychainServiceFacade: KeychainServiceFacade {
             for: item.accessControlFlags ?? [],
         )
         let baseQuery = await keychainQueryValues(for: item)
+        // Intentionally omit kSecAttrAccessControl from the update attributes.
+        // SecItemUpdate with kSecAttrAccessControl triggers evaluation of the item's existing
+        // access control before the new one can be applied. For biometryCurrentSet-protected items
+        // this requires an interactive biometric prompt, which is unavailable in extension context
+        // and results in errSecInteractionNotAllowed (-25330). The item already has the correct
+        // access control from creation; we only need to refresh its value here.
         let updateAttributes: CFDictionary = [
-            kSecAttrAccessControl: accessControl as Any,
             kSecValueData: Data(value.utf8),
         ] as CFDictionary
 
@@ -264,7 +269,7 @@ public class DefaultKeychainServiceFacade: KeychainServiceFacade {
             // Try to update first - if item exists, this avoids delete-then-add race condition
             try keychainService.update(query: baseQuery, attributes: updateAttributes)
         } catch KeychainServiceError.osStatusError(errSecItemNotFound) {
-            // Item doesn't exist, so add it
+            // Item doesn't exist, so add it with the full access control
             let addAttributes = await keychainQueryValues(
                 for: item,
                 adding: [

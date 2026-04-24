@@ -313,6 +313,29 @@ struct KeychainServiceFacadeTests { // swiftlint:disable:this type_body_length
         let receivedAttributes = try #require(updateReceivedArguments.attributes as? [String: Any])
         let storedData = try #require(receivedAttributes[kSecValueData as String] as? Data)
         #expect(storedData == Data("new-value".utf8))
+        // kSecAttrAccessControl must not be in update attributes — including it for biometryCurrentSet
+        // items triggers access control evaluation, causing errSecInteractionNotAllowed (-25330) from
+        // extension context.
+        #expect(receivedAttributes[kSecAttrAccessControl as String] == nil)
+    }
+
+    /// `setValue(_:for:)` includes `kSecAttrAccessControl` in the add attributes when creating a new item.
+    @Test
+    func setValue_includesAccessControl_whenAddingNewItem() async throws {
+        let item = MockKeychainItem(
+            unformattedKey: "test_key",
+            accessControlFlags: .biometryCurrentSet,
+        )
+        let expectedAccessControl = try makeAccessControl()
+        keychainService.accessControlReturnValue = expectedAccessControl
+        keychainService.updateThrowableError = KeychainServiceError.osStatusError(errSecItemNotFound)
+
+        try await subject.setValue("new-value", for: item)
+
+        let addAttributes = try #require(keychainService.addReceivedAttributes as? [String: Any])
+        #expect(addAttributes[kSecAttrAccessControl as String] != nil)
+        let storedData = try #require(addAttributes[kSecValueData as String] as? Data)
+        #expect(storedData == Data("new-value".utf8))
     }
 
     /// `setValue(_:for:)` falls through to `add` when the update returns `errSecItemNotFound`.

@@ -83,6 +83,9 @@ public extension BiometricsRepository {
 public class DefaultBiometricsRepository: BiometricsRepository {
     // MARK: Parameters
 
+    /// Whether the repository is running inside an app extension.
+    var isInAppExtension: Bool
+
     /// A service used to track device biometry data & status.
     var biometricsService: BiometricsService
 
@@ -92,20 +95,31 @@ public class DefaultBiometricsRepository: BiometricsRepository {
     /// A service used to update user preferences.
     var stateService: BiometricsStateService
 
+    /// Cached biometric unlock status for in-extension sessions.
+    ///
+    /// `getBiometricAuthStatus()` creates a new `LAContext` on every call. In the extension each
+    /// `loadData()` call (and each `refreshProfileState()` call) invokes this method, which floods
+    /// `coreauthd` with XPC connections and causes it to invalidate the extension's connection.
+    /// Caching the result prevents the flood while keeping the first-call LAContext evaluation.
+    private var cachedBiometricUnlockStatus: BiometricsUnlockStatus?
+
     // MARK: Initialization
 
     /// Initializes the service.
     ///
     /// - Parameters:
+    ///   - isInAppExtension: Whether the repository is running inside an app extension.
     ///   - biometricsService: The service used to track device biometry data & status.
     ///   - keychainService: The service used to store the UserAuthKey key/value pair.
     ///   - stateService: The service used to update user preferences.
     ///
     public init(
+        isInAppExtension: Bool = false,
         biometricsService: BiometricsService,
         keychainService: BiometricsKeychainRepository,
         stateService: BiometricsStateService,
     ) {
+        self.isInAppExtension = isInAppExtension
         self.biometricsService = biometricsService
         keychainRepository = keychainService
         self.stateService = stateService
@@ -116,6 +130,10 @@ public class DefaultBiometricsRepository: BiometricsRepository {
     }
 
     public func setBiometricUnlockKey(authKey: String?, userId: String?) async throws {
+        // Biometric key writes use kSecAttrAccessControl with .biometryCurrentSet, which
+        // requires interactive evaluation in extension context. Skip to avoid -25330.
+        guard !isInAppExtension else { return }
+
         let userId = try await stateService.userIdOrActive(userId)
         guard let authKey,
               try await biometricsService.evaluateBiometricPolicy() else {
@@ -129,25 +147,42 @@ public class DefaultBiometricsRepository: BiometricsRepository {
     }
 
     public func getBiometricUnlockStatus(userId: String?) async throws -> BiometricsUnlockStatus {
+        if isInAppExtension, let cached = cachedBiometricUnlockStatus {
+            return cached
+        }
+
         let biometryStatus = biometricsService.getBiometricAuthStatus()
         if case .lockedOut = biometryStatus {
             throw BiometricsServiceError.biometryLocked
         }
         let hasEnabledBiometricUnlock = try await stateService.getBiometricAuthenticationEnabled(userId: userId)
+        let status: BiometricsUnlockStatus
         switch biometryStatus {
         case let .authorized(type):
-            return .available(type, enabled: hasEnabledBiometricUnlock)
+            status = .available(type, enabled: hasEnabledBiometricUnlock)
         case .denied,
              .lockedOut,
              .noBiometrics,
              .notDetermined,
              .notEnrolled,
              .unknownError:
-            return .notAvailable
+            status = .notAvailable
         }
+
+        if isInAppExtension {
+            cachedBiometricUnlockStatus = status
+        }
+        return status
     }
 
     public func getUserAuthKey() async throws -> String {
+        // Biometric key reads trigger an LAContext evaluation for the .biometryCurrentSet item.
+        // In extension context the timing of this evaluation relative to the credential provider
+        // lifecycle is unreliable. Report as biometryFailed so callers fall back to password/PIN.
+        guard !isInAppExtension else {
+            throw BiometricsServiceError.biometryFailed
+        }
+
         let id = try await stateService.getActiveAccountId()
 
         do {
@@ -168,13 +203,15 @@ public class DefaultBiometricsRepository: BiometricsRepository {
                 case errSecAuthFailed,
                      errSecUserCanceled,
                      kLAErrorAppCancel,
+                     kLAErrorAuthenticationFailed,
                      kLAErrorSystemCancel,
                      kLAErrorUserCancel:
                     throw BiometricsServiceError.biometryCancelled
                 case errSecItemNotFound:
                     throw BiometricsServiceError.getAuthKeyFailed
                 case kLAErrorBiometryDisconnected,
-                     kLAErrorUserFallback:
+                     kLAErrorUserFallback,
+                     errSecInteractionNotAllowed:
                     throw BiometricsServiceError.biometryFailed
                 default:
                     throw error

@@ -19,8 +19,8 @@ struct AvatarView: View {
             initials = upperCaseText!
         }
 
-        circleColor = stringToColor(str: user?.id ?? upperCaseText, fallbackColor: Color(hex: "#FFFFFF33")!)
-        textColor = textColorFromBgColor(circleColor)
+//        circleColor = stringToColor(str: user?.id ?? upperCaseText, fallbackColor: Color(hex: "#FFFFFF33")!)
+//        textColor = textColorFromBgColor(circleColor)
     }
 
     var body: some View {

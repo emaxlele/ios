@@ -29,6 +29,14 @@ class VaultUnlockProcessor: StateProcessor<
     /// A flag indicating if the processor should attempt automatic biometric unlock
     var shouldAttemptAutomaticBiometricUnlock = false
 
+    /// Guards against concurrent `loadData()` executions.
+    ///
+    /// Each `.appeared` effect triggers `loadData()`. In the AutoFill extension SwiftUI can fire
+    /// `.appeared` for the same view multiple times in rapid succession (e.g. once per navigation
+    /// stack layer). Without this guard each concurrent call creates a new `LAContext` via
+    /// `getBiometricUnlockStatus`, flooding `coreauthd` with XPC connections.
+    private var isLoadingData = false
+
     /// The services used by this processor.
     private var services: Services
 
@@ -59,6 +67,7 @@ class VaultUnlockProcessor: StateProcessor<
     override func perform(_ effect: VaultUnlockEffect) async {
         switch effect {
         case .appeared:
+            Logger.processor.debug("VaultUnlockProcessor: .appeared received (isInAppExtension=\(self.appExtensionDelegate?.isInAppExtension ?? false))")
             await refreshProfileState()
             await checkIfPinUnlockIsAvailable()
             await checkIfShouldShowPasswordOrPinFields()
@@ -118,6 +127,10 @@ class VaultUnlockProcessor: StateProcessor<
             if try await services.authRepository.isPinUnlockAvailable() {
                 state.unlockMethod = .pin
             } else if try await services.stateService.getEncryptedPin() != nil {
+                Logger.processor.debug(
+                    // swiftlint:disable:next line_length
+                    "VaultUnlockProcessor: inconsistent PIN state — isPinUnlockAvailable=false but getEncryptedPin is non-nil; pinKeyEncryptedUserKey may be missing while pinProtectedUserKeyEnvelope is present"
+                )
                 state.unlockMethod = .password
             }
         } catch {
@@ -128,6 +141,13 @@ class VaultUnlockProcessor: StateProcessor<
     /// Loads the async state data for the view
     ///
     private func loadData() async {
+        guard !isLoadingData else {
+            Logger.processor.debug("VaultUnlockProcessor.loadData: skipping concurrent call")
+            return
+        }
+        isLoadingData = true
+        defer { isLoadingData = false }
+        Logger.processor.debug("VaultUnlockProcessor.loadData: starting")
         state.biometricUnlockStatus = await (try? services.biometricsRepository.getBiometricUnlockStatus())
             ?? .notAvailable
         state.unsuccessfulUnlockAttemptsCount = await services.userSessionStateService.getUnsuccessfulUnlockAttempts()
@@ -251,6 +271,10 @@ class VaultUnlockProcessor: StateProcessor<
         } catch BiometricsServiceError.biometryCancelled {
             Logger.processor.error("Biometric unlock cancelled.")
             // Do nothing if the user cancels.
+        } catch BiometricsServiceError.biometryFailed {
+            Logger.processor.error("Biometric unlock failed (e.g. user chose password fallback).")
+            // Benign failure — refresh state so password/PIN fields are shown.
+            await loadData()
         } catch BiometricsServiceError.biometryLocked {
             Logger.processor.error("Biometric unlock failed duo to biometrics lockout.")
             // If the user has locked biometry, logout immediately.
