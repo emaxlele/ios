@@ -597,13 +597,12 @@ public class ServiceContainer: Services { // swiftlint:disable:this type_body_le
         let clientBuilder = DefaultClientBuilder(
             appIDService: appIDService,
             environmentService: environmentService,
-            tokenProvider: tokenService,
+            tokenProvider: apiService.accountTokenProvider,
             userAgentBuilder: userAgentBuilder,
         )
         let sdkRepositoryFactory = DefaultSdkRepositoryFactory(
             appSettingsStore: appSettingsStore,
             cipherDataStore: dataStore,
-            errorReporter: errorReporter,
             serverCommunicationConfigStateService: stateService,
         )
         let clientService = DefaultClientService(
@@ -1084,7 +1083,6 @@ public class ServiceContainer: Services { // swiftlint:disable:this type_body_le
             sdkRepositoryFactory: DefaultSdkRepositoryFactory(
                 appSettingsStore: appSettingsStore,
                 cipherDataStore: dataStore,
-                errorReporter: errorReporter,
                 serverCommunicationConfigStateService: stateService,
             ),
             stateService: stateService,

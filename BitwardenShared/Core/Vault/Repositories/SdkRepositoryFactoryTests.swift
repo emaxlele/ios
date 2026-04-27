@@ -1,4 +1,3 @@
-import BitwardenKitMocks
 import XCTest
 
 @testable import BitwardenShared
@@ -11,7 +10,6 @@ class SdkRepositoryFactoryTests: BitwardenTestCase {
 
     var appSettingsStore: MockAppSettingsStore!
     var cipherDataStore: MockCipherDataStore!
-    var errorReporter: MockErrorReporter!
     var serverCommunicationConfigStateService: MockServerCommunicationConfigStateService!
     var subject: SdkRepositoryFactory!
 
@@ -22,12 +20,10 @@ class SdkRepositoryFactoryTests: BitwardenTestCase {
 
         appSettingsStore = MockAppSettingsStore()
         cipherDataStore = MockCipherDataStore()
-        errorReporter = MockErrorReporter()
         serverCommunicationConfigStateService = MockServerCommunicationConfigStateService()
         subject = DefaultSdkRepositoryFactory(
             appSettingsStore: appSettingsStore,
             cipherDataStore: cipherDataStore,
-            errorReporter: errorReporter,
             serverCommunicationConfigStateService: serverCommunicationConfigStateService,
         )
     }
@@ -37,7 +33,6 @@ class SdkRepositoryFactoryTests: BitwardenTestCase {
 
         appSettingsStore = nil
         cipherDataStore = nil
-        errorReporter = nil
         serverCommunicationConfigStateService = nil
         subject = nil
     }

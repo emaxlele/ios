@@ -22,8 +22,6 @@ struct DefaultSdkRepositoryFactory: SdkRepositoryFactory {
     private let appSettingsStore: AppSettingsStore
     /// The data store for managing the persisted ciphers for the user.
     private let cipherDataStore: CipherDataStore
-    /// The service used by the application to report non-fatal errors.
-    private let errorReporter: ErrorReporter
     /// The service that provides state management functionality for the
     /// server communication configuration.
     private let serverCommunicationConfigStateService: ServerCommunicationConfigStateService
@@ -34,18 +32,15 @@ struct DefaultSdkRepositoryFactory: SdkRepositoryFactory {
     /// - Parameters:
     ///   - appSettingsStore: The store for persisting local user data key states.
     ///   - cipherDataStore: The data store for managing the persisted ciphers for the user.
-    ///   - errorReporter: The service used by the application to report non-fatal errors.
     ///   - serverCommunicationConfigStateService: The service that provides state management functionality for the
     /// server communication configuration.
     init(
         appSettingsStore: AppSettingsStore,
         cipherDataStore: CipherDataStore,
-        errorReporter: ErrorReporter,
         serverCommunicationConfigStateService: ServerCommunicationConfigStateService,
     ) {
         self.appSettingsStore = appSettingsStore
         self.cipherDataStore = cipherDataStore
-        self.errorReporter = errorReporter
         self.serverCommunicationConfigStateService = serverCommunicationConfigStateService
     }
 
@@ -72,6 +67,10 @@ struct DefaultSdkRepositoryFactory: SdkRepositoryFactory {
                 userId: resolvedUserId,
             ),
             ephemeralPinEnvelopeState: nil,
+    func makeCipherRepository(userId: String) -> BitwardenSdk.CipherRepository {
+        SdkCipherRepository(
+            cipherDataStore: cipherDataStore,
+            userId: userId,
         )
     }
 
