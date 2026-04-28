@@ -12,8 +12,8 @@ final class MockServerCommunicationConfigAPIService: ServerCommunicationConfigAP
     var cookiesAcquiredFromURL: URL?
     var cookiesAcquiredResult: Result<[BitwardenSdk.AcquiredCookie]?, Error>?
 
-    func acquireCookies(vaultUrl: String) async -> [BitwardenSdk.AcquiredCookie]? {
-        acquireCookiesCalledHostname = vaultUrl
+    func acquireCookies(hostname: String) async -> [BitwardenSdk.AcquiredCookie]? {
+        acquireCookiesCalledHostname = hostname
         return acquireCookiesResult
     }
 

@@ -81,8 +81,8 @@ class ServerCommunicationConfigClientSingletonTests: BitwardenTestCase {
 
         XCTAssertEqual(serverCommunicationConfigClient.setCommunicationTypeReceivedHostname, hostname)
         XCTAssertEqual(
-            serverCommunicationConfigClient.setCommunicationTypeReceivedRequest,
-            SetCommunicationTypeRequest(bootstrap: .direct),
+            serverCommunicationConfigClient.setCommunicationTypeReceivedConfig,
+            ServerCommunicationConfig(bootstrap: .direct),
         )
         XCTAssertTrue(errorReporter.errors.isEmpty)
     }
@@ -134,14 +134,14 @@ class ServerCommunicationConfigClientSingletonTests: BitwardenTestCase {
 
         XCTAssertEqual(serverCommunicationConfigClient.setCommunicationTypeReceivedHostname, hostname)
         XCTAssertEqual(
-            serverCommunicationConfigClient.setCommunicationTypeReceivedRequest,
-            SetCommunicationTypeRequest(
+            serverCommunicationConfigClient.setCommunicationTypeReceivedConfig,
+            ServerCommunicationConfig(
                 bootstrap: .ssoCookieVendor(
-                    SsoCookieVendorConfigRequest(
+                    SsoCookieVendorConfig(
                         idpLoginUrl: "https://idp.example.com",
                         cookieName: "sso_cookie",
                         cookieDomain: "example.com",
-                        vaultUrl: nil,
+                        cookieValue: nil,
                     ),
                 ),
             ),

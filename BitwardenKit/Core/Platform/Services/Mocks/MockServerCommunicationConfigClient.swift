@@ -23,7 +23,7 @@ public final class MockServerCommunicationConfigClient: ServerCommunicationConfi
 
     public var setCommunicationTypeCallsCount = 0
     public var setCommunicationTypeReceivedHostname: String?
-    public var setCommunicationTypeReceivedRequest: SetCommunicationTypeRequest?
+    public var setCommunicationTypeReceivedConfig: BitwardenSdk.ServerCommunicationConfig?
     public var setCommunicationTypeError: Error?
 
     public init() {}
@@ -51,10 +51,10 @@ public final class MockServerCommunicationConfigClient: ServerCommunicationConfi
         return needsBootstrapResult
     }
 
-    public func setCommunicationType(hostname: String, request: SetCommunicationTypeRequest) async throws {
+    public func setCommunicationType(hostname: String, config: BitwardenSdk.ServerCommunicationConfig) async throws {
         setCommunicationTypeCallsCount += 1
         setCommunicationTypeReceivedHostname = hostname
-        setCommunicationTypeReceivedRequest = request
+        setCommunicationTypeReceivedConfig = config
         if let setCommunicationTypeError {
             throw setCommunicationTypeError
         }

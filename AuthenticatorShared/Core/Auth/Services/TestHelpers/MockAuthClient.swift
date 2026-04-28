@@ -62,8 +62,6 @@ class MockAuthClient: AuthClientProtocol {
     var passwordStrengthEmail: String?
     var passwordStrengthAdditionalInputs: [String]?
 
-    var registrationClientResult: BitwardenSdk.RegistrationClient = RegistrationClient(noHandle: .init())
-
     var satisfiesPolicyPassword: String?
     var satisfiesPolicyStrength: UInt8?
     var satisfiesPolicyPolicy: MasterPasswordPolicyOptions?
@@ -139,10 +137,6 @@ class MockAuthClient: AuthClientProtocol {
         passwordStrengthAdditionalInputs = additionalInputs
 
         return passwordStrengthResult
-    }
-    
-    func registration() -> BitwardenSdk.RegistrationClient {
-        registrationClientResult
     }
 
     func satisfiesPolicy(password: String, strength: UInt8, policy: MasterPasswordPolicyOptions) -> Bool {

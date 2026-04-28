@@ -93,9 +93,12 @@ class SdkLocalUserDataKeyStateRepositoryTests: BitwardenTestCase {
         try await subject.set(id: "k2", value: LocalUserDataKeyState(wrappedKey: "key2"))
         try await subject.set(id: "k3", value: LocalUserDataKeyState(wrappedKey: "key3"))
         try await subject.removeBulk(keys: ["k1", "k2"])
-        await XCTAssertNil(try subject.get(id: "k1"))
-        await XCTAssertNil(try subject.get(id: "k2"))
-        await XCTAssertNotNil(try subject.get(id: "k3"))
+        let removed1 = try await subject.get(id: "k1")
+        let removed2 = try await subject.get(id: "k2")
+        let kept3 = try await subject.get(id: "k3")
+        XCTAssertNil(removed1)
+        XCTAssertNil(removed2)
+        XCTAssertNotNil(kept3)
     }
 
     /// `removeAll()` clears all stored values.
@@ -114,8 +117,10 @@ class SdkLocalUserDataKeyStateRepositoryTests: BitwardenTestCase {
             "k1": LocalUserDataKeyState(wrappedKey: "key1"),
             "k2": LocalUserDataKeyState(wrappedKey: "key2"),
         ])
-        await XCTAssertEqual(try subject.get(id: "k1")?.wrappedKey, "key1")
-        await XCTAssertEqual(try subject.get(id: "k2")?.wrappedKey, "key2")
+        let k1Value = try await subject.get(id: "k1")
+        let k2Value = try await subject.get(id: "k2")
+        XCTAssertEqual(k1Value?.wrappedKey, "key1")
+        XCTAssertEqual(k2Value?.wrappedKey, "key2")
     }
 
     /// Values are isolated per user — a different userId does not see this user's data.

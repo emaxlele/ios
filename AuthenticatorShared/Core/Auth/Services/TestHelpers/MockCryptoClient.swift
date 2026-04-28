@@ -39,9 +39,6 @@ class MockCryptoClient: CryptoClientProtocol {
         ),
     )
 
-    var getUpgradedUserKeyUpgradeToken: V2UpgradeToken?
-    var getUpgradedUserKeyResult: Result<B64, Error> = .success("UPGRADED_USER_KEY")
-
     var getUserEncryptionKeyResult: Result<String, Error> = .success("USER_ENCRYPTION_KEY")
 
     var initializeOrgCryptoRequest: InitOrgCryptoRequest?
@@ -123,11 +120,6 @@ class MockCryptoClient: CryptoClientProtocol {
         return try enrollPinWithEncryptedPinResult.get()
     }
 
-    func getUpgradedUserKey(upgradeToken: V2UpgradeToken?) throws -> B64 {
-        getUpgradedUserKeyUpgradeToken = upgradeToken
-        return try getUpgradedUserKeyResult.get()
-    }
-
     func getUserEncryptionKey() async throws -> String {
         try getUserEncryptionKeyResult.get()
     }
@@ -154,11 +146,6 @@ class MockCryptoClient: CryptoClientProtocol {
     }
 
     func makeUpdatePassword(newPassword: String) throws -> UpdatePasswordResponse {
-        updatePasswordNewPassword = newPassword
-        return try updatePasswordResult.get()
-    }
-
-    func updatePassword(newPassword: String) throws -> BitwardenSdk.UpdatePasswordResponse {
         updatePasswordNewPassword = newPassword
         return try updatePasswordResult.get()
     }
