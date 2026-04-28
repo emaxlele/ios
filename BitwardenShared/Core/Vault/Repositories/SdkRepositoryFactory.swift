@@ -47,17 +47,10 @@ struct DefaultSdkRepositoryFactory: SdkRepositoryFactory {
     // MARK: Methods
 
     func makeCipherRepositories(userId: String?) -> BitwardenSdk.Repositories {
-        if userId == nil {
-            errorReporter.log(error: BitwardenError.generalError(
-                type: "Missing userId",
-                message: "makeCipherRepositories called with nil userId; repositories keyed to empty string.",
-            ))
-        }
-        let resolvedUserId = userId ?? ""
+        let resolvedUserId = userId ?? appSettingsStore.cachedActiveUserId ?? ""
         return Repositories(
             cipher: SdkCipherRepository(
                 cipherDataStore: cipherDataStore,
-                errorReporter: errorReporter,
                 userId: resolvedUserId,
             ),
             folder: nil,
@@ -66,7 +59,9 @@ struct DefaultSdkRepositoryFactory: SdkRepositoryFactory {
                 appSettingsStore: appSettingsStore,
                 userId: resolvedUserId,
             ),
-            ephemeralPinEnvelopeState: nil,
+        )
+    }
+    
     func makeCipherRepository(userId: String) -> BitwardenSdk.CipherRepository {
         SdkCipherRepository(
             cipherDataStore: cipherDataStore,

@@ -108,7 +108,6 @@ extension BitwardenSdk.ServerCommunicationConfig: @retroactive Codable {
                     idpLoginUrl: bootstrap.idpLoginUrl,
                     cookieName: bootstrap.cookieName,
                     cookieDomain: bootstrap.cookieDomain,
-                    vaultUrl: nil,
                     cookieValue: nil,
                 ),
             ),
@@ -138,7 +137,6 @@ extension BitwardenSdk.ServerCommunicationConfig: @retroactive Codable {
                     idpLoginUrl: currentCookieConfig.idpLoginUrl,
                     cookieName: currentCookieConfig.cookieName,
                     cookieDomain: currentCookieConfig.cookieDomain,
-                    vaultUrl: currentCookieConfig.vaultUrl,
                     cookieValue: fromSSOCookieConfig.cookieValue,
                 ),
             ),
@@ -162,13 +160,11 @@ extension BitwardenSdk.SsoCookieVendorConfig: @retroactive Codable {
         let idpLoginUrl = try container.decodeIfPresent(String.self, forKey: .idpLoginUrl)
         let cookieName = try container.decodeIfPresent(String.self, forKey: .cookieName)
         let cookieDomain = try container.decodeIfPresent(String.self, forKey: .cookieDomain)
-        let vaultUrl = try container.decodeIfPresent(String.self, forKey: .vaultUrl)
         let cookieValue = try container.decodeIfPresent([AcquiredCookie].self, forKey: .cookieValue)
         self.init(
             idpLoginUrl: idpLoginUrl,
             cookieName: cookieName,
             cookieDomain: cookieDomain,
-            vaultUrl: vaultUrl,
             cookieValue: cookieValue,
         )
     }
@@ -178,29 +174,6 @@ extension BitwardenSdk.SsoCookieVendorConfig: @retroactive Codable {
         try container.encodeIfPresent(idpLoginUrl, forKey: .idpLoginUrl)
         try container.encodeIfPresent(cookieName, forKey: .cookieName)
         try container.encodeIfPresent(cookieDomain, forKey: .cookieDomain)
-        try container.encodeIfPresent(vaultUrl, forKey: .vaultUrl)
         try container.encodeIfPresent(cookieValue, forKey: .cookieValue)
-    }
-}
-
-// MARK: - BitwardenSdk.SetCommunicationTypeRequest
-
-extension BitwardenSdk.SetCommunicationTypeRequest {
-    init(communicationSettings: ServerCommunicationSettings) {
-        let bootstrap = communicationSettings.bootstrap
-        guard bootstrap.type == BitwardenSdk.BootstrapConfig.BootstrapType.ssoCookieVendor.rawValue else {
-            self.init(bootstrap: .direct)
-            return
-        }
-        self.init(
-            bootstrap: .ssoCookieVendor(
-                SsoCookieVendorConfigRequest(
-                    idpLoginUrl: bootstrap.idpLoginUrl,
-                    cookieName: bootstrap.cookieName,
-                    cookieDomain: bootstrap.cookieDomain,
-                    vaultUrl: nil,
-                ),
-            ),
-        )
     }
 }

@@ -37,7 +37,6 @@ struct DefaultSdkRepositoryFactory: SdkRepositoryFactory {
                 appSettingsStore: appSettingsStore,
                 userId: resolvedUserId,
             ),
-            ephemeralPinEnvelopeState: nil,
         )
     }
 }
