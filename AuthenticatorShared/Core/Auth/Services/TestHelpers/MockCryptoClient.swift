@@ -3,9 +3,6 @@ import BitwardenSdk
 @testable import AuthenticatorShared
 
 class MockCryptoClient: CryptoClientProtocol {
-    var getUpgradedUserKeyUpgradeToken: V2UpgradeToken?
-    var getUpgradedUserKeyResult: Result<B64, Error> = .success("UPGRADED_USER_KEY")
-
     var deriveKeyConnectorRequest: DeriveKeyConnectorRequest?
     var deriveKeyConnectorResult: Result<String, Error> = .success("key")
 
@@ -38,6 +35,9 @@ class MockCryptoClient: CryptoClientProtocol {
             userKeyEncryptedPin: "userKeyEncryptedPin",
         ),
     )
+
+    var getUpgradedUserKeyUpgradeToken: V2UpgradeToken?
+    var getUpgradedUserKeyResult: Result<B64, Error> = .success("UPGRADED_USER_KEY")
 
     var getUserEncryptionKeyResult: Result<String, Error> = .success("USER_ENCRYPTION_KEY")
 
@@ -91,11 +91,6 @@ class MockCryptoClient: CryptoClientProtocol {
         return try deriveKeyConnectorResult.get()
     }
 
-    func getUpgradedUserKey(upgradeToken: BitwardenSdk.V2UpgradeToken?) throws -> BitwardenSdk.B64 {
-        getUpgradedUserKeyUpgradeToken = upgradeToken
-        return try getUpgradedUserKeyResult.get()
-    }
-
     func derivePinKey(pin: String) throws -> DerivePinKeyResponse {
         derivePinKeyPin = pin
         return try derivePinKeyResult.get()
@@ -118,6 +113,11 @@ class MockCryptoClient: CryptoClientProtocol {
     func enrollPinWithEncryptedPin(encryptedPin: EncString) throws -> EnrollPinResponse {
         enrollPinWithEncryptedPinEncryptedPin = encryptedPin
         return try enrollPinWithEncryptedPinResult.get()
+    }
+
+    func getUpgradedUserKey(upgradeToken: BitwardenSdk.V2UpgradeToken?) throws -> BitwardenSdk.B64 {
+        getUpgradedUserKeyUpgradeToken = upgradeToken
+        return try getUpgradedUserKeyResult.get()
     }
 
     func getUserEncryptionKey() async throws -> String {

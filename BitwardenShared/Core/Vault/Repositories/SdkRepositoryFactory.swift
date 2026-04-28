@@ -49,10 +49,7 @@ struct DefaultSdkRepositoryFactory: SdkRepositoryFactory {
     func makeCipherRepositories(userId: String?) -> BitwardenSdk.Repositories {
         let resolvedUserId = userId ?? appSettingsStore.cachedActiveUserId ?? ""
         return Repositories(
-            cipher: SdkCipherRepository(
-                cipherDataStore: cipherDataStore,
-                userId: resolvedUserId,
-            ),
+            cipher: makeCipherRepository(userId: resolvedUserId),
             folder: nil,
             userKeyState: nil,
             localUserDataKeyState: SdkLocalUserDataKeyStateRepository(
@@ -61,7 +58,7 @@ struct DefaultSdkRepositoryFactory: SdkRepositoryFactory {
             ),
         )
     }
-    
+
     func makeCipherRepository(userId: String) -> BitwardenSdk.CipherRepository {
         SdkCipherRepository(
             cipherDataStore: cipherDataStore,
