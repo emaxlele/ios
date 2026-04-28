@@ -113,7 +113,7 @@ extension BitwardenSdk.MakeCredentialRequest: @retroactive CustomDebugStringConv
     public var debugDescription: String {
         let rpName = rp.name ?? "nil"
         let excludeList = excludeList?.description ?? "nil"
-        let extensions = extensions?.prf.debugDescription ?? "nil"
+        let extensions = extensions?.prf?.eval.debugDescription ?? "nil"
 
         return [
             "ClientDataHash: \(clientDataHash.asHexString())",
@@ -139,6 +139,7 @@ extension BitwardenSdk.MakeCredentialResult: @retroactive CustomDebugStringConve
             "AuthenticatorData: \(authenticatorData.asHexString())",
             "AttestationObject: \(attestationObject.asHexString())",
             "CredentialId: \(credentialId.asHexString())",
+            "Extensions: \(extensions)",
         ].joined(separator: "\n")
     }
 }
