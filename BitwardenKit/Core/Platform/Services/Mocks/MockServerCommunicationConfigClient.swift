@@ -9,7 +9,7 @@ public final class MockServerCommunicationConfigClient: ServerCommunicationConfi
     public var acquireCookieError: Error?
 
     public var cookiesReceivedHostname: String?
-    public var cookiesResult: [BitwardenSdk.AcquiredCookie] = []
+    public var cookiesResult: [AcquiredCookie] = []
 
     public var getConfigCallsCount = 0
     public var getConfigResult: Result<ServerCommunicationConfig, Error> = .success(
@@ -23,7 +23,7 @@ public final class MockServerCommunicationConfigClient: ServerCommunicationConfi
 
     public var setCommunicationTypeCallsCount = 0
     public var setCommunicationTypeReceivedHostname: String?
-    public var setCommunicationTypeReceivedConfig: BitwardenSdk.ServerCommunicationConfig?
+    public var setCommunicationTypeReceivedConfig: ServerCommunicationConfig?
     public var setCommunicationTypeError: Error?
 
     public init() {}
