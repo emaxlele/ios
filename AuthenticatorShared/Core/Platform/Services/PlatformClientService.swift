@@ -31,7 +31,7 @@ extension PlatformClient: PlatformClientService {
     }
 
     func loadFlags(_ flags: [String: Bool]) async throws {
-        try await loadFlags(flags: flags)
+        try loadFlags(flags: flags)
     }
 
     func state() -> StateClientProtocol {
