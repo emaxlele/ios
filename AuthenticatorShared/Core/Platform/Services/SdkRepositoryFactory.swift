@@ -7,7 +7,7 @@ protocol SdkRepositoryFactory { // sourcery: AutoMockable
     /// - Parameter userId: The user ID to use in the repository which belongs to the SDK instance
     /// the repository will be registered in.
     /// - Returns: The repositories for the given `userId`.
-    func makeCipherRepositories(userId: String?) -> BitwardenSdk.Repositories
+    func makeCipherRepositories(userId: String) -> BitwardenSdk.Repositories
 }
 
 /// Default implementation of `SdkRepositoryFactory`.
@@ -27,15 +27,14 @@ struct DefaultSdkRepositoryFactory: SdkRepositoryFactory {
 
     // MARK: Methods
 
-    func makeCipherRepositories(userId: String?) -> BitwardenSdk.Repositories {
-        let resolvedUserId = userId ?? appSettingsStore.localUserId
-        return Repositories(
+    func makeCipherRepositories(userId: String) -> BitwardenSdk.Repositories {
+        Repositories(
             cipher: nil,
             folder: nil,
             userKeyState: nil,
             localUserDataKeyState: SdkLocalUserDataKeyStateRepository(
                 appSettingsStore: appSettingsStore,
-                userId: resolvedUserId,
+                userId: userId,
             ),
         )
     }
