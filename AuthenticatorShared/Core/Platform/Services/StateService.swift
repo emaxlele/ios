@@ -40,7 +40,10 @@ protocol StateService: AnyObject {
     ///
     func getFlightRecorderData() async -> FlightRecorderData?
     
-    // TODO: Comments
+    /// Gets the local user data keys for the user ID
+    ///
+    /// - Returns: A dictionary of user data keys.
+    ///
     func getLocalUserDataKeyStates(userId: String) async -> [String: String]?
 
     /// Gets the user's encryption secret key.
@@ -79,7 +82,11 @@ protocol StateService: AnyObject {
     ///
     func setFlightRecorderData(_ data: FlightRecorderData?) async
 
-    // TODO: Comments
+    /// Sets the local user data keys for the user ID
+    ///
+    ///  - Parameters:
+    ///     - states: A dictionary of user data keys.
+    ///     - userId: The user ID associated with the last sync time.
     func setLocalUserDataKeyStates(_ states: [String: String]?, userId: String) async
 
     /// Sets the user's encryption secret key.

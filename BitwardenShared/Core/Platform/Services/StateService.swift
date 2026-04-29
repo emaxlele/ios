@@ -244,9 +244,12 @@ protocol StateService: AnyObject {
     ///
     func getLearnGeneratorActionCardStatus() async -> AccountSetupProgress?
 
-    // TODO: Comments
+    /// Gets the local user data keys for the user ID
+    ///
+    /// - Returns: A dictionary of user data keys.
+    ///
     func getLocalUserDataKeyStates(userId: String) async -> [String: String]?
-    
+
     /// Get any pending login request data.
     ///
     /// - Returns: The pending login request data from a push notification.
@@ -617,7 +620,11 @@ protocol StateService: AnyObject {
     ///
     func setLastSyncTime(_ date: Date?, userId: String?) async throws
     
-    // TODO: Comments
+    /// Sets the local user data keys for the user ID
+    ///
+    ///  - Parameters:
+    ///     - states: A dictionary of user data keys.
+    ///     - userId: The user ID associated with the last sync time.
     func setLocalUserDataKeyStates(_ states: [String: String]?, userId: String) async
 
     /// Sets the status of Learn generator Action Card.
