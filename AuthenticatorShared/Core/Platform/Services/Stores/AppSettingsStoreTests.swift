@@ -268,7 +268,7 @@ struct AppSettingsStoreTests {
     /// `localUserDataKeyStates(userId:)` returns stored key states for a user.
     @Test
     func localUserDataKeyStates_returnsKeysById() {
-        let expected = ["test_key": "test_value"]
+        let expected = ["test_key": UserKeyData(wrappedKey: "test_value")]
         subject.setLocalUserDataKeyStates(expected, userId: "01")
         #expect(subject.localUserDataKeyStates(userId: "01") == expected)
     }
@@ -276,7 +276,7 @@ struct AppSettingsStoreTests {
     /// `setLocalUserDataKeyStates(_:userId:)` with `nil` clears the stored value.
     @Test
     func localUserDataKeyStates_clearsOnNil() {
-        let expected = ["test_key": "test_value"]
+        let expected = ["test_key": UserKeyData(wrappedKey: "test_value")]
 
         subject.setLocalUserDataKeyStates(expected, userId: "01")
         #expect(subject.localUserDataKeyStates(userId: "01") == expected)
@@ -288,7 +288,7 @@ struct AppSettingsStoreTests {
     /// `localUserDataKeyStates` are isolated per user.
     @Test
     func localUserDataKeyStates_userIsolation() {
-        subject.setLocalUserDataKeyStates(["k1": "wrappedKey1"], userId: "1")
+        subject.setLocalUserDataKeyStates(["k1": UserKeyData(wrappedKey: "wrappedKey1")], userId: "1")
         #expect(subject.localUserDataKeyStates(userId: "2") == nil)
     }
 

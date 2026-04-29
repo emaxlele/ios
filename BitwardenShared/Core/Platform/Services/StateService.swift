@@ -246,7 +246,7 @@ protocol StateService: AnyObject {
 
     /// Gets the local user data keys for the user ID
     ///
-    /// - Returns: A dictionary of user data keys.
+    /// - Returns: A dictionary of user keys.
     ///
     func getLocalUserDataKeyStates(userId: String) async -> [String: UserKeyData]?
 
@@ -623,7 +623,7 @@ protocol StateService: AnyObject {
     /// Sets the local user data keys for the user ID
     ///
     ///  - Parameters:
-    ///     - states: A dictionary of user data keys.
+    ///     - states: A dictionary of user keys.
     ///     - userId: The user ID associated with the last sync time.
     func setLocalUserDataKeyStates(_ states: [String: UserKeyData]?, userId: String) async
 
@@ -1644,7 +1644,7 @@ actor DefaultStateService: StateService, ActiveAccountStateProvider, ConfigState
     }
 
     func getLocalUserDataKeyStates(userId: String) async -> [String: UserKeyData]? {
-          appSettingsStore.localUserDataKeyStates(userId: userId)
+        appSettingsStore.localUserDataKeyStates(userId: userId)
     }
 
     func getPremiumUpgradeBannerDismissed(userId: String?) async throws -> Bool {

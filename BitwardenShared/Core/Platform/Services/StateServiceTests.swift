@@ -872,6 +872,20 @@ class StateServiceTests: BitwardenTestCase { // swiftlint:disable:this type_body
         XCTAssertEqual(learnNewLoginActionCardStatus, .complete)
     }
 
+    /// `getLocalUserDataKeyStates(userId:)` returns stored key states for a user.
+    func test_getLocalUserDataKeyStates() async {
+        let states: [String: UserKeyData] = ["k1": UserKeyData(wrappedKey: "key1")]
+        appSettingsStore.localUserDataKeyStatesByUserId["1"] = states
+        let result = await subject.getLocalUserDataKeyStates(userId: "1")
+        XCTAssertEqual(result, states)
+    }
+
+    /// `getLocalUserDataKeyStates(userId:)` returns `nil` when no states are stored.
+    func test_getLocalUserDataKeyStates_notSet() async {
+        let result = await subject.getLocalUserDataKeyStates(userId: "1")
+        XCTAssertNil(result)
+    }
+
     /// `getLastRequestToTurnOnCredentialProvider()` returns the date of the last request
     /// to turn on the credential provider.
     func test_getLastRequestToTurnOnCredentialProvider() async {
@@ -2279,6 +2293,21 @@ class StateServiceTests: BitwardenTestCase { // swiftlint:disable:this type_body
 
         await subject.setLearnNewLoginActionCardStatus(.complete)
         XCTAssertEqual(appSettingsStore.learnNewLoginActionCardStatus, .complete)
+    }
+
+    /// `setLocalUserDataKeyStates(_:userId:)` stores the user data key states for a user.
+    func test_setLocalUserDataKeyStates() async {
+        let states: [String: UserKeyData] = ["k1": UserKeyData(wrappedKey: "key1")]
+        await subject.setLocalUserDataKeyStates(states, userId: "1")
+        XCTAssertEqual(appSettingsStore.localUserDataKeyStatesByUserId["1"], states)
+    }
+
+    /// `setLocalUserDataKeyStates(_:userId:)` clears stored states when passed nil.
+    func test_setLocalUserDataKeyStates_nil() async {
+        let states: [String: UserKeyData] = ["k1": UserKeyData(wrappedKey: "key1")]
+        await subject.setLocalUserDataKeyStates(states, userId: "1")
+        await subject.setLocalUserDataKeyStates(nil, userId: "1")
+        XCTAssertNil(appSettingsStore.localUserDataKeyStatesByUserId["1"])
     }
 
     /// `setLoginRequest()` sets the pending login requests.

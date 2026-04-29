@@ -35,7 +35,7 @@ class MockAppSettingsStore: AppSettingsStore {
     var hasSyncedAccountValues = [String: Bool]()
     var lastActiveTime = [String: Date]()
     var lastSyncTimeByUserId = [String: Date]()
-    var localUserDataKeyStatesByUserId = [String: [String: String]]()
+    var localUserDataKeyStatesByUserId = [String: [String: UserKeyData]]()
     var masterPasswordHashes = [String: String]()
     var notificationsLastRegistrationDates = [String: Date]()
     var pinKeyEncryptedUserKey = [String: String]()
@@ -68,7 +68,7 @@ class MockAppSettingsStore: AppSettingsStore {
         lastActiveTime[userId]
     }
 
-    func localUserDataKeyStates(userId: String) -> [String: String]? {
+    func localUserDataKeyStates(userId: String) -> [String: UserKeyData]? {
         localUserDataKeyStatesByUserId[userId]
     }
 
@@ -101,7 +101,7 @@ class MockAppSettingsStore: AppSettingsStore {
         lastActiveTime[userId] = date
     }
 
-    func setLocalUserDataKeyStates(_ states: [String: String]?, userId: String) {
+    func setLocalUserDataKeyStates(_ states: [String: UserKeyData]?, userId: String) {
         localUserDataKeyStatesByUserId[userId] = states
     }
 

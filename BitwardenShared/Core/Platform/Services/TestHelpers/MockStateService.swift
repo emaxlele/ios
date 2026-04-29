@@ -58,7 +58,7 @@ class MockStateService: StateService, ActiveAccountStateProvider, AutofillStateS
     var isInitialSyncRequiredByUserId = [String: Bool]()
     var learnGeneratorActionCardStatus: AccountSetupProgress?
     var learnNewLoginActionCardStatus: AccountSetupProgress?
-    var localUserDataKeyStatesByUserId: [String: [String: String]?] = [:]
+    var localUserDataKeyStatesByUserId: [String: [String: UserKeyData]?] = [:]
     var loginRequest: LoginRequestNotification?
     var logoutAccountUserInitiated = false
     var getAccountEncryptionKeysError: Error?
@@ -248,7 +248,7 @@ class MockStateService: StateService, ActiveAccountStateProvider, AutofillStateS
         archiveOnboardingShown
     }
 
-    func getLocalUserDataKeyStates(userId: String) async -> [String: String]? {
+    func getLocalUserDataKeyStates(userId: String) async -> [String: UserKeyData]? {
         localUserDataKeyStatesByUserId[userId] ?? nil
     }
 
@@ -564,7 +564,7 @@ class MockStateService: StateService, ActiveAccountStateProvider, AutofillStateS
         archiveOnboardingShown = shown
     }
 
-    func setLocalUserDataKeyStates(_ states: [String: String]?, userId: String) async {
+    func setLocalUserDataKeyStates(_ states: [String: UserKeyData]?, userId: String) async {
         localUserDataKeyStatesByUserId[userId] = states
     }
 

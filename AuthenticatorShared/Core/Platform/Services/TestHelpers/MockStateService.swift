@@ -16,7 +16,7 @@ class MockStateService: StateService {
     var clearClipboardResult: Result<Void, Error> = .success(())
     var getSecretKeyResult: Result<String, Error> = .success("qwerty")
     var flightRecorderData: FlightRecorderData?
-    var localUserDataKeyStatesByUserId: [String: [String: String]?] = [:]
+    var localUserDataKeyStatesByUserId: [String: [String: UserKeyData]?] = [:]
     var preAuthServerConfig: ServerConfig?
     var secretKeyValues = [String: String]()
     var serverConfig = [String: ServerConfig]()
@@ -46,7 +46,7 @@ class MockStateService: StateService {
         flightRecorderData
     }
 
-    func getLocalUserDataKeyStates(userId: String) async -> [String: String]? {
+    func getLocalUserDataKeyStates(userId: String) async -> [String: UserKeyData]? {
         localUserDataKeyStatesByUserId[userId] ?? nil
     }
 
@@ -81,7 +81,7 @@ class MockStateService: StateService {
         flightRecorderData = data
     }
     
-    func setLocalUserDataKeyStates(_ states: [String: String]?, userId: String) async {
+    func setLocalUserDataKeyStates(_ states: [String: UserKeyData]?, userId: String) async {
         localUserDataKeyStatesByUserId[userId] = states
     }
 
