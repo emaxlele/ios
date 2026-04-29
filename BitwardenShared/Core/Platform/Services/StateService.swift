@@ -248,7 +248,7 @@ protocol StateService: AnyObject {
     ///
     /// - Returns: A dictionary of user data keys.
     ///
-    func getLocalUserDataKeyStates(userId: String) async -> [String: String]?
+    func getLocalUserDataKeyStates(userId: String) async -> [String: UserKeyData]?
 
     /// Get any pending login request data.
     ///
@@ -625,7 +625,7 @@ protocol StateService: AnyObject {
     ///  - Parameters:
     ///     - states: A dictionary of user data keys.
     ///     - userId: The user ID associated with the last sync time.
-    func setLocalUserDataKeyStates(_ states: [String: String]?, userId: String) async
+    func setLocalUserDataKeyStates(_ states: [String: UserKeyData]?, userId: String) async
 
     /// Sets the status of Learn generator Action Card.
     ///
@@ -1643,7 +1643,7 @@ actor DefaultStateService: StateService, ActiveAccountStateProvider, ConfigState
         appSettingsStore.archiveOnboardingShown
     }
 
-    func getLocalUserDataKeyStates(userId: String) async -> [String: String]? {
+    func getLocalUserDataKeyStates(userId: String) async -> [String: UserKeyData]? {
           appSettingsStore.localUserDataKeyStates(userId: userId)
     }
 
@@ -2070,7 +2070,7 @@ actor DefaultStateService: StateService, ActiveAccountStateProvider, ConfigState
         appSettingsStore.learnGeneratorActionCardStatus = status
     }
 
-    func setLocalUserDataKeyStates(_ states: [String: String]?, userId: String) async {
+    func setLocalUserDataKeyStates(_ states: [String: UserKeyData]?, userId: String) async {
         appSettingsStore.setLocalUserDataKeyStates(states, userId: userId)
     }
 

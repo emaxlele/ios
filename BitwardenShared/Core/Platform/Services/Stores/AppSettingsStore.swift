@@ -220,7 +220,7 @@ protocol AppSettingsStore: AnyObject {
     /// - Parameter userId: The user ID associated with the key states.
     /// - Returns: A dictionary mapping key ID to encrypted wrapped key string.
     ///
-    func localUserDataKeyStates(userId: String) -> [String: String]?
+    func localUserDataKeyStates(userId: String) -> [String: UserKeyData]?
 
     /// Gets whether the account belonging to the user Id has been manually locked.
     /// - Parameter userId: The user ID associated with the account.
@@ -451,7 +451,7 @@ protocol AppSettingsStore: AnyObject {
     ///   - states: A dictionary mapping key ID to encrypted wrapped key string, or `nil` to clear.
     ///   - userId: The user ID associated with the key states.
     ///
-    func setLocalUserDataKeyStates(_ states: [String: String]?, userId: String)
+    func setLocalUserDataKeyStates(_ states: [String: UserKeyData]?, userId: String)
 
     /// Sets whether the account belonging to the user Id has been manually locked.
     /// - Parameters
@@ -1125,7 +1125,7 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
         fetch(for: .lastSync(userId: userId)).map { Date(timeIntervalSince1970: $0) }
     }
 
-    func localUserDataKeyStates(userId: String) -> [String: String]? {
+    func localUserDataKeyStates(userId: String) -> [String: UserKeyData]? {
         fetch(for: .localUserDataKeyStates(userId: userId))
     }
 
@@ -1251,7 +1251,7 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
         store(date?.timeIntervalSince1970, for: .lastSync(userId: userId))
     }
 
-    func setLocalUserDataKeyStates(_ states: [String: String]?, userId: String) {
+    func setLocalUserDataKeyStates(_ states: [String: UserKeyData]?, userId: String) {
         store(states, for: .localUserDataKeyStates(userId: userId))
     }
 

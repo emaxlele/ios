@@ -44,7 +44,7 @@ protocol StateService: AnyObject {
     ///
     /// - Returns: A dictionary of user data keys.
     ///
-    func getLocalUserDataKeyStates(userId: String) async -> [String: String]?
+    func getLocalUserDataKeyStates(userId: String) async -> [String: UserKeyData]?
 
     /// Gets the user's encryption secret key.
     ///
@@ -87,7 +87,7 @@ protocol StateService: AnyObject {
     ///  - Parameters:
     ///     - states: A dictionary of user data keys.
     ///     - userId: The user ID associated with the last sync time.
-    func setLocalUserDataKeyStates(_ states: [String: String]?, userId: String) async
+    func setLocalUserDataKeyStates(_ states: [String: UserKeyData]?, userId: String) async
 
     /// Sets the user's encryption secret key.
     ///
@@ -214,7 +214,7 @@ actor DefaultStateService:
         appSettingsStore.flightRecorderData
     }
 
-    func getLocalUserDataKeyStates(userId: String) async -> [String: String]? {
+    func getLocalUserDataKeyStates(userId: String) async -> [String: UserKeyData]? {
           appSettingsStore.localUserDataKeyStates(userId: userId)
     }
 
@@ -257,8 +257,8 @@ actor DefaultStateService:
         appSettingsStore.flightRecorderData = data
     }
 
-    func setLocalUserDataKeyStates(_ states: [String: String]?, userId: String) async {
-          appSettingsStore.setLocalUserDataKeyStates(states, userId: userId)
+    func setLocalUserDataKeyStates(_ states: [String: UserKeyData]?, userId: String) async {
+        appSettingsStore.setLocalUserDataKeyStates(states, userId: userId)
     }
 
     func setPreAuthServerConfig(config: ServerConfig) async {

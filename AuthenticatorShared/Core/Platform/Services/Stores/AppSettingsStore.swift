@@ -89,7 +89,7 @@ protocol AppSettingsStore: AnyObject {
     /// - Parameter userId: The user ID associated with the key states.
     /// - Returns: A dictionary mapping key ID to encrypted wrapped key string.
     ///
-    func localUserDataKeyStates(userId: String) -> [String: String]?
+    func localUserDataKeyStates(userId: String) -> [String: UserKeyData]?
 
     /// Gets the user's secret encryption key.
     ///
@@ -151,7 +151,7 @@ protocol AppSettingsStore: AnyObject {
     ///   - states: A dictionary mapping key ID to encrypted wrapped key string, or `nil` to clear.
     ///   - userId: The user ID associated with the key states.
     ///
-    func setLocalUserDataKeyStates(_ states: [String: String]?, userId: String)
+    func setLocalUserDataKeyStates(_ states: [String: UserKeyData]?, userId: String)
 
     /// Sets the user's secret encryption key.
     ///
@@ -443,7 +443,7 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
         fetch(for: .lastActiveTime(userId: userId)).map { Date(timeIntervalSince1970: $0) }
     }
 
-    func localUserDataKeyStates(userId: String) -> [String: String]? {
+    func localUserDataKeyStates(userId: String) -> [String: UserKeyData]? {
         fetch(for: .localUserDataKeyStates(userId: userId))
     }
 
@@ -479,7 +479,7 @@ extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
         store(date?.timeIntervalSince1970, for: .lastActiveTime(userId: userId))
     }
 
-    func setLocalUserDataKeyStates(_ states: [String: String]?, userId: String) {
+    func setLocalUserDataKeyStates(_ states: [String: UserKeyData]?, userId: String) {
         store(states, for: .localUserDataKeyStates(userId: userId))
     }
 

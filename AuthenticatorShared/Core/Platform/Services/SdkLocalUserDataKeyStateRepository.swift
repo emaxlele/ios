@@ -27,7 +27,7 @@ actor SdkLocalUserDataKeyStateRepository: BitwardenSdk.LocalUserDataKeyStateRepo
 
     func get(id: String) async throws -> LocalUserDataKeyState? {
         await stateService.getLocalUserDataKeyStates(userId: userId)?[id]
-            .map { LocalUserDataKeyState(wrappedKey: $0) }
+            .map { LocalUserDataKeyState(wrappedKey: $0.wrappedKey) }
     }
 
     func has(id: String) async throws -> Bool {
@@ -35,8 +35,8 @@ actor SdkLocalUserDataKeyStateRepository: BitwardenSdk.LocalUserDataKeyStateRepo
     }
 
     func list() async throws -> [LocalUserDataKeyState] {
-        (await stateService.getLocalUserDataKeyStates(userId: userId) ?? [:])
-            .values.map { LocalUserDataKeyState(wrappedKey: $0) }
+        await (stateService.getLocalUserDataKeyStates(userId: userId) ?? [:])
+            .values.map { LocalUserDataKeyState(wrappedKey: $0.wrappedKey) }
     }
 
     func remove(id: String) async throws {
@@ -59,14 +59,14 @@ actor SdkLocalUserDataKeyStateRepository: BitwardenSdk.LocalUserDataKeyStateRepo
 
     func set(id: String, value: LocalUserDataKeyState) async throws {
         var states = await stateService.getLocalUserDataKeyStates(userId: userId) ?? [:]
-        states[id] = value.wrappedKey
+        states[id] = UserKeyData(localUserDataKeyState: value)
         await stateService.setLocalUserDataKeyStates(states, userId: userId)
     }
 
     func setBulk(values: [String: LocalUserDataKeyState]) async throws {
         var states = await stateService.getLocalUserDataKeyStates(userId: userId) ?? [:]
         for (id, state) in values {
-            states[id] = state.wrappedKey
+            states[id] = UserKeyData(localUserDataKeyState: state)
         }
         await stateService.setLocalUserDataKeyStates(states, userId: userId)
     }
