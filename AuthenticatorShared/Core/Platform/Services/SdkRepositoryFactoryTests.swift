@@ -7,14 +7,14 @@ import Testing
 struct SdkRepositoryFactoryTests {
     // MARK: Properties
 
-    let appSettingsStore: MockAppSettingsStore
+    let stateService: MockStateService
     let subject: SdkRepositoryFactory
 
     // MARK: Setup
 
     init() {
-        appSettingsStore = MockAppSettingsStore()
-        subject = DefaultSdkRepositoryFactory(appSettingsStore: appSettingsStore)
+        stateService = MockStateService()
+        subject = DefaultSdkRepositoryFactory(stateService: stateService)
     }
 
     // MARK: Tests

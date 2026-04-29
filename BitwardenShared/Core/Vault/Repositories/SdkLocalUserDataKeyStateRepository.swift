@@ -1,4 +1,3 @@
-import BitwardenKit
 import BitwardenSdk
 
 /// `LocalUserDataKeyStateRepository` implementation to be used on SDK client-managed state.
@@ -7,8 +6,8 @@ import BitwardenSdk
 actor SdkLocalUserDataKeyStateRepository: BitwardenSdk.LocalUserDataKeyStateRepository {
     // MARK: Properties
 
-    /// The store for persisting local user data key states.
-    private let appSettingsStore: AppSettingsStore
+    /// The service for managing account state.
+    private let stateService: StateService
 
     /// The user ID of the SDK instance this repository belongs to.
     nonisolated let userId: String
@@ -17,58 +16,58 @@ actor SdkLocalUserDataKeyStateRepository: BitwardenSdk.LocalUserDataKeyStateRepo
 
     /// Initializes a `SdkLocalUserDataKeyStateRepository`.
     /// - Parameters:
-    ///   - appSettingsStore: The store for persisting local user data key states.
+    ///   - stateService: The service for managing account state.
     ///   - userId: The user ID of the SDK instance this repository belongs to.
-    init(appSettingsStore: AppSettingsStore, userId: String) {
-        self.appSettingsStore = appSettingsStore
+    init(stateService: StateService, userId: String) {
+        self.stateService = stateService
         self.userId = userId
     }
 
     // MARK: LocalUserDataKeyStateRepository
 
     func get(id: String) async throws -> LocalUserDataKeyState? {
-        appSettingsStore.localUserDataKeyStates(userId: userId)?[id]
+        await stateService.getLocalUserDataKeyStates(userId: userId)?[id]
             .map { LocalUserDataKeyState(wrappedKey: $0) }
     }
 
     func has(id: String) async throws -> Bool {
-        appSettingsStore.localUserDataKeyStates(userId: userId)?[id] != nil
+        await stateService.getLocalUserDataKeyStates(userId: userId)?[id] != nil
     }
 
     func list() async throws -> [LocalUserDataKeyState] {
-        (appSettingsStore.localUserDataKeyStates(userId: userId) ?? [:])
+        (await stateService.getLocalUserDataKeyStates(userId: userId) ?? [:])
             .values.map { LocalUserDataKeyState(wrappedKey: $0) }
     }
 
     func remove(id: String) async throws {
-        var states = appSettingsStore.localUserDataKeyStates(userId: userId) ?? [:]
+        var states = await stateService.getLocalUserDataKeyStates(userId: userId) ?? [:]
         states.removeValue(forKey: id)
-        appSettingsStore.setLocalUserDataKeyStates(states.isEmpty ? nil : states, userId: userId)
+        await stateService.setLocalUserDataKeyStates(states.isEmpty ? nil : states, userId: userId)
     }
 
     func removeBulk(keys: [String]) async throws {
-        var states = appSettingsStore.localUserDataKeyStates(userId: userId) ?? [:]
+        var states = await stateService.getLocalUserDataKeyStates(userId: userId) ?? [:]
         for key in keys {
             states.removeValue(forKey: key)
         }
-        appSettingsStore.setLocalUserDataKeyStates(states.isEmpty ? nil : states, userId: userId)
+        await stateService.setLocalUserDataKeyStates(states.isEmpty ? nil : states, userId: userId)
     }
 
     func removeAll() async throws {
-        appSettingsStore.setLocalUserDataKeyStates(nil, userId: userId)
+        await stateService.setLocalUserDataKeyStates(nil, userId: userId)
     }
 
     func set(id: String, value: LocalUserDataKeyState) async throws {
-        var states = appSettingsStore.localUserDataKeyStates(userId: userId) ?? [:]
+        var states = await stateService.getLocalUserDataKeyStates(userId: userId) ?? [:]
         states[id] = value.wrappedKey
-        appSettingsStore.setLocalUserDataKeyStates(states, userId: userId)
+        await stateService.setLocalUserDataKeyStates(states, userId: userId)
     }
 
     func setBulk(values: [String: LocalUserDataKeyState]) async throws {
-        var states = appSettingsStore.localUserDataKeyStates(userId: userId) ?? [:]
+        var states = await stateService.getLocalUserDataKeyStates(userId: userId) ?? [:]
         for (id, state) in values {
             states[id] = state.wrappedKey
         }
-        appSettingsStore.setLocalUserDataKeyStates(states, userId: userId)
+        await stateService.setLocalUserDataKeyStates(states, userId: userId)
     }
 }

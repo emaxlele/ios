@@ -39,6 +39,9 @@ protocol StateService: AnyObject {
     /// - Returns: The flight recorder data.
     ///
     func getFlightRecorderData() async -> FlightRecorderData?
+    
+    // TODO: Comments
+    func getLocalUserDataKeyStates(userId: String) async -> [String: String]?
 
     /// Gets the user's encryption secret key.
     ///
@@ -75,6 +78,9 @@ protocol StateService: AnyObject {
     /// Sets the data for the flight recorder.
     ///
     func setFlightRecorderData(_ data: FlightRecorderData?) async
+
+    // TODO: Comments
+    func setLocalUserDataKeyStates(_ states: [String: String]?, userId: String) async
 
     /// Sets the user's encryption secret key.
     ///
@@ -201,6 +207,10 @@ actor DefaultStateService:
         appSettingsStore.flightRecorderData
     }
 
+    func getLocalUserDataKeyStates(userId: String) async -> [String: String]? {
+          appSettingsStore.localUserDataKeyStates(userId: userId)
+    }
+
     func getPreAuthServerConfig() async -> ServerConfig? {
         appSettingsStore.preAuthServerConfig
     }
@@ -238,6 +248,10 @@ actor DefaultStateService:
 
     func setFlightRecorderData(_ data: FlightRecorderData?) async {
         appSettingsStore.flightRecorderData = data
+    }
+
+    func setLocalUserDataKeyStates(_ states: [String: String]?, userId: String) async {
+          appSettingsStore.setLocalUserDataKeyStates(states, userId: userId)
     }
 
     func setPreAuthServerConfig(config: ServerConfig) async {

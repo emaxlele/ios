@@ -601,9 +601,9 @@ public class ServiceContainer: Services { // swiftlint:disable:this type_body_le
             userAgentBuilder: userAgentBuilder,
         )
         let sdkRepositoryFactory = DefaultSdkRepositoryFactory(
-            appSettingsStore: appSettingsStore,
             cipherDataStore: dataStore,
             serverCommunicationConfigStateService: stateService,
+            stateService: stateService,
         )
         let clientService = DefaultClientService(
             clientBuilder: clientBuilder,
@@ -1081,9 +1081,9 @@ public class ServiceContainer: Services { // swiftlint:disable:this type_body_le
             configService: configService,
             errorReporter: errorReporter,
             sdkRepositoryFactory: DefaultSdkRepositoryFactory(
-                appSettingsStore: appSettingsStore,
                 cipherDataStore: dataStore,
                 serverCommunicationConfigStateService: stateService,
+                stateService: stateService,
             ),
             stateService: stateService,
         )

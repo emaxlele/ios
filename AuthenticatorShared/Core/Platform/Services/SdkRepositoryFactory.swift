@@ -14,15 +14,15 @@ protocol SdkRepositoryFactory { // sourcery: AutoMockable
 struct DefaultSdkRepositoryFactory: SdkRepositoryFactory {
     // MARK: Properties
 
-    /// The store for persisting local user data key states.
-    private let appSettingsStore: AppSettingsStore
+    /// The service for managing account state.
+    private let stateService: StateService
 
     // MARK: Init
 
     /// Initializes a `DefaultSdkRepositoryFactory`.
-    /// - Parameter appSettingsStore: The store for persisting local user data key states.
-    init(appSettingsStore: AppSettingsStore) {
-        self.appSettingsStore = appSettingsStore
+    /// - Parameter stateService: The service for managing account state.
+    init(stateService: StateService) {
+        self.stateService = stateService
     }
 
     // MARK: Methods
@@ -33,7 +33,7 @@ struct DefaultSdkRepositoryFactory: SdkRepositoryFactory {
             folder: nil,
             userKeyState: nil,
             localUserDataKeyState: SdkLocalUserDataKeyStateRepository(
-                appSettingsStore: appSettingsStore,
+                stateService: stateService,
                 userId: userId,
             ),
         )

@@ -1,4 +1,3 @@
-import BitwardenKit
 import BitwardenSdk
 
 /// A factory to create SDK repositories.
@@ -18,8 +17,8 @@ protocol SdkRepositoryFactory { // sourcery: AutoMockable
 struct DefaultSdkRepositoryFactory: SdkRepositoryFactory {
     // MARK: Properties
 
-    /// The store for persisting local user data key states.
-    private let appSettingsStore: AppSettingsStore
+    /// The service for managing account state.
+    private let stateService: StateService
     /// The data store for managing the persisted ciphers for the user.
     private let cipherDataStore: CipherDataStore
     /// The service that provides state management functionality for the
@@ -30,18 +29,18 @@ struct DefaultSdkRepositoryFactory: SdkRepositoryFactory {
 
     /// Initializes a `DefaultSdkRepositoryFactory`.
     /// - Parameters:
-    ///   - appSettingsStore: The store for persisting local user data key states.
     ///   - cipherDataStore: The data store for managing the persisted ciphers for the user.
     ///   - serverCommunicationConfigStateService: The service that provides state management functionality for the
     /// server communication configuration.
+    ///   - stateService: The service for managing account state.
     init(
-        appSettingsStore: AppSettingsStore,
         cipherDataStore: CipherDataStore,
         serverCommunicationConfigStateService: ServerCommunicationConfigStateService,
+        stateService: StateService,
     ) {
-        self.appSettingsStore = appSettingsStore
         self.cipherDataStore = cipherDataStore
         self.serverCommunicationConfigStateService = serverCommunicationConfigStateService
+        self.stateService = stateService
     }
 
     // MARK: Methods
@@ -52,7 +51,7 @@ struct DefaultSdkRepositoryFactory: SdkRepositoryFactory {
             folder: nil,
             userKeyState: nil,
             localUserDataKeyState: SdkLocalUserDataKeyStateRepository(
-                appSettingsStore: appSettingsStore,
+                stateService: stateService,
                 userId: userId,
             ),
         )

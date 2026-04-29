@@ -8,16 +8,16 @@ import Testing
 struct SdkLocalUserDataKeyStateRepositoryTests {
     // MARK: Properties
 
-    let appSettingsStore: MockAppSettingsStore
+    let stateService: MockStateService
     let subject: SdkLocalUserDataKeyStateRepository
     let userId = "user-1"
 
     // MARK: Setup
 
     init() {
-        appSettingsStore = MockAppSettingsStore()
+        stateService = MockStateService()
         subject = SdkLocalUserDataKeyStateRepository(
-            appSettingsStore: appSettingsStore,
+            stateService: stateService,
             userId: "user-1",
         )
     }
@@ -107,7 +107,7 @@ struct SdkLocalUserDataKeyStateRepositoryTests {
         try await subject.removeAll()
         let results = try await subject.list()
         #expect(results.isEmpty)
-        #expect(appSettingsStore.localUserDataKeyStatesByUserId[userId] == nil)
+        #expect(stateService.localUserDataKeyStatesByUserId[userId]?.isEmptyOrNil ?? false)
     }
 
     /// `setBulk(values:)` stores multiple values at once.
@@ -128,7 +128,7 @@ struct SdkLocalUserDataKeyStateRepositoryTests {
     func userIsolation() async throws {
         try await subject.set(id: "k1", value: LocalUserDataKeyState(wrappedKey: "key"))
         let other = SdkLocalUserDataKeyStateRepository(
-            appSettingsStore: appSettingsStore,
+            stateService: stateService,
             userId: "user-2",
         )
         let result = try await other.get(id: "k1")

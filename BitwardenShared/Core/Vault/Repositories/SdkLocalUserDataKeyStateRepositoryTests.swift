@@ -9,7 +9,7 @@ import XCTest
 class SdkLocalUserDataKeyStateRepositoryTests: BitwardenTestCase {
     // MARK: Properties
 
-    var appSettingsStore: MockAppSettingsStore!
+    var stateService: MockStateService!
     var subject: SdkLocalUserDataKeyStateRepository!
     let userId = "user-1"
 
@@ -18,9 +18,9 @@ class SdkLocalUserDataKeyStateRepositoryTests: BitwardenTestCase {
     override func setUp() {
         super.setUp()
 
-        appSettingsStore = MockAppSettingsStore()
+        stateService = MockStateService()
         subject = SdkLocalUserDataKeyStateRepository(
-            appSettingsStore: appSettingsStore,
+            stateService: stateService,
             userId: userId,
         )
     }
@@ -28,7 +28,7 @@ class SdkLocalUserDataKeyStateRepositoryTests: BitwardenTestCase {
     override func tearDown() {
         super.tearDown()
 
-        appSettingsStore = nil
+        stateService = nil
         subject = nil
     }
 
@@ -108,7 +108,7 @@ class SdkLocalUserDataKeyStateRepositoryTests: BitwardenTestCase {
         try await subject.removeAll()
         let results = try await subject.list()
         XCTAssertTrue(results.isEmpty)
-        XCTAssertNil(appSettingsStore.localUserDataKeyStatesByUserId[userId])
+        XCTAssertTrue(stateService.localUserDataKeyStatesByUserId[userId]?.isEmptyOrNil ?? false)
     }
 
     /// `setBulk(values:)` stores multiple values at once.
@@ -127,7 +127,7 @@ class SdkLocalUserDataKeyStateRepositoryTests: BitwardenTestCase {
     func test_userIsolation() async throws {
         try await subject.set(id: "k1", value: LocalUserDataKeyState(wrappedKey: "key"))
         let other = SdkLocalUserDataKeyStateRepository(
-            appSettingsStore: appSettingsStore,
+            stateService: stateService,
             userId: "user-2",
         )
         let result = try await other.get(id: "k1")

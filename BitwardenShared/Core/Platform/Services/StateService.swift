@@ -244,6 +244,9 @@ protocol StateService: AnyObject {
     ///
     func getLearnGeneratorActionCardStatus() async -> AccountSetupProgress?
 
+    // TODO: Comments
+    func getLocalUserDataKeyStates(userId: String) async -> [String: String]?
+    
     /// Get any pending login request data.
     ///
     /// - Returns: The pending login request data from a push notification.
@@ -613,6 +616,9 @@ protocol StateService: AnyObject {
     ///   - userId: The user ID associated with the last sync time.
     ///
     func setLastSyncTime(_ date: Date?, userId: String?) async throws
+    
+    // TODO: Comments
+    func setLocalUserDataKeyStates(_ states: [String: String]?, userId: String) async
 
     /// Sets the status of Learn generator Action Card.
     ///
@@ -1630,6 +1636,10 @@ actor DefaultStateService: StateService, ActiveAccountStateProvider, ConfigState
         appSettingsStore.archiveOnboardingShown
     }
 
+    func getLocalUserDataKeyStates(userId: String) async -> [String: String]? {
+          appSettingsStore.localUserDataKeyStates(userId: userId)
+    }
+
     func getPremiumUpgradeBannerDismissed(userId: String?) async throws -> Bool {
         let userId = try userId ?? getActiveAccountUserId()
         return appSettingsStore.premiumUpgradeBannerDismissed(userId: userId)
@@ -2051,6 +2061,10 @@ actor DefaultStateService: StateService, ActiveAccountStateProvider, ConfigState
 
     func setLearnGeneratorActionCardStatus(_ status: AccountSetupProgress) async {
         appSettingsStore.learnGeneratorActionCardStatus = status
+    }
+
+    func setLocalUserDataKeyStates(_ states: [String: String]?, userId: String) async {
+        appSettingsStore.setLocalUserDataKeyStates(states, userId: userId)
     }
 
     func setLoginRequest(_ loginRequest: LoginRequestNotification?) async {

@@ -8,9 +8,9 @@ import XCTest
 class SdkRepositoryFactoryTests: BitwardenTestCase {
     // MARK: Properties
 
-    var appSettingsStore: MockAppSettingsStore!
     var cipherDataStore: MockCipherDataStore!
     var serverCommunicationConfigStateService: MockServerCommunicationConfigStateService!
+    var stateService: MockStateService!
     var subject: SdkRepositoryFactory!
 
     // MARK: Setup & Teardown
@@ -18,22 +18,22 @@ class SdkRepositoryFactoryTests: BitwardenTestCase {
     override func setUp() {
         super.setUp()
 
-        appSettingsStore = MockAppSettingsStore()
         cipherDataStore = MockCipherDataStore()
         serverCommunicationConfigStateService = MockServerCommunicationConfigStateService()
+        stateService = MockStateService()
         subject = DefaultSdkRepositoryFactory(
-            appSettingsStore: appSettingsStore,
             cipherDataStore: cipherDataStore,
             serverCommunicationConfigStateService: serverCommunicationConfigStateService,
+            stateService: stateService,
         )
     }
 
     override func tearDown() {
         super.tearDown()
 
-        appSettingsStore = nil
         cipherDataStore = nil
         serverCommunicationConfigStateService = nil
+        stateService = nil
         subject = nil
     }
 
