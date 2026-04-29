@@ -115,7 +115,7 @@ class MockCryptoClient: CryptoClientProtocol {
         return try enrollPinWithEncryptedPinResult.get()
     }
 
-    func getUpgradedUserKey(upgradeToken: BitwardenSdk.V2UpgradeToken?) throws -> BitwardenSdk.B64 {
+    func getUpgradedUserKey(upgradeToken: V2UpgradeToken?) throws -> B64 {
         getUpgradedUserKeyUpgradeToken = upgradeToken
         return try getUpgradedUserKeyResult.get()
     }
@@ -146,6 +146,11 @@ class MockCryptoClient: CryptoClientProtocol {
     }
 
     func makeUpdatePassword(newPassword: String) throws -> UpdatePasswordResponse {
+        updatePasswordNewPassword = newPassword
+        return try updatePasswordResult.get()
+    }
+
+    func updatePassword(newPassword: String) throws -> BitwardenSdk.UpdatePasswordResponse {
         updatePasswordNewPassword = newPassword
         return try updatePasswordResult.get()
     }
