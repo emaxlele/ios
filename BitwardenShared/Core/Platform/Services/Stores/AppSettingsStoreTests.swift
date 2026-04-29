@@ -711,19 +711,20 @@ class AppSettingsStoreTests: BitwardenTestCase { // swiftlint:disable:this type_
         )
     }
 
-    /// `localUserDataKeyStates` returns keys for an ID if they exist.
+    /// `localUserDataKeyStates` returns data key states for an ID if they exist.
     func test_localUserDataKeyStates_returnsKeysById() {
         let expected = ["test_key": "test_value"]
         subject.setLocalUserDataKeyStates(expected, userId: "01")
         XCTAssertEqual(subject.localUserDataKeyStates(userId: "01"), expected)
     }
 
+    /// `localUserDataKeyStates` clears storage when passed nil.
     func test_localUserDataKeyStates_clearsOnNil() {
         let expected = ["test_key": "test_value"]
-        
+
         subject.setLocalUserDataKeyStates(expected, userId: "01")
         XCTAssertEqual(subject.localUserDataKeyStates(userId: "01"), expected)
-        
+
         subject.setLocalUserDataKeyStates(nil, userId: "01")
         XCTAssertNil(subject.localUserDataKeyStates(userId: "01"))
     }

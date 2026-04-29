@@ -151,7 +151,6 @@ extension BitwardenSdk.SsoCookieVendorConfig: @retroactive Codable {
         case idpLoginUrl
         case cookieName
         case cookieDomain
-        case vaultUrl
         case cookieValue
     }
 

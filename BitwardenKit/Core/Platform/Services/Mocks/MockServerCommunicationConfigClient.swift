@@ -9,7 +9,7 @@ public final class MockServerCommunicationConfigClient: ServerCommunicationConfi
     public var acquireCookieError: Error?
 
     public var cookiesReceivedHostname: String?
-    public var cookiesResult: [AcquiredCookie] = []
+    public var cookiesResult: [BitwardenSdk.AcquiredCookie] = []
 
     public var getConfigCallsCount = 0
     public var getConfigResult: Result<ServerCommunicationConfig, Error> = .success(
@@ -51,7 +51,7 @@ public final class MockServerCommunicationConfigClient: ServerCommunicationConfi
         return needsBootstrapResult
     }
 
-    public func setCommunicationType(hostname: String, config: BitwardenSdk.ServerCommunicationConfig) async throws {
+    public func setCommunicationType(hostname: String, config: ServerCommunicationConfig) async throws {
         setCommunicationTypeCallsCount += 1
         setCommunicationTypeReceivedHostname = hostname
         setCommunicationTypeReceivedConfig = config
