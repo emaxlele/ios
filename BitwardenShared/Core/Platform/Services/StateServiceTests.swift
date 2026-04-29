@@ -1521,7 +1521,8 @@ class StateServiceTests: BitwardenTestCase { // swiftlint:disable:this type_body
         XCTAssertEqual(appSettingsStore.defaultUriMatchTypeByUserId, [:])
         XCTAssertEqual(appSettingsStore.disableAutoTotpCopyByUserId, [:])
         XCTAssertEqual(appSettingsStore.passwordGenerationOptions, [:])
-
+        XCTAssertEqual(appSettingsStore.localUserDataKeyStatesByUserId, [:])
+        
         let context = dataStore.persistentContainer.viewContext
         try XCTAssertEqual(context.count(for: CipherData.fetchByUserIdRequest(userId: "1")), 0)
         try XCTAssertEqual(context.count(for: CollectionData.fetchByUserIdRequest(userId: "1")), 0)
@@ -1531,6 +1532,7 @@ class StateServiceTests: BitwardenTestCase { // swiftlint:disable:this type_body
         try XCTAssertEqual(context.count(for: PasswordHistoryData.fetchByUserIdRequest(userId: "1")), 0)
         try XCTAssertEqual(context.count(for: PolicyData.fetchByUserIdRequest(userId: "1")), 0)
         try XCTAssertEqual(context.count(for: SendData.fetchByUserIdRequest(userId: "1")), 0)
+        
 
         // All of the data should be deleted within a single merge.
         XCTAssertEqual(mergeChangesCount, 1)
