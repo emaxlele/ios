@@ -259,9 +259,7 @@ extension VaultListProcessor {
 
         state.hasPremium = await services.stateService.doesActiveAccountHavePremium()
 
-        if await services.configService.getFeatureFlag(.archiveVaultItems) {
-            state.shouldShowArchiveOnboardingActionCard = await services.stateService.shouldDoArchiveOnboarding()
-        }
+        state.shouldShowArchiveOnboardingActionCard = await services.stateService.shouldDoArchiveOnboarding()
 
         if await services.configService.getFeatureFlag(.premiumUpgradePath) {
             let shouldShow = await services.stateService.shouldShowPremiumUpgradeBanner()

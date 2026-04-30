@@ -678,7 +678,6 @@ public class ServiceContainer: Services { // swiftlint:disable:this type_body_le
         let exportVaultService = DefaultExportVaultService(
             cipherService: cipherService,
             clientService: clientService,
-            configService: configService,
             errorReporter: errorReporter,
             folderService: folderService,
             policyService: policyService,
@@ -732,7 +731,6 @@ public class ServiceContainer: Services { // swiftlint:disable:this type_body_le
         let watchService = DefaultWatchService(
             cipherService: cipherService,
             clientService: clientService,
-            configService: configService,
             environmentService: environmentService,
             errorReporter: errorReporter,
             organizationService: organizationService,
@@ -920,7 +918,6 @@ public class ServiceContainer: Services { // swiftlint:disable:this type_body_le
             vaultListBuilderFactory: DefaultVaultListSectionsBuilderFactory(
                 clientService: clientService,
                 collectionHelper: collectionHelper,
-                configService: configService,
                 errorReporter: errorReporter,
                 stateService: stateService,
             ),
@@ -934,7 +931,6 @@ public class ServiceContainer: Services { // swiftlint:disable:this type_body_le
                     errorReporter: errorReporter,
                 ),
                 clientService: clientService,
-                configService: configService,
                 errorReporter: errorReporter,
                 policyService: policyService,
                 stateService: stateService,
@@ -960,7 +956,6 @@ public class ServiceContainer: Services { // swiftlint:disable:this type_body_le
             clientService: clientService,
             collectionHelper: collectionHelper,
             collectionService: collectionService,
-            configService: configService,
             environmentService: environmentService,
             errorReporter: errorReporter,
             folderService: folderService,
@@ -986,7 +981,6 @@ public class ServiceContainer: Services { // swiftlint:disable:this type_body_le
             fido2CredentialStore: Fido2CredentialStoreService(
                 cipherService: cipherService,
                 clientService: clientService,
-                configService: configService,
                 errorReporter: errorReporter,
                 stateService: stateService,
                 syncService: syncService,
@@ -996,7 +990,6 @@ public class ServiceContainer: Services { // swiftlint:disable:this type_body_le
         let fido2CredentialStore = Fido2CredentialStoreService(
             cipherService: cipherService,
             clientService: clientService,
-            configService: configService,
             errorReporter: errorReporter,
             stateService: stateService,
             syncService: syncService,
@@ -1106,7 +1099,6 @@ public class ServiceContainer: Services { // swiftlint:disable:this type_body_le
             authenticatorClientService: authenticatorClientService,
             cipherDataStore: dataStore,
             clientService: clientService,
-            configService: configService,
             errorReporter: errorReporter,
             keychainRepository: keychainRepository,
             organizationService: organizationService,
