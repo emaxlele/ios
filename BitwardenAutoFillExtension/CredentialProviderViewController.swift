@@ -22,6 +22,16 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
     /// The context of the credential provider to see how the extension is being used.
     private var context: CredentialProviderContext?
 
+    /// Zero-frame text field that holds first responder in `autofillText` mode to keep
+    /// InputUI's keyboard session alive across view-controller transitions and search dismissals.
+    private var keyboardAnchor: KeyboardAnchorTextField?
+
+    /// Earliest time the vault-list search bar is allowed to activate. Set to 2 seconds after
+    /// the vault list is shown to prevent UISearchController from auto-activating during the
+    /// initial async data load, which would briefly show the system keyboard and then cause a
+    /// focus gap if it deactivates before our delegate is installed.
+    private var searchActivationAllowedAfter: Date = .distantPast
+
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
 
@@ -144,6 +154,61 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
                 ),
             )
         }
+    }
+
+    /// Installs `keyboardAnchor` as first responder to keep InputUI's keyboard session alive.
+    ///
+    /// Call before any VC transition in `autofillText` mode. No retries are scheduled:
+    /// retries disrupt SwiftUI `@FocusState` sessions (`fromBecomeFirstResponder:0`, no timer),
+    /// turning them into explicit sessions (`fromBecomeFirstResponder:1`, 5-second timer) and
+    /// causing a visible keyboard flicker. `keyboardWillHide` handles true keyboard dismissals.
+    private func installKeyboardAnchor() {
+        guard let context, case .autofillText = context.extensionMode else { return }
+
+        if keyboardAnchor == nil {
+            let anchor = KeyboardAnchorTextField(frame: .zero)
+            view.addSubview(anchor)
+            keyboardAnchor = anchor
+        }
+
+        keyboardAnchor?.becomeFirstResponder()
+    }
+
+    /// Schedules proactive attempts to find the vault-list UISearchController and install
+    /// `self` as its `UISearchControllerDelegate`.
+    ///
+    /// The primary install path is `keyboardWillShow`: when the search bar opens, it is
+    /// already visible in the window view hierarchy, so `findSearchBar(in:)` finds it and
+    /// `searchBar.delegate as? UISearchController` gives us the controller reliably.
+    ///
+    /// This method provides a secondary proactive attempt via VC-hierarchy polling, in case the
+    /// search controller is discoverable before the user activates search.
+    private func installSearchBarDelegate() {
+        guard let context, case .autofillText = context.extensionMode else { return }
+        pollForSearchControllerDelegate(deadline: Date().addingTimeInterval(5))
+    }
+
+    private func pollForSearchControllerDelegate(deadline: Date) {
+        guard Date() < deadline,
+              let context, case .autofillText = context.extensionMode else { return }
+        // Try VC hierarchy (works if SwiftUI exposes its internal VCs via addChild).
+        if let sc = children.compactMap({ findSearchController(in: $0) }).first,
+           sc.delegate == nil || sc.delegate === self {
+            sc.delegate = self
+            Logger.appExtension.debug("KeyboardAnchorTextField: searchController.delegate installed via VC hierarchy")
+            return
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
+            self?.pollForSearchControllerDelegate(deadline: deadline)
+        }
+    }
+
+    private func findSearchController(in vc: UIViewController) -> UISearchController? {
+        if let sc = vc.navigationItem.searchController { return sc }
+        for child in vc.children {
+            if let found = findSearchController(in: child) { return found }
+        }
+        return nil
     }
 
     /// Sets up and initializes the app and UI.
@@ -291,7 +356,69 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
 extension CredentialProviderViewController {
     @available(iOSApplicationExtension 18.0, *)
     override func prepareInterfaceForUserChoosingTextToInsert() {
+        // Create the anchor directly here — `self.context` is nil at this point so
+        // `installKeyboardAnchor`'s context guard would return early. This is the only
+        // synchronous call site where the view is in the window, no children exist, and
+        // nothing else can steal focus. `initializeApp` launches an async Task, so anchoring
+        // inside it would be too late.
+        let anchor = KeyboardAnchorTextField(frame: .zero)
+        view.addSubview(anchor)
+        keyboardAnchor = anchor
+        anchor.becomeFirstResponder()
+
+        // Safety net: reclaim anchor when keyboard starts hiding and anchor isn't FR.
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(keyboardWillHide),
+            name: UIResponder.keyboardWillHideNotification,
+            object: nil,
+        )
+        // When the keyboard shows for something OTHER than our anchor, install the
+        // UISearchControllerDelegate so willDismissSearchController fires on Cancel.
+        // This fires after UISearchController makes its text field first responder,
+        // so the UISearchBar is already visible in the window view hierarchy.
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(keyboardWillShow),
+            name: UIResponder.keyboardWillShowNotification,
+            object: nil,
+        )
+
         initializeApp(with: DefaultCredentialProviderContext(.autofillText))
+    }
+
+    @objc private func keyboardWillHide() {
+        guard let context, case .autofillText = context.extensionMode,
+              let anchor = keyboardAnchor, !anchor.isFirstResponder else { return }
+        Logger.appExtension.debug("KeyboardAnchorTextField: keyboard will hide without anchor as FR — reclaiming")
+        anchor.becomeFirstResponder()
+    }
+
+    /// When the keyboard shows for something other than our anchor, the search bar is now active
+    /// and visible in the window. UISearchController sets itself as `searchBar.delegate`, so we
+    /// can retrieve it via the view hierarchy and install our `UISearchControllerDelegate` just
+    /// before the user can tap Cancel — ensuring `willDismissSearchController` fires.
+    @objc private func keyboardWillShow() {
+        guard let context, case .autofillText = context.extensionMode,
+              let anchor = keyboardAnchor, !anchor.isFirstResponder else { return }
+        installSearchControllerDelegate()
+    }
+
+    private func installSearchControllerDelegate() {
+        guard let window = view.window,
+              let searchBar = findSearchBar(in: window),
+              let sc = searchBar.delegate as? UISearchController,
+              sc.delegate == nil || sc.delegate === self else { return }
+        sc.delegate = self
+        Logger.appExtension.debug("KeyboardAnchorTextField: searchController.delegate installed via keyboardWillShow")
+    }
+
+    private func findSearchBar(in view: UIView) -> UISearchBar? {
+        if let sb = view as? UISearchBar { return sb }
+        for sv in view.subviews {
+            if let found = findSearchBar(in: sv) { return found }
+        }
+        return nil
     }
 
     @available(iOSApplicationExtension 18.0, *)
@@ -459,37 +586,93 @@ extension CredentialProviderViewController: RootNavigator {
     var rootViewController: UIViewController? { self }
 
     func show(child: Navigator) {
+        // In autofillText mode, seize the anchor BEFORE the transition so there is no gap
+        // where no text-input holds first responder (which would signal useKeyboard=0 to InputUI).
+        installKeyboardAnchor()
+
         removeChildViewController()
 
         if let toViewController = child.rootViewController {
             addChild(toViewController)
             view.addConstrained(subview: toViewController.view)
             toViewController.didMove(toParent: self)
+            installSearchBarDelegate()
         }
     }
 
     // MARK: Private methods
 
-    /// Removes the first child view controller taking into account some edge cases.
+    /// Removes the first child view controller.
     func removeChildViewController() {
-        let fromViewController = children.first
+        guard let fromViewController = children.first else { return }
+        fromViewController.willMove(toParent: nil)
+        fromViewController.view.removeFromSuperview()
+        fromViewController.removeFromParent()
+    }
+}
 
-        // HACK: [PM-28227] When opening this extension on mode `text to insert`
-        // We can't use `removeFromSuperview` or the extension closes afterwards after a few seconds.
-        // Therefore we have this hack to pop to root on navigation controller.
-        // iOS sometimes changes something on the navigation from `prepareInterfaceForUserChoosingTextToInsert`
-        // which needs this workaround.
-        if let context,
-           case .autofillText = context.extensionMode,
-           let navController = fromViewController as? UINavigationController {
-            navController.popToRoot(animated: true)
-            return
-        }
+// MARK: - UISearchBarDelegate
 
-        if let fromViewController {
-            fromViewController.willMove(toParent: nil)
-            fromViewController.view.removeFromSuperview()
-            fromViewController.removeFromParent()
-        }
+extension CredentialProviderViewController: UISearchBarDelegate {
+    func searchBarShouldBeginEditing(_ searchBar: UISearchBar) -> Bool {
+        // Block auto-activation during the 2-second suppression window. Without this,
+        // UISearchController activates on load, shows the system keyboard, then
+        // immediately deactivates — creating a focus gap before our delegate is set.
+        Date() >= searchActivationAllowedAfter
+    }
+
+    func searchBarTextDidEndEditing(_ searchBar: UISearchBar) {
+        // Fallback: reclaim the anchor if UISearchBarDelegate is being called.
+        // In practice UISearchController owns the search bar delegate, so
+        // willDismissSearchController (UISearchControllerDelegate) is the primary path.
+        keyboardAnchor?.becomeFirstResponder()
+    }
+}
+
+// MARK: - UISearchControllerDelegate
+
+extension CredentialProviderViewController: UISearchControllerDelegate {
+    /// Called *before* the keyboard starts hiding. Reclaiming the anchor here — while the
+    /// search bar is still active — creates a direct search-bar → anchor transition so the
+    /// physical keyboard never visibly dismisses when the user cancels a search.
+    func willDismissSearchController(_ searchController: UISearchController) {
+        guard let context, case .autofillText = context.extensionMode else { return }
+        Logger.appExtension.debug("KeyboardAnchorTextField: willDismissSearchController — reclaiming FR")
+        keyboardAnchor?.becomeFirstResponder()
     }
 } // swiftlint:disable:this file_length
+
+// MARK: - KeyboardAnchorTextField
+
+/// A zero-frame text field used in `autofillText` mode to maintain InputUI's keyboard session.
+///
+/// `useKeyboard` is computed as `allowsSystemInputView && !hasCustomInputView && responderRequiresKeyboard`.
+/// Any non-nil `inputView` makes `!hasCustomInputView = 0` → `useKeyboard = 0` → `delayEndInputSession:YES`
+/// on every delegate transition, firing `endRemoteTextInputSessionWithID` after ~5 seconds.
+///
+/// With `inputView = nil` (the default), every transition produces `useKeyboard = 1`. The anchor
+/// reclaims first responder via `willDismissSearchController` (before the keyboard starts hiding)
+/// and via the `keyboardWillHide` safety-net observer (fires at the start of the animation,
+/// allowing the hide to be aborted rather than reversed).
+private final class KeyboardAnchorTextField: UITextField {
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { nil }
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+    }
+
+    @discardableResult
+    override func becomeFirstResponder() -> Bool {
+        let result = super.becomeFirstResponder()
+        Logger.appExtension.debug("KeyboardAnchorTextField: becomeFirstResponder → \(result)")
+        return result
+    }
+
+    @discardableResult
+    override func resignFirstResponder() -> Bool {
+        let result = super.resignFirstResponder()
+        Logger.appExtension.debug("KeyboardAnchorTextField: resignFirstResponder → \(result)")
+        return result
+    }
+}
