@@ -73,18 +73,45 @@ class StateServiceTests: BitwardenTestCase {
         XCTAssertEqual(appSettingsStore.flightRecorderData, flightRecorderData)
     }
 
-    /// `setLocalUserDataKeyStates(_:userId:)` stores the user data key states for a user.
-    func test_setLocalUserDataKeyStates() async {
-        let states: [String: UserKeyData] = ["k1": UserKeyData(wrappedKey: "key1")]
-        await subject.setLocalUserDataKeyStates(states, userId: "1")
-        XCTAssertEqual(appSettingsStore.localUserDataKeyStatesByUserId["1"], states)
+    /// `setLocalUserDataKeyState(id:value:userId:)` stores a single key state.
+    func test_setLocalUserDataKeyState() async {
+        await subject.setLocalUserDataKeyState(id: "k1", value: UserKeyData(wrappedKey: "key1"), userId: "1")
+        XCTAssertEqual(appSettingsStore.localUserDataKeyStatesByUserId["1"], ["k1": UserKeyData(wrappedKey: "key1")])
     }
 
-    /// `setLocalUserDataKeyStates(_:userId:)` clears stored states when passed nil.
-    func test_setLocalUserDataKeyStates_nil() async {
-        let states: [String: UserKeyData] = ["k1": UserKeyData(wrappedKey: "key1")]
-        await subject.setLocalUserDataKeyStates(states, userId: "1")
-        await subject.setLocalUserDataKeyStates(nil, userId: "1")
+    /// `setBulkLocalUserDataKeyStates(_:userId:)` merges multiple key states atomically.
+    func test_setBulkLocalUserDataKeyStates() async {
+        let values: [String: UserKeyData] = [
+            "k1": UserKeyData(wrappedKey: "key1"),
+            "k2": UserKeyData(wrappedKey: "key2"),
+        ]
+        await subject.setBulkLocalUserDataKeyStates(values, userId: "1")
+        XCTAssertEqual(appSettingsStore.localUserDataKeyStatesByUserId["1"], values)
+    }
+
+    /// `removeLocalUserDataKeyState(id:userId:)` removes a single key state.
+    func test_removeLocalUserDataKeyState() async {
+        await subject.setLocalUserDataKeyState(id: "k1", value: UserKeyData(wrappedKey: "key1"), userId: "1")
+        await subject.removeLocalUserDataKeyState(id: "k1", userId: "1")
+        XCTAssertNil(appSettingsStore.localUserDataKeyStatesByUserId["1"])
+    }
+
+    /// `removeBulkLocalUserDataKeyStates(keys:userId:)` removes multiple key states atomically.
+    func test_removeBulkLocalUserDataKeyStates() async {
+        let values: [String: UserKeyData] = [
+            "k1": UserKeyData(wrappedKey: "key1"),
+            "k2": UserKeyData(wrappedKey: "key2"),
+            "k3": UserKeyData(wrappedKey: "key3"),
+        ]
+        await subject.setBulkLocalUserDataKeyStates(values, userId: "1")
+        await subject.removeBulkLocalUserDataKeyStates(keys: ["k1", "k2"], userId: "1")
+        XCTAssertEqual(appSettingsStore.localUserDataKeyStatesByUserId["1"], ["k3": UserKeyData(wrappedKey: "key3")])
+    }
+
+    /// `removeAllLocalUserDataKeyStates(userId:)` clears all stored states.
+    func test_removeAllLocalUserDataKeyStates() async {
+        await subject.setLocalUserDataKeyState(id: "k1", value: UserKeyData(wrappedKey: "key1"), userId: "1")
+        await subject.removeAllLocalUserDataKeyStates(userId: "1")
         XCTAssertNil(appSettingsStore.localUserDataKeyStatesByUserId["1"])
     }
 

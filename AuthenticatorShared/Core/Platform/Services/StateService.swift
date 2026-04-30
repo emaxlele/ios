@@ -39,7 +39,7 @@ protocol StateService: AnyObject {
     /// - Returns: The flight recorder data.
     ///
     func getFlightRecorderData() async -> FlightRecorderData?
-    
+
     /// Gets the local user data keys for the user ID
     ///
     /// - Returns: A dictionary of user keys.
@@ -82,12 +82,44 @@ protocol StateService: AnyObject {
     ///
     func setFlightRecorderData(_ data: FlightRecorderData?) async
 
-    /// Sets the local user data keys for the user ID
+    /// Atomically removes a single local user data key state for the user.
     ///
-    ///  - Parameters:
-    ///     - states: A dictionary of user keys.
-    ///     - userId: The user ID associated with the last sync time.
-    func setLocalUserDataKeyStates(_ states: [String: UserKeyData]?, userId: String) async
+    /// - Parameters:
+    ///   - id: The SDK-assigned key identifier.
+    ///   - userId: The user ID of the account.
+    ///
+    func removeLocalUserDataKeyState(id: String, userId: String) async
+
+    /// Atomically removes all local user data key states for the user.
+    ///
+    /// - Parameter userId: The user ID of the account.
+    ///
+    func removeAllLocalUserDataKeyStates(userId: String) async
+
+    /// Atomically removes multiple local user data key states for the user.
+    ///
+    /// - Parameters:
+    ///   - keys: The SDK-assigned key identifiers to remove.
+    ///   - userId: The user ID of the account.
+    ///
+    func removeBulkLocalUserDataKeyStates(keys: [String], userId: String) async
+
+    /// Atomically sets a single local user data key state for the user.
+    ///
+    /// - Parameters:
+    ///   - id: The SDK-assigned key identifier.
+    ///   - value: The wrapped key data to store.
+    ///   - userId: The user ID of the account.
+    ///
+    func setLocalUserDataKeyState(id: String, value: UserKeyData, userId: String) async
+
+    /// Atomically merges multiple local user data key states for the user.
+    ///
+    /// - Parameters:
+    ///   - values: A dictionary mapping SDK-assigned key identifiers to wrapped key data.
+    ///   - userId: The user ID of the account.
+    ///
+    func setBulkLocalUserDataKeyStates(_ values: [String: UserKeyData], userId: String) async
 
     /// Sets the user's encryption secret key.
     ///
@@ -215,7 +247,7 @@ actor DefaultStateService:
     }
 
     func getLocalUserDataKeyStates(userId: String) async -> [String: UserKeyData]? {
-          appSettingsStore.localUserDataKeyStates(userId: userId)
+        appSettingsStore.localUserDataKeyStates(userId: userId)
     }
 
     func getPreAuthServerConfig() async -> ServerConfig? {
@@ -257,7 +289,35 @@ actor DefaultStateService:
         appSettingsStore.flightRecorderData = data
     }
 
-    func setLocalUserDataKeyStates(_ states: [String: UserKeyData]?, userId: String) async {
+    func removeLocalUserDataKeyState(id: String, userId: String) async {
+        var states = appSettingsStore.localUserDataKeyStates(userId: userId) ?? [:]
+        states.removeValue(forKey: id)
+        appSettingsStore.setLocalUserDataKeyStates(states.isEmpty ? nil : states, userId: userId)
+    }
+
+    func removeAllLocalUserDataKeyStates(userId: String) async {
+        appSettingsStore.setLocalUserDataKeyStates(nil, userId: userId)
+    }
+
+    func removeBulkLocalUserDataKeyStates(keys: [String], userId: String) async {
+        var states = appSettingsStore.localUserDataKeyStates(userId: userId) ?? [:]
+        for key in keys {
+            states.removeValue(forKey: key)
+        }
+        appSettingsStore.setLocalUserDataKeyStates(states.isEmpty ? nil : states, userId: userId)
+    }
+
+    func setLocalUserDataKeyState(id: String, value: UserKeyData, userId: String) async {
+        var states = appSettingsStore.localUserDataKeyStates(userId: userId) ?? [:]
+        states[id] = value
+        appSettingsStore.setLocalUserDataKeyStates(states, userId: userId)
+    }
+
+    func setBulkLocalUserDataKeyStates(_ values: [String: UserKeyData], userId: String) async {
+        var states = appSettingsStore.localUserDataKeyStates(userId: userId) ?? [:]
+        for (id, value) in values {
+            states[id] = value
+        }
         appSettingsStore.setLocalUserDataKeyStates(states, userId: userId)
     }
 

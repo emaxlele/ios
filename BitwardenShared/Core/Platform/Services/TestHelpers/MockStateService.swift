@@ -564,8 +564,36 @@ class MockStateService: StateService, ActiveAccountStateProvider, AutofillStateS
         archiveOnboardingShown = shown
     }
 
-    func setLocalUserDataKeyStates(_ states: [String: UserKeyData]?, userId: String) async {
-        localUserDataKeyStatesByUserId[userId] = states
+    func removeLocalUserDataKeyState(id: String, userId: String) async {
+        var current = (localUserDataKeyStatesByUserId[userId] ?? nil) ?? [:]
+        current.removeValue(forKey: id)
+        localUserDataKeyStatesByUserId[userId] = current.isEmpty ? nil : current
+    }
+
+    func removeAllLocalUserDataKeyStates(userId: String) async {
+        localUserDataKeyStatesByUserId.updateValue(nil, forKey: userId)
+    }
+
+    func removeBulkLocalUserDataKeyStates(keys: [String], userId: String) async {
+        var current = (localUserDataKeyStatesByUserId[userId] ?? nil) ?? [:]
+        for key in keys {
+            current.removeValue(forKey: key)
+        }
+        localUserDataKeyStatesByUserId[userId] = current.isEmpty ? nil : current
+    }
+
+    func setLocalUserDataKeyState(id: String, value: UserKeyData, userId: String) async {
+        var current = (localUserDataKeyStatesByUserId[userId] ?? nil) ?? [:]
+        current[id] = value
+        localUserDataKeyStatesByUserId[userId] = current
+    }
+
+    func setBulkLocalUserDataKeyStates(_ values: [String: UserKeyData], userId: String) async {
+        var current = (localUserDataKeyStatesByUserId[userId] ?? nil) ?? [:]
+        for (id, value) in values {
+            current[id] = value
+        }
+        localUserDataKeyStatesByUserId[userId] = current
     }
 
     func setPremiumUpgradeBannerDismissed(_ dismissed: Bool, userId: String?) async throws {

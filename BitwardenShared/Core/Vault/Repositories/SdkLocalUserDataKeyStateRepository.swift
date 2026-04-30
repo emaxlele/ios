@@ -40,34 +40,29 @@ actor SdkLocalUserDataKeyStateRepository: BitwardenSdk.LocalUserDataKeyStateRepo
     }
 
     func remove(id: String) async throws {
-        var states = await stateService.getLocalUserDataKeyStates(userId: userId) ?? [:]
-        states.removeValue(forKey: id)
-        await stateService.setLocalUserDataKeyStates(states.isEmpty ? nil : states, userId: userId)
+        await stateService.removeLocalUserDataKeyState(id: id, userId: userId)
     }
 
     func removeBulk(keys: [String]) async throws {
-        var states = await stateService.getLocalUserDataKeyStates(userId: userId) ?? [:]
-        for key in keys {
-            states.removeValue(forKey: key)
-        }
-        await stateService.setLocalUserDataKeyStates(states.isEmpty ? nil : states, userId: userId)
+        await stateService.removeBulkLocalUserDataKeyStates(keys: keys, userId: userId)
     }
 
     func removeAll() async throws {
-        await stateService.setLocalUserDataKeyStates(nil, userId: userId)
+        await stateService.removeAllLocalUserDataKeyStates(userId: userId)
     }
 
     func set(id: String, value: LocalUserDataKeyState) async throws {
-        var states = await stateService.getLocalUserDataKeyStates(userId: userId) ?? [:]
-        states[id] = UserKeyData(localUserDataKeyState: value)
-        await stateService.setLocalUserDataKeyStates(states, userId: userId)
+        await stateService.setLocalUserDataKeyState(
+            id: id,
+            value: UserKeyData(localUserDataKeyState: value),
+            userId: userId,
+        )
     }
 
     func setBulk(values: [String: LocalUserDataKeyState]) async throws {
-        var states = await stateService.getLocalUserDataKeyStates(userId: userId) ?? [:]
-        for (id, state) in values {
-            states[id] = UserKeyData(localUserDataKeyState: state)
-        }
-        await stateService.setLocalUserDataKeyStates(states, userId: userId)
+        await stateService.setBulkLocalUserDataKeyStates(
+            values.mapValues { UserKeyData(localUserDataKeyState: $0) },
+            userId: userId,
+        )
     }
 }
