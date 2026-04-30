@@ -235,6 +235,7 @@ targets:
       - target: AuthenticatorSharedMocks
       - target: BitwardenKit/AuthenticatorBridgeKitMocks
       - target: BitwardenKit/BitwardenKitMocks
+      - target: BitwardenKit/BitwardenSdkMocks
       - target: BitwardenKit/TestHelpers
       - package: BitwardenSdk
       - package: SnapshotTesting
@@ -260,6 +261,7 @@ targets:
       - target: AuthenticatorSharedMocks
       - target: BitwardenKit/AuthenticatorBridgeKitMocks
       - target: BitwardenKit/BitwardenKitMocks
+      - target: BitwardenKit/BitwardenSdkMocks
       - target: BitwardenKit/TestHelpers
       - package: BitwardenSdk
       - package: SnapshotTesting
@@ -286,6 +288,7 @@ targets:
       - target: AuthenticatorSharedMocks
       - target: BitwardenKit/AuthenticatorBridgeKitMocks
       - target: BitwardenKit/BitwardenKitMocks
+      - target: BitwardenKit/BitwardenSdkMocks
       - target: BitwardenKit/TestHelpers
       - target: BitwardenKit/ViewInspectorTestHelpers
       - package: BitwardenSdk
