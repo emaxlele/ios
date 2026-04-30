@@ -156,6 +156,9 @@ class CredentialProviderViewController: ASCredentialProviderViewController {
     /// retries disrupt SwiftUI `@FocusState` sessions (`fromBecomeFirstResponder:0`, no timer),
     /// turning them into explicit sessions (`fromBecomeFirstResponder:1`, 5-second timer) and
     /// causing a visible keyboard flicker. `keyboardWillHide` handles true keyboard dismissals.
+    ///
+    /// SwiftUI must reclaim focus via `@FocusState` before the RTI 5-second timer fires;
+    /// screens without a focusable element remain on the `becomeFirstResponder:1` path.
     private func installKeyboardAnchor() {
         guard let context, case .autofillText = context.extensionMode else { return }
 
