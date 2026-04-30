@@ -147,6 +147,7 @@ final class AddEditItemProcessor: StateProcessor<// swiftlint:disable:this type_
     override func perform(_ effect: AddEditItemEffect) async {
         switch effect {
         case .appeared:
+            await loadFeatureFlags()
             await showPasswordAutofillAlertIfNeeded()
             await checkIfUserHasMasterPassword()
             await checkLearnNewLoginActionCardEligibility()
