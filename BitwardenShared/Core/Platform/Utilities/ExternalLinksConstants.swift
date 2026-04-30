@@ -49,9 +49,9 @@ extension ExternalLinksConstants {
     /// A markdown link to Bitwarden's marketing email preferences.
     static let unsubscribeFromMarketingEmails = URL(string: "https://bitwarden.com/email-preferences/")!
 
-    /// A link to Bitwarden's help page for showing website icons.
-    static let websiteIconsHelp = URL(string: "https://bitwarden.com/help/website-icons/")!
-
     /// A link to Bitwarden's help page for URI match detection.
     static let uriMatchDetections = URL(string: "https://bitwarden.com/help/uri-match-detection/")!
+
+    /// A link to Bitwarden's help page for showing website icons.
+    static let websiteIconsHelp = URL(string: "https://bitwarden.com/help/website-icons/")!
 }

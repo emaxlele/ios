@@ -11,6 +11,7 @@ class NotificationServiceTests: BitwardenTestCase { // swiftlint:disable:this ty
     // MARK: Properties
 
     var appIDSettingsStore: MockAppIDSettingsStore!
+    var billingService: MockBillingService!
     var refreshableApiService: MockRefreshableAPIService!
     var authRepository: MockAuthRepository!
     var authService: MockAuthService!
@@ -30,6 +31,7 @@ class NotificationServiceTests: BitwardenTestCase { // swiftlint:disable:this ty
         super.setUp()
 
         appIDSettingsStore = MockAppIDSettingsStore()
+        billingService = MockBillingService()
         authRepository = MockAuthRepository()
         authService = MockAuthService()
         client = MockHTTPClient()
@@ -46,6 +48,7 @@ class NotificationServiceTests: BitwardenTestCase { // swiftlint:disable:this ty
             appIDService: AppIDService(appIDSettingsStore: appIDSettingsStore),
             authRepository: authRepository,
             authService: authService,
+            billingService: billingService,
             configService: configService,
             errorReporter: errorReporter,
             flightRecorder: flightRecorder,
@@ -61,6 +64,7 @@ class NotificationServiceTests: BitwardenTestCase { // swiftlint:disable:this ty
         try await super.tearDown()
 
         appIDSettingsStore = nil
+        billingService = nil
         authService = nil
         client = nil
         configService = nil
@@ -427,6 +431,23 @@ class NotificationServiceTests: BitwardenTestCase { // swiftlint:disable:this ty
         XCTAssertTrue(syncService.didFetchSync)
     }
 
+    /// `messageReceived(_:notificationDismissed:notificationTapped:)` performs a sync when
+    /// receiving a premium status changed notification.
+    func test_messageReceived_premiumStatusChanged() async throws {
+        stateService.setIsAuthenticated()
+        appIDSettingsStore.appID = "10"
+        let message: [AnyHashable: Any] = [
+            "data": [
+                "type": NotificationType.premiumStatusChanged.rawValue,
+                "payload": "anything",
+            ],
+        ]
+
+        await subject.messageReceived(message, notificationDismissed: nil, notificationTapped: nil)
+
+        XCTAssertEqual(billingService.premiumStatusChangedCallsCount, 1)
+    }
+
     /// `messageReceived(_:notificationDismissed:notificationTapped:)` logs to the flight recorder
     /// when a login request push notification is received for an account that doesn't exist.
     @MainActor
@@ -556,6 +577,29 @@ class NotificationServiceTests: BitwardenTestCase { // swiftlint:disable:this ty
 
         XCTAssertEqual(stateService.loginRequest, loginRequestNotification)
         XCTAssertEqual(delegate.showLoginRequestRequest, .fixture())
+    }
+
+    /// `messageReceived(_:notificationDismissed:notificationTapped:)` clears the login request from state
+    /// when the server returns 404 (request expired) for a same-account login request notification.
+    @MainActor
+    func test_messageReceived_loginRequest_sameAccount_notFound() async throws {
+        stateService.setIsAuthenticated()
+        stateService.accounts = [.fixture()]
+        appIDSettingsStore.appID = "10"
+        authService.getPendingLoginRequestResult = .failure(PendingLoginRequestError.notFound)
+        let loginRequestNotification = LoginRequestNotification(id: "requestId", userId: "1")
+        let notificationData = try JSONEncoder().encode(loginRequestNotification)
+        nonisolated(unsafe) let message: [AnyHashable: Any] = [
+            "data": [
+                "type": NotificationType.authRequest.rawValue,
+                "payload": String(data: notificationData, encoding: .utf8) ?? "",
+            ],
+        ]
+
+        await subject.messageReceived(message, notificationDismissed: nil, notificationTapped: nil)
+
+        XCTAssertNil(stateService.loginRequest)
+        XCTAssertTrue(errorReporter.errors.isEmpty)
     }
 
     /// `messageReceived(_:notificationDismissed:notificationTapped:)` handles logout requests and will not route
@@ -886,6 +930,30 @@ class NotificationServiceTests: BitwardenTestCase { // swiftlint:disable:this ty
         await subject.messageReceived(message, notificationDismissed: nil, notificationTapped: true)
 
         XCTAssertEqual(delegate.showLoginRequestRequest, .fixture(id: "requestId"))
+    }
+
+    /// `messageReceived(_:notificationDismissed:notificationTapped:)` clears the login request from state
+    /// when the server returns 404 (request expired) for a same-account notification tap.
+    @MainActor
+    func test_messageReceived_notificationTapped_sameAccount_notFound() async throws {
+        stateService.accounts = [.fixture()]
+        stateService.activeAccount = .fixture()
+        stateService.loginRequest = LoginRequestNotification(id: "requestId", userId: "1")
+        authService.getPendingLoginRequestResult = .failure(PendingLoginRequestError.notFound)
+        let loginRequest = LoginRequestPushNotification(
+            id: "requestId",
+            timeoutInMinutes: 15,
+            userId: Account.fixture().profile.userId,
+        )
+        let testData = try JSONEncoder().encode(loginRequest)
+        nonisolated(unsafe) let message: [AnyHashable: Any] = [
+            "notificationData": String(data: testData, encoding: .utf8) ?? "",
+        ]
+
+        await subject.messageReceived(message, notificationDismissed: nil, notificationTapped: true)
+
+        XCTAssertNil(stateService.loginRequest)
+        XCTAssertTrue(errorReporter.errors.isEmpty)
     }
 }
 
