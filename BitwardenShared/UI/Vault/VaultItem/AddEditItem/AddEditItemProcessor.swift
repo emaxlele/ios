@@ -464,36 +464,6 @@ final class AddEditItemProcessor: StateProcessor<// swiftlint:disable:this type_
             state.cardItemState.cardholderName = name
         case let .cardNumberChanged(number):
             state.cardItemState.cardNumber = number
-        case let .cardSecurityCodeChanged(code):
-            state.cardItemState.cardSecurityCode = code
-        case let .expirationMonthChanged(month):
-            state.cardItemState.expirationMonth = month
-        case let .expirationYearChanged(year):
-            state.cardItemState.expirationYear = year
-        case let .toggleCodeVisibilityChanged(isVisible):
-            state.cardItemState.isCodeVisible = isVisible
-            if isVisible {
-                let cipherId = state.cipher.id
-                Task {
-                    await services.eventService.collect(
-                        eventType: .cipherClientToggledCardCodeVisible,
-                        cipherId: cipherId,
-                    )
-                }
-            }
-        case let .toggleNumberVisibilityChanged(isVisible):
-            state.cardItemState.isNumberVisible = isVisible
-            if isVisible {
-                let cipherId = state.cipher.id
-                Task {
-                    await services.eventService.collect(
-                        eventType: .cipherClientToggledCardNumberVisible,
-                        cipherId: cipherId,
-                    )
-                }
-            }
-        case .scanCardButtonTapped:
-            state.cardItemState.isCardScannerPresented = true
         case .cardScannerDismissed:
             state.cardItemState.isCardScannerPresented = false
             state.cardItemState.shouldFocusCardholderNameAfterScan = false
@@ -515,6 +485,36 @@ final class AddEditItemProcessor: StateProcessor<// swiftlint:disable:this type_
             }
             if let year = data.expirationYear {
                 state.cardItemState.expirationYear = year
+            }
+        case let .cardSecurityCodeChanged(code):
+            state.cardItemState.cardSecurityCode = code
+        case let .expirationMonthChanged(month):
+            state.cardItemState.expirationMonth = month
+        case let .expirationYearChanged(year):
+            state.cardItemState.expirationYear = year
+        case .scanCardButtonTapped:
+            state.cardItemState.isCardScannerPresented = true
+        case let .toggleCodeVisibilityChanged(isVisible):
+            state.cardItemState.isCodeVisible = isVisible
+            if isVisible {
+                let cipherId = state.cipher.id
+                Task {
+                    await services.eventService.collect(
+                        eventType: .cipherClientToggledCardCodeVisible,
+                        cipherId: cipherId,
+                    )
+                }
+            }
+        case let .toggleNumberVisibilityChanged(isVisible):
+            state.cardItemState.isNumberVisible = isVisible
+            if isVisible {
+                let cipherId = state.cipher.id
+                Task {
+                    await services.eventService.collect(
+                        eventType: .cipherClientToggledCardNumberVisible,
+                        cipherId: cipherId,
+                    )
+                }
             }
         }
     }
