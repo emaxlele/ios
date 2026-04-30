@@ -12,9 +12,3 @@ public struct UserKeyData: Codable, Equatable {
         self.init(wrappedKey: localUserDataKeyState.wrappedKey)
     }
 }
-
-extension BitwardenSdk.LocalUserDataKeyState {
-    init(_ value: UserKeyData) {
-        self.init(wrappedKey: value.wrappedKey)
-    }
-}
