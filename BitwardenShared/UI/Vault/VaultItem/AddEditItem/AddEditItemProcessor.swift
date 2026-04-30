@@ -147,7 +147,6 @@ final class AddEditItemProcessor: StateProcessor<// swiftlint:disable:this type_
     override func perform(_ effect: AddEditItemEffect) async {
         switch effect {
         case .appeared:
-            await loadFeatureFlags()
             await showPasswordAutofillAlertIfNeeded()
             await checkIfUserHasMasterPassword()
             await checkLearnNewLoginActionCardEligibility()
@@ -447,7 +446,6 @@ final class AddEditItemProcessor: StateProcessor<// swiftlint:disable:this type_
 
     /// Loads the feature flags required for this processor.
     private func loadFeatureFlags() async {
-        state.isArchiveVaultItemsFFEnabled = await services.configService.getFeatureFlag(.archiveVaultItems)
         state.cardItemState.cardScannerEnabled = await services.configService.getFeatureFlag(.cardScanner)
     }
 
@@ -547,6 +545,8 @@ final class AddEditItemProcessor: StateProcessor<// swiftlint:disable:this type_
             state.identityState.passportNumber = passportNumber
         case let .licenseNumberChanged(licenseNumber):
             state.identityState.licenseNumber = licenseNumber
+        case let .ssnVisibilityChanged(isVisible):
+            state.identityState.showSocialSecurityNumber = isVisible
         case let .emailChanged(email):
             state.identityState.email = email
         case let .phoneNumberChanged(phoneNumber):
@@ -722,6 +722,15 @@ final class AddEditItemProcessor: StateProcessor<// swiftlint:disable:this type_
             coordinator.showAlert(Alert.inputValidationAlert(error: error))
             return
         } catch UserVerificationError.cancelled {
+            return
+        } catch let error as ServerError
+            where error.message.contains("Cipher was not encrypted for the current user") {
+            await coordinator.showErrorAlert(error: error)
+            services.errorReporter.log(error: BitwardenError.generalError(
+                type: "Save item failed",
+                message: error.message,
+                error: error,
+            ))
             return
         } catch {
             await coordinator.showErrorAlert(error: error)

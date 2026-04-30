@@ -39,15 +39,24 @@ Or run all at once via `./Scripts/bootstrap.sh`.
 
 ## Running Tests
 
+**Always read the simulator config files before running tests:**
+
+```bash
+DEVICE=$(tr -d '\n' < .test-simulator-device-name)
+OS=$(tr -d '\n' < .test-simulator-ios-version)
+```
+
+Then run tests with:
+
 ```bash
 xcodebuild test \
   -workspace Bitwarden.xcworkspace \
   -scheme Bitwarden \
   -testPlan Bitwarden-Default \
-  -destination 'platform=iOS Simulator,name=iPhone 16'
+  -destination "platform=iOS Simulator,name=$DEVICE,OS=$OS"
 ```
 
-Simulator must match `.test-simulator-device-name` and `.test-simulator-ios-version`.
+Current values (as of last update): device `iPhone 17 Pro`, OS `26.2`. **Do not hardcode these** — always read from `.test-simulator-device-name` and `.test-simulator-ios-version` at runtime, as they change when the project upgrades its simulator target.
 
 CI runs all `-Default` test plans on PRs to `main`, commits to `main`, and release branches. Test execution order is randomized (`randomExecutionOrder: true`).
 
@@ -69,10 +78,11 @@ SwiftLint and SwiftFormat run automatically as post-compile scripts (configured 
 Run automatically in pre-build phases; trigger manually when needed:
 
 ```bash
-# Mock generation
-mint run sourcery --config BitwardenShared/Sourcery/sourcery.yml
-mint run sourcery --config AuthenticatorShared/Sourcery/sourcery.yml
-mint run sourcery --config BitwardenKit/Sourcery/sourcery.yml
+# Mock generation — run from an Xcode build phase (BUILD_DIR is set automatically by Xcode)
+# To run standalone, supply BUILD_DIR manually — see the script header for the one-liner
+./Scripts/generate-mocks.sh BitwardenShared    # default if argument omitted
+./Scripts/generate-mocks.sh AuthenticatorShared
+./Scripts/generate-mocks.sh BitwardenKit
 
 # Asset/localization code generation
 mint run swiftgen config run --config swiftgen-bwr.yml   # BitwardenResources (most common)

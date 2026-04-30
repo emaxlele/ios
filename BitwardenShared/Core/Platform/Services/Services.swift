@@ -13,14 +13,16 @@ typealias Services = HasAPIService
     & HasApplication
     & HasAuthAPIService
     & HasAuthRepository
-    & HasBillingAPIService
     & HasAuthService
     & HasAutofillCredentialService
+    & HasBillingAPIService
+    & HasBillingService
     & HasBiometricsRepository
     & HasCameraService
     & HasCardTextParser
     & HasChangeKdfService
     & HasCipherOwnershipHelper
+    & HasClientCertificateService
     & HasClientService
     & HasConfigService
     & HasDeviceAPIService
@@ -55,6 +57,7 @@ typealias Services = HasAPIService
     & HasSettingsRepository
     & HasSharedTimeoutService
     & HasStateService
+    & HasStorefrontService
     & HasSyncService
     & HasSystemDevice
     & HasTOTPExpirationManagerFactory
@@ -153,6 +156,13 @@ protocol HasBillingAPIService {
     var billingAPIService: BillingAPIService { get }
 }
 
+/// Protocol for an object that provides a `BillingService`.
+///
+protocol HasBillingService {
+    /// The service used by the application to manage billing operations.
+    var billingService: BillingService { get }
+}
+
 /// Protocol for obtaining the device's biometric authentication type.
 ///
 protocol HasBiometricsRepository {
@@ -186,6 +196,13 @@ protocol HasCipherOwnershipHelper {
 protocol HasChangeKdfService {
     /// The service used to change the user's KDF settings.
     var changeKdfService: ChangeKdfService { get }
+}
+
+/// Protocol for an object that provides a `ClientCertificateService`.
+///
+protocol HasClientCertificateService {
+    /// The service used by the application to manage client certificates for mTLS authentication.
+    var clientCertificateService: ClientCertificateService { get }
 }
 
 /// Protocol for an object that provides a `ClientService`.
@@ -366,6 +383,13 @@ protocol HasSettingsRepository {
 protocol HasStateService {
     /// The service used by the application to manage account state.
     var stateService: StateService { get }
+}
+
+/// Protocol for an object that provides a `StorefrontService`.
+///
+protocol HasStorefrontService {
+    /// The service used by the application to retrieve App Store storefront information.
+    var storefrontService: StorefrontService { get }
 }
 
 /// Protocol for an object that provides a `UserSessionStateService`.
