@@ -287,7 +287,7 @@ class DependencyUpdateRunner:
         client: Shared GitHub API client used by all file updaters.
     """
 
-    PROJECT_FILES: list[str] = ["project-bwk.yml", "project-bwa.yml", "project-pm.yml"]
+    PROJECT_FILES: list[str] = ["project-bwk.yml", "project-bwa.yml", "project-bwth.yml", "project-common.yml", "project-pm.yml"]
 
     def __init__(self) -> None:
         """Initialize the runner with a fresh GitHub client."""

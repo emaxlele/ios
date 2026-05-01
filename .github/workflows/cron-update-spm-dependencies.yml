@@ -26,7 +26,7 @@ jobs:
       - name: Check for changes
         id: check-changes
         run: |
-          PROJECT_FILES="project-bwk.yml project-bwa.yml project-pm.yml"
+          PROJECT_FILES="project-bwk.yml project-bwa.yml project-bwth.yml project-common.yml project-pm.yml"
           if git diff --quiet -- $PROJECT_FILES; then
             echo "✅ No changes detected, skipping..."
             echo "has_changes=false" >> $GITHUB_OUTPUT
@@ -45,7 +45,7 @@ jobs:
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
           git checkout -b $BRANCH_NAME
-          git add project-bwk.yml project-bwa.yml project-pm.yml
+          git add project-bwk.yml project-bwa.yml project-bwth.yml project-common.yml project-pm.yml
           git commit -m "Update SPM dependencies"
           git push origin $BRANCH_NAME
           echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
