@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # 4.2.2
+        with:
+          persist-credentials: false
 
       - name: Install Python dependencies
         run: pip install packaging ruamel-yaml
@@ -38,6 +40,8 @@ jobs:
 
       - name: Create branch and commit
         if: steps.check-changes.outputs.has_changes == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "📋 Committing project file updates..."
 
@@ -47,6 +51,7 @@ jobs:
           git checkout -b $BRANCH_NAME
           git add project-bwk.yml project-bwa.yml project-bwth.yml project-common.yml project-pm.yml
           git commit -m "Update SPM dependencies"
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git push origin $BRANCH_NAME
           echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
           echo "🌱 Branch created: $BRANCH_NAME"
