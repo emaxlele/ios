@@ -20,9 +20,9 @@ final class VaultListProcessor: StateProcessor<
     typealias Services = HasApplication
         & HasAuthRepository
         & HasAuthService
+        & HasBillingRepository
         & HasBillingService
         & HasChangeKdfService
-        & HasConfigService
         & HasEnvironmentService
         & HasErrorReporter
         & HasEventService
@@ -33,7 +33,6 @@ final class VaultListProcessor: StateProcessor<
         & HasReviewPromptService
         & HasSearchProcessorMediatorFactory
         & HasStateService
-        & HasStorefrontService
         & HasSyncService
         & HasTimeProvider
         & HasVaultRepository
@@ -262,7 +261,7 @@ extension VaultListProcessor {
         state.shouldShowArchiveOnboardingActionCard = await services.stateService.shouldDoArchiveOnboarding()
 
         let isBannerDismissed = await services.stateService.isPremiumUpgradeBannerDismissed()
-        let isUpgradeAvailable = await isInAppUpgradeAvailable()
+        let isUpgradeAvailable = await services.billingRepository.isInAppUpgradeAvailable()
         state.shouldShowPremiumUpgradeActionCard = !isBannerDismissed && isUpgradeAvailable
     }
 
@@ -557,29 +556,11 @@ extension VaultListProcessor {
         }
     }
 
-    /// Returns `true` when the in-app premium upgrade path is available for the active user.
-    /// Does not check banner dismissal — callers that need that check must do so separately.
-    ///
-    private func isInAppUpgradeAvailable() async -> Bool {
-        guard await services.configService.getFeatureFlag(.premiumUpgradePath) else { return false }
-        guard await services.storefrontService.isUSStorefront() else { return false }
-        guard await services.stateService.isPremiumUpgradeEligible() else { return false }
-        do {
-            guard try await services.vaultRepository
-                .hasMinimumCipherCount(Constants.minimumPremiumUpgradeBannerCipherCount)
-            else { return false }
-        } catch {
-            services.errorReporter.log(error: error)
-            return false
-        }
-        return true
-    }
-
     /// Navigates to the premium upgrade flow. Uses the in-app upgrade path when available;
     /// otherwise opens the web vault upgrade URL as a fallback.
     ///
     private func navigateToPremiumUpgrade() async {
-        guard await isInAppUpgradeAvailable() else {
+        guard await services.billingRepository.isInAppUpgradeAvailable() else {
             state.url = services.environmentService.upgradeToPremiumURL
             return
         }
