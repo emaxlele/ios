@@ -400,8 +400,7 @@ protocol StateService: AnyObject {
     ///
     func isPremiumUpgradeBannerDismissed() async -> Bool
 
-    /// Returns whether the user meets the eligibility criteria for the premium upgrade
-    /// (free account and 7+ days old).
+    /// Returns whether the user meets the eligibility criteria for the premium upgrade.
     ///
     /// - Returns: `true` if the user is eligible for the premium upgrade.
     ///
@@ -1837,7 +1836,12 @@ actor DefaultStateService: StateService, ActiveAccountStateProvider, ConfigState
     }
 
     func isPremiumUpgradeBannerDismissed() async -> Bool {
-        await ((try? getPremiumUpgradeBannerDismissed()) ?? false)
+        do {
+            return try await getPremiumUpgradeBannerDismissed()
+        } catch {
+            errorReporter.log(error: error)
+            return false
+        }
     }
 
     func isPremiumUpgradeEligible() async -> Bool {
@@ -1846,11 +1850,7 @@ actor DefaultStateService: StateService, ActiveAccountStateProvider, ConfigState
         // Check account age >= 7 days
         guard let account = try? await getActiveAccount(),
               let creationDate = account.profile.creationDate else { return false }
-        guard timeProvider.timeSince(creationDate) >= Constants.premiumUpgradeBannerAccountAge else {
-            return false
-        }
-
-        return true
+        return timeProvider.timeSince(creationDate) >= Constants.premiumUpgradeBannerAccountAge
     }
 
     func logoutAccount(userId: String?, userInitiated: Bool) async throws {
