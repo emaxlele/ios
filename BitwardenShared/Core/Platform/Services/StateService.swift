@@ -244,12 +244,6 @@ protocol StateService: AnyObject {
     ///
     func getLearnGeneratorActionCardStatus() async -> AccountSetupProgress?
 
-    /// Gets the local user data keys for the user ID
-    ///
-    /// - Returns: A dictionary of user keys.
-    ///
-    func getLocalUserDataKeyStates(userId: String) async -> [String: UserKeyData]?
-
     /// Get any pending login request data.
     ///
     /// - Returns: The pending login request data from a push notification.
