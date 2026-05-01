@@ -261,15 +261,7 @@ extension VaultListProcessor {
 
         state.shouldShowArchiveOnboardingActionCard = await services.stateService.shouldDoArchiveOnboarding()
 
-        if await services.configService.getFeatureFlag(.premiumUpgradePath) {
-            let shouldShow = await services.stateService.shouldShowPremiumUpgradeBanner()
-            let hasEnoughItems = await (try? services.vaultRepository
-                .hasMinimumCipherCount(Constants.minimumPremiumUpgradeBannerCipherCount)) ?? false
-            let isUSStorefront = await services.storefrontService.isUSStorefront()
-            state.shouldShowPremiumUpgradeActionCard = shouldShow && hasEnoughItems && isUSStorefront
-        } else {
-            state.shouldShowPremiumUpgradeActionCard = false
-        }
+        state.shouldShowPremiumUpgradeActionCard = await isInAppUpgradeAvailable()
     }
 
     /// Checks if the user needs to update their KDF settings.
@@ -368,8 +360,9 @@ extension VaultListProcessor {
             if !state.hasPremium, group == .archive, count == 0 {
                 coordinator.showAlert(
                     Alert.archiveUnavailable(action: { [weak self] in
-                        guard let self else { return }
-                        state.url = services.environmentService.upgradeToPremiumURL
+                        Task { [weak self] in
+                            await self?.navigateToPremiumUpgrade()
+                        }
                     }),
                 )
                 return
@@ -559,6 +552,33 @@ extension VaultListProcessor {
             } catch {
                 services.errorReporter.log(error: error)
             }
+        }
+    }
+
+    /// Returns `true` when the in-app premium upgrade path is available for the active user.
+    /// Requires the feature flag to be enabled, the banner eligibility conditions to pass
+    /// (account age, not dismissed, not already premium), the vault to contain the minimum
+    /// number of required items, and the user to be on the US storefront.
+    ///
+    private func isInAppUpgradeAvailable() async -> Bool {
+        guard await services.configService.getFeatureFlag(.premiumUpgradePath) else { return false }
+        guard await services.stateService.isPremiumUpgradeEligible() else { return false }
+        guard (try? await services.vaultRepository
+            .hasMinimumCipherCount(Constants.minimumPremiumUpgradeBannerCipherCount)) ?? false
+        else { return false }
+        guard await services.storefrontService.isUSStorefront() else { return false }
+        return true
+    }
+
+    /// Navigates to the premium upgrade flow. Uses the in-app upgrade path when available;
+    /// otherwise opens the web vault upgrade URL as a fallback.
+    ///
+    private func navigateToPremiumUpgrade() async {
+        if await isInAppUpgradeAvailable() {
+            subscribeToPremiumCheckoutStatus()
+            coordinator.navigate(to: .premiumUpgrade)
+        } else {
+            state.url = services.environmentService.upgradeToPremiumURL
         }
     }
 
