@@ -2691,8 +2691,9 @@ class StateServiceTests: BitwardenTestCase { // swiftlint:disable:this type_body
         XCTAssertFalse(shouldShow)
     }
 
-    /// `isPremiumUpgradeEligible()` returns `false` when banner has been dismissed.
-    func test_isPremiumUpgradeEligible_dismissed() async {
+    /// `isPremiumUpgradeEligible()` returns `true` even when the banner has been dismissed,
+    /// since dismissal is a separate concern checked via `isPremiumUpgradeBannerDismissed()`.
+    func test_isPremiumUpgradeEligible_bannerDismissedDoesNotAffectEligibility() async {
         let fixedDate = Date(timeIntervalSince1970: 1_000_000_000)
         timeProvider.timeConfig = .mockTime(fixedDate)
         let creationDate = fixedDate.addingTimeInterval(-Constants.premiumUpgradeBannerAccountAge - 1)
@@ -2702,8 +2703,26 @@ class StateServiceTests: BitwardenTestCase { // swiftlint:disable:this type_body
         )))
         appSettingsStore.premiumUpgradeBannerDismissedByUserId["1"] = true
 
-        let shouldShow = await subject.isPremiumUpgradeEligible()
-        XCTAssertFalse(shouldShow)
+        let isEligible = await subject.isPremiumUpgradeEligible()
+        XCTAssertTrue(isEligible)
+    }
+
+    /// `isPremiumUpgradeBannerDismissed()` returns `true` when the banner has been dismissed.
+    func test_isPremiumUpgradeBannerDismissed_true() async {
+        await subject.addAccount(.fixture())
+        appSettingsStore.premiumUpgradeBannerDismissedByUserId["1"] = true
+
+        let isDismissed = await subject.isPremiumUpgradeBannerDismissed()
+        XCTAssertTrue(isDismissed)
+    }
+
+    /// `isPremiumUpgradeBannerDismissed()` returns `false` when the banner has not been dismissed.
+    func test_isPremiumUpgradeBannerDismissed_false() async {
+        await subject.addAccount(.fixture())
+        appSettingsStore.premiumUpgradeBannerDismissedByUserId["1"] = false
+
+        let isDismissed = await subject.isPremiumUpgradeBannerDismissed()
+        XCTAssertFalse(isDismissed)
     }
 
     /// `isPremiumUpgradeEligible()` returns `false` when account is less than 7 days old.

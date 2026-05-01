@@ -394,8 +394,14 @@ protocol StateService: AnyObject {
     ///
     func isInitialSyncRequired(userId: String?) async -> Bool
 
+    /// Returns whether the premium upgrade banner has been permanently dismissed by the user.
+    ///
+    /// - Returns: `true` if the user has dismissed the banner.
+    ///
+    func isPremiumUpgradeBannerDismissed() async -> Bool
+
     /// Returns whether the user meets the eligibility criteria for the premium upgrade
-    /// (free account, 7+ days old, and banner not dismissed).
+    /// (free account and 7+ days old).
     ///
     /// - Returns: `true` if the user is eligible for the premium upgrade.
     ///
@@ -1830,11 +1836,12 @@ actor DefaultStateService: StateService, ActiveAccountStateProvider, ConfigState
         }
     }
 
+    func isPremiumUpgradeBannerDismissed() async -> Bool {
+        await ((try? getPremiumUpgradeBannerDismissed()) ?? false)
+    }
+
     func isPremiumUpgradeEligible() async -> Bool {
         guard await !doesActiveAccountHavePremium() else { return false }
-
-        let dismissed = await ((try? getPremiumUpgradeBannerDismissed()) ?? false)
-        guard !dismissed else { return false }
 
         // Check account age >= 7 days
         guard let account = try? await getActiveAccount(),

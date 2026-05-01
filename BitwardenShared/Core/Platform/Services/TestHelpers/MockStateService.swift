@@ -56,6 +56,7 @@ class MockStateService: StateService, ActiveAccountStateProvider, AutofillStateS
     var isAuthenticated = [String: Bool]()
     var isAuthenticatedError: Error?
     var isInitialSyncRequiredByUserId = [String: Bool]()
+    var isPremiumUpgradeBannerDismissedResult: Bool = false
     var isPremiumUpgradeEligibleResult: Bool = false
     var learnGeneratorActionCardStatus: AccountSetupProgress?
     var learnNewLoginActionCardStatus: AccountSetupProgress?
@@ -443,6 +444,10 @@ class MockStateService: StateService, ActiveAccountStateProvider, AutofillStateS
     func isInitialSyncRequired(userId: String?) async -> Bool {
         guard let userId = try? unwrapUserId(userId) else { return false }
         return isInitialSyncRequiredByUserId[userId] ?? false
+    }
+
+    func isPremiumUpgradeBannerDismissed() async -> Bool {
+        isPremiumUpgradeBannerDismissedResult
     }
 
     func isPremiumUpgradeEligible() async -> Bool {
