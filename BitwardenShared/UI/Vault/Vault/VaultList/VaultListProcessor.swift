@@ -558,17 +558,20 @@ extension VaultListProcessor {
     }
 
     /// Returns `true` when the in-app premium upgrade path is available for the active user.
-    /// Requires the feature flag to be enabled, the user to be eligible (free account, 7+ days old),
-    /// the vault to contain the minimum number of required items, and the user to be on the US storefront.
     /// Does not check banner dismissal — callers that need that check must do so separately.
     ///
     private func isInAppUpgradeAvailable() async -> Bool {
         guard await services.configService.getFeatureFlag(.premiumUpgradePath) else { return false }
-        guard await services.stateService.isPremiumUpgradeEligible() else { return false }
-        guard (try? await services.vaultRepository
-            .hasMinimumCipherCount(Constants.minimumPremiumUpgradeBannerCipherCount)) ?? false
-        else { return false }
         guard await services.storefrontService.isUSStorefront() else { return false }
+        guard await services.stateService.isPremiumUpgradeEligible() else { return false }
+        do {
+            guard try await services.vaultRepository
+                .hasMinimumCipherCount(Constants.minimumPremiumUpgradeBannerCipherCount)
+            else { return false }
+        } catch {
+            services.errorReporter.log(error: error)
+            return false
+        }
         return true
     }
 
@@ -576,12 +579,12 @@ extension VaultListProcessor {
     /// otherwise opens the web vault upgrade URL as a fallback.
     ///
     private func navigateToPremiumUpgrade() async {
-        if await isInAppUpgradeAvailable() {
-            subscribeToPremiumCheckoutStatus()
-            coordinator.navigate(to: .premiumUpgrade)
-        } else {
+        guard await isInAppUpgradeAvailable() else {
             state.url = services.environmentService.upgradeToPremiumURL
+            return
         }
+        subscribeToPremiumCheckoutStatus()
+        coordinator.navigate(to: .premiumUpgrade)
     }
 
     /// Subscribes to premium checkout status updates. On `.confirmed`, reloads the vault list
