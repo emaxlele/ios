@@ -84,7 +84,7 @@ class MockStateService: StateService {
     func removeLocalUserDataKeyState(id: String, userId: String) async {
         var current = (localUserDataKeyStatesByUserId[userId] ?? nil) ?? [:]
         current.removeValue(forKey: id)
-        localUserDataKeyStatesByUserId[userId] = current.isEmpty ? nil : current
+        localUserDataKeyStatesByUserId[userId] = current.nilIfEmpty
     }
 
     func removeAllLocalUserDataKeyStates(userId: String) async {
@@ -96,7 +96,7 @@ class MockStateService: StateService {
         for key in keys {
             current.removeValue(forKey: key)
         }
-        localUserDataKeyStatesByUserId[userId] = current.isEmpty ? nil : current
+        localUserDataKeyStatesByUserId[userId] = current.nilIfEmpty
     }
 
     func setLocalUserDataKeyState(id: String, value: UserKeyData, userId: String) async {

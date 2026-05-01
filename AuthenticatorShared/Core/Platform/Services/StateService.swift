@@ -292,7 +292,7 @@ actor DefaultStateService:
     func removeLocalUserDataKeyState(id: String, userId: String) async {
         var states = appSettingsStore.localUserDataKeyStates(userId: userId) ?? [:]
         states.removeValue(forKey: id)
-        appSettingsStore.setLocalUserDataKeyStates(states.isEmpty ? nil : states, userId: userId)
+        appSettingsStore.setLocalUserDataKeyStates(states.nilIfEmpty, userId: userId)
     }
 
     func removeAllLocalUserDataKeyStates(userId: String) async {
@@ -304,7 +304,7 @@ actor DefaultStateService:
         for key in keys {
             states.removeValue(forKey: key)
         }
-        appSettingsStore.setLocalUserDataKeyStates(states.isEmpty ? nil : states, userId: userId)
+        appSettingsStore.setLocalUserDataKeyStates(states.nilIfEmpty, userId: userId)
     }
 
     func setLocalUserDataKeyState(id: String, value: UserKeyData, userId: String) async {
