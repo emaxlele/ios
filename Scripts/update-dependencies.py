@@ -19,6 +19,7 @@ Usage:
 import json
 import re
 import subprocess
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
@@ -126,11 +127,18 @@ class GitHubClient:
     def _call_api(self, endpoint: str) -> object:
         """Run ``gh api`` and return the parsed JSON response.
 
+        Raises ``RuntimeError`` on any failure so that the caller's workflow
+        step fails loudly rather than silently treating all packages as up to date.
+
         Args:
             endpoint: GitHub API path (without a leading slash).
 
         Returns:
-            Parsed JSON as a dict or list; an empty dict on any error.
+            Parsed JSON as a dict or list.
+
+        Raises:
+            RuntimeError: If the ``gh api`` call fails or the response is not
+                valid JSON (e.g. broken auth token, rate limit exceeded).
         """
         try:
             result = subprocess.run(
@@ -141,11 +149,13 @@ class GitHubClient:
             )
             return json.loads(result.stdout)
         except subprocess.CalledProcessError as e:
-            print(f"  Error calling GitHub API ({endpoint}): {e.stderr.strip()}")
-            return {}
+            raise RuntimeError(
+                f"GitHub API call failed ({endpoint}): {e.stderr.strip()}"
+            ) from e
         except json.JSONDecodeError as e:
-            print(f"  Error parsing JSON from {endpoint}: {e}")
-            return {}
+            raise RuntimeError(
+                f"GitHub API returned invalid JSON ({endpoint}): {e}"
+            ) from e
 
 
 @dataclass
@@ -579,10 +589,14 @@ def _is_older(current: str, latest: str) -> bool:
 
 def main() -> None:
     """Run all dependency updates and write a Markdown summary to ``SUMMARY_FILE``."""
-    runner = DependencyUpdateRunner()
-    updates = runner.run()
-    runner.write_summary(updates, SUMMARY_FILE)
-    print(f"Summary written to {SUMMARY_FILE}")
+    try:
+        runner = DependencyUpdateRunner()
+        updates = runner.run()
+        runner.write_summary(updates, SUMMARY_FILE)
+        print(f"Summary written to {SUMMARY_FILE}")
+    except RuntimeError as e:
+        print(f"Fatal error: {e}", file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
