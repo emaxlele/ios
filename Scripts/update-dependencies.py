@@ -325,7 +325,10 @@ class ProjectFileUpdater:
             return None
 
         is_version_bump = _is_older(current, latest_tag)
-        target_tag = latest_tag
+
+        # Use the current tag when it's already at or ahead of the latest stable
+        # release, so we never downgrade a manually-pinned newer version.
+        target_tag = latest_tag if is_version_bump else current
 
         sha = self.client.get_tag_commit_sha(url, target_tag)
         if sha is None:
