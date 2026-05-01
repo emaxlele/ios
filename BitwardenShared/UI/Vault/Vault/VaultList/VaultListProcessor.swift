@@ -261,7 +261,9 @@ extension VaultListProcessor {
 
         state.shouldShowArchiveOnboardingActionCard = await services.stateService.shouldDoArchiveOnboarding()
 
-        state.shouldShowPremiumUpgradeActionCard = await isInAppUpgradeAvailable()
+        let isBannerDismissed = await services.stateService.isPremiumUpgradeBannerDismissed()
+        let isUpgradeAvailable = await isInAppUpgradeAvailable()
+        state.shouldShowPremiumUpgradeActionCard = !isBannerDismissed && isUpgradeAvailable
     }
 
     /// Checks if the user needs to update their KDF settings.
@@ -556,9 +558,9 @@ extension VaultListProcessor {
     }
 
     /// Returns `true` when the in-app premium upgrade path is available for the active user.
-    /// Requires the feature flag to be enabled, the banner eligibility conditions to pass
-    /// (account age, not dismissed, not already premium), the vault to contain the minimum
-    /// number of required items, and the user to be on the US storefront.
+    /// Requires the feature flag to be enabled, the user to be eligible (free account, 7+ days old),
+    /// the vault to contain the minimum number of required items, and the user to be on the US storefront.
+    /// Does not check banner dismissal — callers that need that check must do so separately.
     ///
     private func isInAppUpgradeAvailable() async -> Bool {
         guard await services.configService.getFeatureFlag(.premiumUpgradePath) else { return false }

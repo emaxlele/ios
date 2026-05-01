@@ -606,12 +606,26 @@ class VaultListProcessorTests: BitwardenTestCase { // swiftlint:disable:this typ
     @MainActor
     func test_perform_appeared_loadPremiumUpgradeBanner_shown() async {
         configService.featureFlagsBool[.premiumUpgradePath] = true
+        stateService.isPremiumUpgradeBannerDismissedResult = false
         stateService.isPremiumUpgradeEligibleResult = true
         vaultRepository.hasMinimumCipherCountResult = .success(true)
 
         await subject.perform(.appeared)
 
         XCTAssertTrue(subject.state.shouldShowPremiumUpgradeActionCard)
+    }
+
+    /// `perform(_:)` with `.appeared` hides the premium upgrade action card when the banner has been dismissed.
+    @MainActor
+    func test_perform_appeared_loadPremiumUpgradeBanner_bannerDismissed() async {
+        configService.featureFlagsBool[.premiumUpgradePath] = true
+        stateService.isPremiumUpgradeBannerDismissedResult = true
+        stateService.isPremiumUpgradeEligibleResult = true
+        vaultRepository.hasMinimumCipherCountResult = .success(true)
+
+        await subject.perform(.appeared)
+
+        XCTAssertFalse(subject.state.shouldShowPremiumUpgradeActionCard)
     }
 
     /// `perform(_:)` with `.appeared` hides the premium upgrade action card when feature flag is off.
@@ -2156,6 +2170,30 @@ class VaultListProcessorTests: BitwardenTestCase { // swiftlint:disable:this typ
         XCTAssertEqual(coordinator.routes.last, .premiumUpgrade)
         XCTAssertNil(subject.state.url)
         XCTAssertTrue(billingService.premiumCheckoutStatusPublisherCalled)
+    }
+
+    /// `receive(_:)` with `.itemPressed` navigates to the premium upgrade screen even when the
+    /// banner has been dismissed, since the archive entry point bypasses the dismissal check.
+    @MainActor
+    func test_receive_itemPressed_archiveGroup_noPremium_noItems_actionTapped_bannerDismissed() async throws {
+        configService.featureFlagsBool[.premiumUpgradePath] = true
+        stateService.isPremiumUpgradeEligibleResult = true
+        vaultRepository.hasMinimumCipherCountResult = .success(true)
+        storefrontService.isUSStorefrontReturnValue = true
+        let statusSubject = PassthroughSubject<PremiumCheckoutStatus, Never>()
+        billingService.premiumCheckoutStatusPublisherReturnValue = statusSubject.eraseToAnyPublisher()
+
+        subject.state.hasPremium = false
+        let archiveItem = VaultListItem(id: "Archive", hasPremium: false, itemType: .group(.archive, 0))
+
+        subject.receive(.itemPressed(item: archiveItem))
+
+        let alert = coordinator.alertShown.last
+        try? await alert?.tapAction(title: Localizations.upgradeToPremium)
+        try await waitForAsync { self.coordinator.routes.last == .premiumUpgrade }
+
+        XCTAssertEqual(coordinator.routes.last, .premiumUpgrade)
+        XCTAssertNil(subject.state.url)
     }
 
     /// `receive(_:)` with `.itemPressed` shows archive unavailable alert and opens the web vault
