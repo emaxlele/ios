@@ -16,15 +16,18 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # 4.2.2
-      
+
+      - name: Install Python dependencies
+        run: pip install pyyaml packaging
+
       - name: Run update script
-        run: |
-           ./Scripts/update-dependencies.py
+        run: ./Scripts/update-dependencies.py
 
       - name: Check for changes
         id: check-changes
         run: |
-          if git diff --quiet -- $PSL_FILE; then
+          PROJECT_FILES="project-bwk.yml project-bwa.yml project-pm.yml"
+          if git diff --quiet -- $PROJECT_FILES; then
             echo "✅ No changes detected, skipping..."
             echo "has_changes=false" >> $GITHUB_OUTPUT
             exit 0
@@ -42,7 +45,7 @@ jobs:
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
           git checkout -b $BRANCH_NAME
-          git add $PSL_FILE
+          git add project-bwk.yml project-bwa.yml project-pm.yml
           git commit -m "Update SPM dependencies"
           git push origin $BRANCH_NAME
           echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
@@ -52,16 +55,11 @@ jobs:
         if: steps.check-changes.outputs.has_changes == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DUPLICATES_FOUND: ${{ steps.check-changes.outputs.duplicates_found }}
-          BASE_PR_URL: ${{ github.server_url }}/${{ github.repository }}/pull/
         run: |
-          PR_BODY="Updates SPM dependencies"
-
-          # Use echo -e to interpret escape sequences and pipe to gh pr create
-          PR_URL=$(echo -e "$PR_BODY" | gh pr create \
+          gh pr create \
             --title "Update SPM dependencies" \
-            --body-file - \
+            --body-file spm-update-summary.md \
             --base main \
             --head $BRANCH_NAME \
             --label "automated-pr" \
-            --label "t:ci")
+            --label "t:ci"
