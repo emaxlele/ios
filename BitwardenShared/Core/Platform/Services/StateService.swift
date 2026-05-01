@@ -394,6 +394,13 @@ protocol StateService: AnyObject {
     ///
     func isInitialSyncRequired(userId: String?) async -> Bool
 
+    /// Returns whether the user meets the eligibility criteria for the premium upgrade
+    /// (free account, 7+ days old, and banner not dismissed).
+    ///
+    /// - Returns: `true` if the user is eligible for the premium upgrade.
+    ///
+    func isPremiumUpgradeEligible() async -> Bool
+
     /// Logs the user out of an account.
     ///
     /// - Parameters:
@@ -819,12 +826,6 @@ protocol StateService: AnyObject {
     /// - Returns: A publisher for showing badges in the settings tab.
     ///
     func settingsBadgePublisher() async throws -> AnyPublisher<SettingsBadgeState, Never>
-
-    /// Whether the user should see the premium upgrade banner based on account criteria.
-    ///
-    /// - Returns: `true` if user is free, account is 7+ days old, and banner not dismissed.
-    ///
-    func shouldShowPremiumUpgradeBanner() async -> Bool
 
     /// A publisher for whether or not to show the web icons.
     ///
@@ -1829,6 +1830,22 @@ actor DefaultStateService: StateService, ActiveAccountStateProvider, ConfigState
         }
     }
 
+    func isPremiumUpgradeEligible() async -> Bool {
+        guard await !doesActiveAccountHavePremium() else { return false }
+
+        let dismissed = await ((try? getPremiumUpgradeBannerDismissed()) ?? false)
+        guard !dismissed else { return false }
+
+        // Check account age >= 7 days
+        guard let account = try? await getActiveAccount(),
+              let creationDate = account.profile.creationDate else { return false }
+        guard timeProvider.timeSince(creationDate) >= Constants.premiumUpgradeBannerAccountAge else {
+            return false
+        }
+
+        return true
+    }
+
     func logoutAccount(userId: String?, userInitiated: Bool) async throws {
         guard var state = appSettingsStore.state else { return }
         defer { appSettingsStore.state = state }
@@ -2190,22 +2207,6 @@ actor DefaultStateService: StateService, ActiveAccountStateProvider, ConfigState
     func setUsesKeyConnector(_ usesKeyConnector: Bool, userId: String?) async throws {
         let userId = try userId ?? getActiveAccountUserId()
         appSettingsStore.setUsesKeyConnector(usesKeyConnector, userId: userId)
-    }
-
-    func shouldShowPremiumUpgradeBanner() async -> Bool {
-        guard await !doesActiveAccountHavePremium() else { return false }
-
-        let dismissed = await ((try? getPremiumUpgradeBannerDismissed()) ?? false)
-        guard !dismissed else { return false }
-
-        // Check account age >= 7 days
-        guard let account = try? await getActiveAccount(),
-              let creationDate = account.profile.creationDate else { return false }
-        guard timeProvider.timeSince(creationDate) >= Constants.premiumUpgradeBannerAccountAge else {
-            return false
-        }
-
-        return true
     }
 
     func updateProfile(from response: ProfileResponseModel, userId: String) async {

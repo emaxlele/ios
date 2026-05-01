@@ -606,7 +606,7 @@ class VaultListProcessorTests: BitwardenTestCase { // swiftlint:disable:this typ
     @MainActor
     func test_perform_appeared_loadPremiumUpgradeBanner_shown() async {
         configService.featureFlagsBool[.premiumUpgradePath] = true
-        stateService.shouldShowPremiumUpgradeBannerResult = true
+        stateService.isPremiumUpgradeEligibleResult = true
         vaultRepository.hasMinimumCipherCountResult = .success(true)
 
         await subject.perform(.appeared)
@@ -618,7 +618,7 @@ class VaultListProcessorTests: BitwardenTestCase { // swiftlint:disable:this typ
     @MainActor
     func test_perform_appeared_loadPremiumUpgradeBanner_featureFlagOff() async {
         configService.featureFlagsBool[.premiumUpgradePath] = false
-        stateService.shouldShowPremiumUpgradeBannerResult = true
+        stateService.isPremiumUpgradeEligibleResult = true
         vaultRepository.hasMinimumCipherCountResult = .success(true)
 
         await subject.perform(.appeared)
@@ -630,7 +630,7 @@ class VaultListProcessorTests: BitwardenTestCase { // swiftlint:disable:this typ
     @MainActor
     func test_perform_appeared_loadPremiumUpgradeBanner_hasPremium() async {
         configService.featureFlagsBool[.premiumUpgradePath] = true
-        stateService.shouldShowPremiumUpgradeBannerResult = false
+        stateService.isPremiumUpgradeEligibleResult = false
         vaultRepository.hasMinimumCipherCountResult = .success(true)
 
         await subject.perform(.appeared)
@@ -642,7 +642,7 @@ class VaultListProcessorTests: BitwardenTestCase { // swiftlint:disable:this typ
     @MainActor
     func test_perform_appeared_loadPremiumUpgradeBanner_insufficientItems() async {
         configService.featureFlagsBool[.premiumUpgradePath] = true
-        stateService.shouldShowPremiumUpgradeBannerResult = true
+        stateService.isPremiumUpgradeEligibleResult = true
         vaultRepository.hasMinimumCipherCountResult = .success(false)
 
         await subject.perform(.appeared)
@@ -654,7 +654,7 @@ class VaultListProcessorTests: BitwardenTestCase { // swiftlint:disable:this typ
     @MainActor
     func test_perform_appeared_loadPremiumUpgradeBanner_nonUSStorefront() async {
         configService.featureFlagsBool[.premiumUpgradePath] = true
-        stateService.shouldShowPremiumUpgradeBannerResult = true
+        stateService.isPremiumUpgradeEligibleResult = true
         vaultRepository.hasMinimumCipherCountResult = .success(true)
         storefrontService.isUSStorefrontReturnValue = false
 

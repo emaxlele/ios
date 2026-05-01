@@ -2660,9 +2660,9 @@ class StateServiceTests: BitwardenTestCase { // swiftlint:disable:this type_body
         XCTAssertFalse(shouldDoArchiveOnboarding)
     }
 
-    /// `shouldShowPremiumUpgradeBanner()` returns `true` when user is free, account is 7+ days old,
+    /// `isPremiumUpgradeEligible()` returns `true` when user is free, account is 7+ days old,
     /// and banner has not been dismissed.
-    func test_shouldShowPremiumUpgradeBanner_true() async {
+    func test_isPremiumUpgradeEligible_true() async {
         let fixedDate = Date(timeIntervalSince1970: 1_000_000_000)
         timeProvider.timeConfig = .mockTime(fixedDate)
         let creationDate = fixedDate.addingTimeInterval(-Constants.premiumUpgradeBannerAccountAge - 1)
@@ -2672,12 +2672,12 @@ class StateServiceTests: BitwardenTestCase { // swiftlint:disable:this type_body
         )))
         appSettingsStore.premiumUpgradeBannerDismissedByUserId["1"] = false
 
-        let shouldShow = await subject.shouldShowPremiumUpgradeBanner()
+        let shouldShow = await subject.isPremiumUpgradeEligible()
         XCTAssertTrue(shouldShow)
     }
 
-    /// `shouldShowPremiumUpgradeBanner()` returns `false` when user has premium.
-    func test_shouldShowPremiumUpgradeBanner_hasPremium() async {
+    /// `isPremiumUpgradeEligible()` returns `false` when user has premium.
+    func test_isPremiumUpgradeEligible_hasPremium() async {
         let fixedDate = Date(timeIntervalSince1970: 1_000_000_000)
         timeProvider.timeConfig = .mockTime(fixedDate)
         let creationDate = fixedDate.addingTimeInterval(-Constants.premiumUpgradeBannerAccountAge - 1)
@@ -2687,12 +2687,12 @@ class StateServiceTests: BitwardenTestCase { // swiftlint:disable:this type_body
         )))
         appSettingsStore.premiumUpgradeBannerDismissedByUserId["1"] = false
 
-        let shouldShow = await subject.shouldShowPremiumUpgradeBanner()
+        let shouldShow = await subject.isPremiumUpgradeEligible()
         XCTAssertFalse(shouldShow)
     }
 
-    /// `shouldShowPremiumUpgradeBanner()` returns `false` when banner has been dismissed.
-    func test_shouldShowPremiumUpgradeBanner_dismissed() async {
+    /// `isPremiumUpgradeEligible()` returns `false` when banner has been dismissed.
+    func test_isPremiumUpgradeEligible_dismissed() async {
         let fixedDate = Date(timeIntervalSince1970: 1_000_000_000)
         timeProvider.timeConfig = .mockTime(fixedDate)
         let creationDate = fixedDate.addingTimeInterval(-Constants.premiumUpgradeBannerAccountAge - 1)
@@ -2702,12 +2702,12 @@ class StateServiceTests: BitwardenTestCase { // swiftlint:disable:this type_body
         )))
         appSettingsStore.premiumUpgradeBannerDismissedByUserId["1"] = true
 
-        let shouldShow = await subject.shouldShowPremiumUpgradeBanner()
+        let shouldShow = await subject.isPremiumUpgradeEligible()
         XCTAssertFalse(shouldShow)
     }
 
-    /// `shouldShowPremiumUpgradeBanner()` returns `false` when account is less than 7 days old.
-    func test_shouldShowPremiumUpgradeBanner_accountTooNew() async {
+    /// `isPremiumUpgradeEligible()` returns `false` when account is less than 7 days old.
+    func test_isPremiumUpgradeEligible_accountTooNew() async {
         let fixedDate = Date(timeIntervalSince1970: 1_000_000_000)
         timeProvider.timeConfig = .mockTime(fixedDate)
         let creationDate = fixedDate.addingTimeInterval(-Constants.premiumUpgradeBannerAccountAge + 1)
@@ -2717,19 +2717,19 @@ class StateServiceTests: BitwardenTestCase { // swiftlint:disable:this type_body
         )))
         appSettingsStore.premiumUpgradeBannerDismissedByUserId["1"] = false
 
-        let shouldShow = await subject.shouldShowPremiumUpgradeBanner()
+        let shouldShow = await subject.isPremiumUpgradeEligible()
         XCTAssertFalse(shouldShow)
     }
 
-    /// `shouldShowPremiumUpgradeBanner()` returns `false` when account has no creation date.
-    func test_shouldShowPremiumUpgradeBanner_noCreationDate() async {
+    /// `isPremiumUpgradeEligible()` returns `false` when account has no creation date.
+    func test_isPremiumUpgradeEligible_noCreationDate() async {
         await subject.addAccount(.fixture(profile: .fixture(
             creationDate: nil,
             hasPremiumPersonally: false,
         )))
         appSettingsStore.premiumUpgradeBannerDismissedByUserId["1"] = false
 
-        let shouldShow = await subject.shouldShowPremiumUpgradeBanner()
+        let shouldShow = await subject.isPremiumUpgradeEligible()
         XCTAssertFalse(shouldShow)
     }
 
