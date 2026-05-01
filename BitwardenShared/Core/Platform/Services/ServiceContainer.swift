@@ -57,6 +57,9 @@ public class ServiceContainer: Services { // swiftlint:disable:this type_body_le
     /// The service which manages the ciphers exposed to the system for AutoFill suggestions.
     let autofillCredentialService: AutofillCredentialService
 
+    /// The repository used by the application to manage billing data for the UI layer.
+    let billingRepository: BillingRepository
+
     /// The service used by the application to manage billing operations.
     let billingService: BillingService
 
@@ -244,6 +247,8 @@ public class ServiceContainer: Services { // swiftlint:disable:this type_body_le
     ///   - authenticatorSyncService: The service used by the application to sync TOTP codes with the Authenticator app.
     ///   - autofillCredentialService: The service which manages the ciphers exposed to the system
     ///     for AutoFill suggestions.
+    ///   - billingRepository: The repository used by the application to manage billing data for the UI layer.
+    ///   - billingService: The service used by the application to manage billing operations.
     ///   - biometricsRepository: The repository to manage biometric unlock policies and access
     ///     controls for the user.
     ///   - biometricsService: The service used to obtain device biometrics status & data.
@@ -319,6 +324,7 @@ public class ServiceContainer: Services { // swiftlint:disable:this type_body_le
         authService: AuthService,
         authenticatorSyncService: AuthenticatorSyncService,
         autofillCredentialService: AutofillCredentialService,
+        billingRepository: BillingRepository,
         billingService: BillingService,
         biometricsRepository: BiometricsRepository,
         biometricsService: BiometricsService,
@@ -387,6 +393,7 @@ public class ServiceContainer: Services { // swiftlint:disable:this type_body_le
         self.authService = authService
         self.authenticatorSyncService = authenticatorSyncService
         self.autofillCredentialService = autofillCredentialService
+        self.billingRepository = billingRepository
         self.billingService = billingService
         self.biometricsRepository = biometricsRepository
         self.biometricsService = biometricsService
@@ -970,6 +977,16 @@ public class ServiceContainer: Services { // swiftlint:disable:this type_body_le
             vaultTimeoutService: vaultTimeoutService,
         )
 
+        let storefrontService = DefaultStorefrontService()
+
+        let billingRepository = DefaultBillingRepository(
+            configService: configService,
+            errorReporter: errorReporter,
+            stateService: stateService,
+            storefrontService: storefrontService,
+            vaultRepository: vaultRepository,
+        )
+
         let cipherOwnershipHelper = DefaultCipherOwnershipHelper(
             policyService: policyService,
             timeProvider: timeProvider,
@@ -1120,6 +1137,7 @@ public class ServiceContainer: Services { // swiftlint:disable:this type_body_le
             authService: authService,
             authenticatorSyncService: authenticatorSyncService,
             autofillCredentialService: autofillCredentialService,
+            billingRepository: billingRepository,
             billingService: billingService,
             biometricsRepository: biometricsRepository,
             biometricsService: biometricsService,
@@ -1161,7 +1179,7 @@ public class ServiceContainer: Services { // swiftlint:disable:this type_body_le
             settingsRepository: settingsRepository,
             sharedTimeoutService: sharedTimeoutService,
             stateService: stateService,
-            storefrontService: DefaultStorefrontService(),
+            storefrontService: storefrontService,
             syncService: syncService,
             systemDevice: UIDevice.current,
             textAutofillHelperFactory: textAutofillHelperFactory,
