@@ -18,7 +18,7 @@ struct DefaultSdkRepositoryFactory: SdkRepositoryFactory {
     // MARK: Properties
 
     /// The service for managing account state.
-    private let stateService: StateService
+    private let stateService: LocalUserDataStateService
     /// The data store for managing the persisted ciphers for the user.
     private let cipherDataStore: CipherDataStore
     /// The service that provides state management functionality for the
@@ -36,7 +36,7 @@ struct DefaultSdkRepositoryFactory: SdkRepositoryFactory {
     init(
         cipherDataStore: CipherDataStore,
         serverCommunicationConfigStateService: ServerCommunicationConfigStateService,
-        stateService: StateService,
+        stateService: LocalUserDataStateService,
     ) {
         self.cipherDataStore = cipherDataStore
         self.serverCommunicationConfigStateService = serverCommunicationConfigStateService

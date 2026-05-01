@@ -8,7 +8,7 @@ import Foundation
 @testable import BitwardenShared
 @testable import BitwardenSharedMocks
 
-class MockStateService: StateService, ActiveAccountStateProvider, AutofillStateService, ServerCommunicationConfigStateService { // swiftlint:disable:this type_body_length line_length
+class MockStateService: StateService, ActiveAccountStateProvider, AutofillStateService, ServerCommunicationConfigStateService, LocalUserDataStateService { // swiftlint:disable:this type_body_length line_length
     var accessTokenExpirationDateByUserId = [String: Date]()
     var accountEncryptionKeys = [String: AccountEncryptionKeys]()
     var accountSetupAutofill = [String: AccountSetupProgress]()
@@ -58,7 +58,7 @@ class MockStateService: StateService, ActiveAccountStateProvider, AutofillStateS
     var isInitialSyncRequiredByUserId = [String: Bool]()
     var learnGeneratorActionCardStatus: AccountSetupProgress?
     var learnNewLoginActionCardStatus: AccountSetupProgress?
-    var localUserDataKeyStatesByUserId: [String: [String: UserKeyData]?] = [:]
+    var localUserDataKeyStatesByUserId: [String: [String: UserKeyData]] = [:]
     var loginRequest: LoginRequestNotification?
     var logoutAccountUserInitiated = false
     var getAccountEncryptionKeysError: Error?
@@ -571,7 +571,7 @@ class MockStateService: StateService, ActiveAccountStateProvider, AutofillStateS
     }
 
     func removeAllLocalUserDataKeyStates(userId: String) async {
-        localUserDataKeyStatesByUserId.updateValue(nil, forKey: userId)
+        localUserDataKeyStatesByUserId.updateValue([:], forKey: userId)
     }
 
     func removeBulkLocalUserDataKeyStates(keys: [String], userId: String) async {

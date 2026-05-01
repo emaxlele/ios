@@ -7,7 +7,7 @@ actor SdkLocalUserDataKeyStateRepository: BitwardenSdk.LocalUserDataKeyStateRepo
     // MARK: Properties
 
     /// The service for managing account state.
-    private let stateService: StateService
+    private let stateService: LocalUserDataStateService
 
     /// The user ID of the SDK instance this repository belongs to.
     nonisolated let userId: String
@@ -18,7 +18,7 @@ actor SdkLocalUserDataKeyStateRepository: BitwardenSdk.LocalUserDataKeyStateRepo
     /// - Parameters:
     ///   - stateService: The service for managing account state.
     ///   - userId: The user ID of the SDK instance this repository belongs to.
-    init(stateService: StateService, userId: String) {
+    init(stateService: LocalUserDataStateService, userId: String) {
         self.stateService = stateService
         self.userId = userId
     }

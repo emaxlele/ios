@@ -448,7 +448,7 @@ protocol AppSettingsStore: AnyObject {
     /// Sets the local user data key states for a user ID.
     ///
     /// - Parameters:
-    ///   - states: A dictionary mapping key ID to encrypted wrapped key string, or `nil` to clear.
+    ///   - states: A dictionary mapping key IDs to `UserKeyData`.
     ///   - userId: The user ID associated with the key states.
     ///
     func setLocalUserDataKeyStates(_ states: [String: UserKeyData]?, userId: String)

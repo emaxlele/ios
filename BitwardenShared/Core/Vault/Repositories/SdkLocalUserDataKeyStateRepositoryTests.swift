@@ -108,7 +108,7 @@ class SdkLocalUserDataKeyStateRepositoryTests: BitwardenTestCase {
         try await subject.removeAll()
         let results = try await subject.list()
         XCTAssertTrue(results.isEmpty)
-        XCTAssertTrue(stateService.localUserDataKeyStatesByUserId[userId]?.isEmptyOrNil ?? false)
+        XCTAssertTrue(stateService.localUserDataKeyStatesByUserId[userId]?.isEmpty ?? false)
     }
 
     /// `setBulk(values:)` stores multiple values at once.

@@ -620,45 +620,6 @@ protocol StateService: AnyObject {
     ///
     func setLastSyncTime(_ date: Date?, userId: String?) async throws
 
-    /// Atomically removes a single local user data key state for the user.
-    ///
-    /// - Parameters:
-    ///   - id: The SDK-assigned key identifier.
-    ///   - userId: The user ID of the account.
-    ///
-    func removeLocalUserDataKeyState(id: String, userId: String) async
-
-    /// Atomically removes all local user data key states for the user.
-    ///
-    /// - Parameter userId: The user ID of the account.
-    ///
-    func removeAllLocalUserDataKeyStates(userId: String) async
-
-    /// Atomically removes multiple local user data key states for the user.
-    ///
-    /// - Parameters:
-    ///   - keys: The SDK-assigned key identifiers to remove.
-    ///   - userId: The user ID of the account.
-    ///
-    func removeBulkLocalUserDataKeyStates(keys: [String], userId: String) async
-
-    /// Atomically sets a single local user data key state for the user.
-    ///
-    /// - Parameters:
-    ///   - id: The SDK-assigned key identifier.
-    ///   - value: The wrapped key data to store.
-    ///   - userId: The user ID of the account.
-    ///
-    func setLocalUserDataKeyState(id: String, value: UserKeyData, userId: String) async
-
-    /// Atomically merges multiple local user data key states for the user.
-    ///
-    /// - Parameters:
-    ///   - values: A dictionary mapping SDK-assigned key identifiers to wrapped key data.
-    ///   - userId: The user ID of the account.
-    ///
-    func setBulkLocalUserDataKeyStates(_ values: [String: UserKeyData], userId: String) async
-
     /// Sets the status of Learn generator Action Card.
     ///
     /// - Parameter status: The status of Learn generator Action Card.
@@ -1441,7 +1402,7 @@ enum StateServiceError: LocalizedError {
 
 /// A default implementation of `StateService`.
 ///
-actor DefaultStateService: StateService, ActiveAccountStateProvider, ConfigStateService, FlightRecorderStateService, LanguageStateService { // swiftlint:disable:this type_body_length line_length
+actor DefaultStateService: StateService, ActiveAccountStateProvider, ConfigStateService, FlightRecorderStateService, LanguageStateService, LocalUserDataStateService { // swiftlint:disable:this type_body_length line_length
     // MARK: Properties
 
     /// The language option currently selected for the app.
@@ -2105,7 +2066,7 @@ actor DefaultStateService: StateService, ActiveAccountStateProvider, ConfigState
     func removeLocalUserDataKeyState(id: String, userId: String) async {
         var states = appSettingsStore.localUserDataKeyStates(userId: userId) ?? [:]
         states.removeValue(forKey: id)
-        appSettingsStore.setLocalUserDataKeyStates(states.isEmpty ? nil : states, userId: userId)
+        appSettingsStore.setLocalUserDataKeyStates(states.nilIfEmpty, userId: userId)
     }
 
     func removeAllLocalUserDataKeyStates(userId: String) async {
@@ -2117,7 +2078,7 @@ actor DefaultStateService: StateService, ActiveAccountStateProvider, ConfigState
         for key in keys {
             states.removeValue(forKey: key)
         }
-        appSettingsStore.setLocalUserDataKeyStates(states.isEmpty ? nil : states, userId: userId)
+        appSettingsStore.setLocalUserDataKeyStates(states.nilIfEmpty, userId: userId)
     }
 
     func setLocalUserDataKeyState(id: String, value: UserKeyData, userId: String) async {
