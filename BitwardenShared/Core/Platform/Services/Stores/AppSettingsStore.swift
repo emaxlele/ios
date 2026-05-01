@@ -215,13 +215,6 @@ protocol AppSettingsStore: AnyObject {
     ///
     func lastSyncTime(userId: String) -> Date?
 
-    /// Gets the local user data key states for the user ID.
-    ///
-    /// - Parameter userId: The user ID associated with the key states.
-    /// - Returns: A dictionary mapping key ID to encrypted wrapped key string.
-    ///
-    func localUserDataKeyStates(userId: String) -> [String: UserKeyData]?
-
     /// Gets whether the account belonging to the user Id has been manually locked.
     /// - Parameter userId: The user ID associated with the account.
     /// - Returns: `true` if manually locked, `false` otherwise.
@@ -444,14 +437,6 @@ protocol AppSettingsStore: AnyObject {
     ///   - userId: The user ID associated with the last sync time.
     ///
     func setLastSyncTime(_ date: Date?, userId: String)
-
-    /// Sets the local user data key states for a user ID.
-    ///
-    /// - Parameters:
-    ///   - states: A dictionary mapping key IDs to `UserKeyData`.
-    ///   - userId: The user ID associated with the key states.
-    ///
-    func setLocalUserDataKeyStates(_ states: [String: UserKeyData]?, userId: String)
 
     /// Sets whether the account belonging to the user Id has been manually locked.
     /// - Parameters
@@ -748,7 +733,7 @@ class DefaultAppSettingsStore {
     }
 }
 
-extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore {
+extension DefaultAppSettingsStore: AppSettingsStore, ConfigSettingsStore, LocalUserDataKeyAppSettingsStore {
     /// The keys used to store their associated values.
     ///
     enum Keys {

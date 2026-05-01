@@ -1,7 +1,9 @@
 import Foundation
 
 /// A service that provides state management functionality for `UserKeyData`.
-public protocol LocalUserDataStateService {
+protocol LocalUserDataStateService {
+    var localUserDataKeyStore: LocalUserDataKeyAppSettingsStore? { get }
+
     /// Gets the local user data keys for the user ID
     ///
     /// - Parameters:
@@ -34,7 +36,7 @@ public protocol LocalUserDataStateService {
     func removeBulkLocalUserDataKeyStates(keys: [String], userId: String) async
 
     /// Sets a single `UserKeyData` state for the user.
-    /// ///
+    ///
     /// - Parameters:
     ///   - id: The SDK-assigned key identifier.
     ///   - value: The `UserKeyData` to store.
@@ -49,4 +51,42 @@ public protocol LocalUserDataStateService {
     ///   - userId: The user ID of the account.
     ///
     func setBulkLocalUserDataKeyStates(_ values: [String: UserKeyData], userId: String) async
+}
+
+extension LocalUserDataStateService {
+    func getLocalUserDataKeyStates(userId: String) async -> [String: UserKeyData]? {
+        localUserDataKeyStore?.localUserDataKeyStates(userId: userId)
+    }
+
+    func removeLocalUserDataKeyState(id: String, userId: String) async {
+        var states = localUserDataKeyStore?.localUserDataKeyStates(userId: userId) ?? [:]
+        states.removeValue(forKey: id)
+        localUserDataKeyStore?.setLocalUserDataKeyStates(states.nilIfEmpty, userId: userId)
+    }
+
+    func removeAllLocalUserDataKeyStates(userId: String) async {
+        localUserDataKeyStore?.setLocalUserDataKeyStates(nil, userId: userId)
+    }
+
+    func removeBulkLocalUserDataKeyStates(keys: [String], userId: String) async {
+        var states = localUserDataKeyStore?.localUserDataKeyStates(userId: userId) ?? [:]
+        for key in keys {
+            states.removeValue(forKey: key)
+        }
+        localUserDataKeyStore?.setLocalUserDataKeyStates(states.nilIfEmpty, userId: userId)
+    }
+
+    func setLocalUserDataKeyState(id: String, value: UserKeyData, userId: String) async {
+        var states = localUserDataKeyStore?.localUserDataKeyStates(userId: userId) ?? [:]
+        states[id] = value
+        localUserDataKeyStore?.setLocalUserDataKeyStates(states, userId: userId)
+    }
+
+    func setBulkLocalUserDataKeyStates(_ values: [String: UserKeyData], userId: String) async {
+        var states = localUserDataKeyStore?.localUserDataKeyStates(userId: userId) ?? [:]
+        for (id, value) in values {
+            states[id] = value
+        }
+        localUserDataKeyStore?.setLocalUserDataKeyStates(states, userId: userId)
+    }
 }

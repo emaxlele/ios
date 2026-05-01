@@ -1419,6 +1419,10 @@ actor DefaultStateService: StateService, ActiveAccountStateProvider, ConfigState
     /// The service that persists app settings.
     let appSettingsStore: AppSettingsStore
 
+    nonisolated var localUserDataKeyStore: LocalUserDataKeyAppSettingsStore? {
+        appSettingsStore as? LocalUserDataKeyAppSettingsStore
+    }
+
     /// A subject containing the app theme.
     private var appThemeSubject: CurrentValueSubject<AppTheme, Never>
 
@@ -1628,10 +1632,6 @@ actor DefaultStateService: StateService, ActiveAccountStateProvider, ConfigState
 
     func getArchiveOnboardingShown() async -> Bool {
         appSettingsStore.archiveOnboardingShown
-    }
-
-    func getLocalUserDataKeyStates(userId: String) async -> [String: UserKeyData]? {
-        appSettingsStore.localUserDataKeyStates(userId: userId)
     }
 
     func getPremiumUpgradeBannerDismissed(userId: String?) async throws -> Bool {
@@ -1855,9 +1855,9 @@ actor DefaultStateService: StateService, ActiveAccountStateProvider, ConfigState
         appSettingsStore.setEncryptedUserKey(key: nil, userId: knownUserId)
         appSettingsStore.setHasPerformedSyncAfterLogin(nil, userId: knownUserId)
         appSettingsStore.setLastSyncTime(nil, userId: knownUserId)
-        appSettingsStore.setLocalUserDataKeyStates(nil, userId: knownUserId)
         appSettingsStore.setMasterPasswordHash(nil, userId: knownUserId)
         appSettingsStore.setPasswordGenerationOptions(nil, userId: knownUserId)
+        localUserDataKeyStore?.setLocalUserDataKeyStates(nil, userId: knownUserId)
 
         try await dataStore.deleteDataForUser(userId: knownUserId)
     }
@@ -2055,38 +2055,6 @@ actor DefaultStateService: StateService, ActiveAccountStateProvider, ConfigState
 
     func setLearnGeneratorActionCardStatus(_ status: AccountSetupProgress) async {
         appSettingsStore.learnGeneratorActionCardStatus = status
-    }
-
-    func removeLocalUserDataKeyState(id: String, userId: String) async {
-        var states = appSettingsStore.localUserDataKeyStates(userId: userId) ?? [:]
-        states.removeValue(forKey: id)
-        appSettingsStore.setLocalUserDataKeyStates(states.nilIfEmpty, userId: userId)
-    }
-
-    func removeAllLocalUserDataKeyStates(userId: String) async {
-        appSettingsStore.setLocalUserDataKeyStates(nil, userId: userId)
-    }
-
-    func removeBulkLocalUserDataKeyStates(keys: [String], userId: String) async {
-        var states = appSettingsStore.localUserDataKeyStates(userId: userId) ?? [:]
-        for key in keys {
-            states.removeValue(forKey: key)
-        }
-        appSettingsStore.setLocalUserDataKeyStates(states.nilIfEmpty, userId: userId)
-    }
-
-    func setLocalUserDataKeyState(id: String, value: UserKeyData, userId: String) async {
-        var states = appSettingsStore.localUserDataKeyStates(userId: userId) ?? [:]
-        states[id] = value
-        appSettingsStore.setLocalUserDataKeyStates(states, userId: userId)
-    }
-
-    func setBulkLocalUserDataKeyStates(_ values: [String: UserKeyData], userId: String) async {
-        var states = appSettingsStore.localUserDataKeyStates(userId: userId) ?? [:]
-        for (id, value) in values {
-            states[id] = value
-        }
-        appSettingsStore.setLocalUserDataKeyStates(states, userId: userId)
     }
 
     func setLoginRequest(_ loginRequest: LoginRequestNotification?) async {
