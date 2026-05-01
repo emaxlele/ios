@@ -32,6 +32,7 @@ SUMMARY_FILE = "spm-update-summary.md"
 _yaml = YAML()
 _yaml.preserve_quotes = True
 _yaml.width = 4096  # prevent unwanted line wrapping
+_yaml.indent(mapping=2, sequence=4, offset=2)  # match existing file style
 
 
 class GitHubClient:
