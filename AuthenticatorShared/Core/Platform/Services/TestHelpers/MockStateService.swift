@@ -16,7 +16,6 @@ class MockStateService: StateService {
     var clearClipboardResult: Result<Void, Error> = .success(())
     var getSecretKeyResult: Result<String, Error> = .success("qwerty")
     var flightRecorderData: FlightRecorderData?
-    var localUserDataKeyStatesByUserId: [String: [String: UserKeyData]?] = [:]
     var preAuthServerConfig: ServerConfig?
     var secretKeyValues = [String: String]()
     var serverConfig = [String: ServerConfig]()
@@ -44,10 +43,6 @@ class MockStateService: StateService {
 
     func getFlightRecorderData() async -> FlightRecorderData? {
         flightRecorderData
-    }
-
-    func getLocalUserDataKeyStates(userId: String) async -> [String: UserKeyData]? {
-        localUserDataKeyStatesByUserId[userId] ?? nil
     }
 
     func getPreAuthServerConfig() async -> ServerConfig? {
@@ -79,38 +74,6 @@ class MockStateService: StateService {
 
     func setFlightRecorderData(_ data: FlightRecorderData?) async {
         flightRecorderData = data
-    }
-
-    func removeLocalUserDataKeyState(id: String, userId: String) async {
-        var current = (localUserDataKeyStatesByUserId[userId] ?? nil) ?? [:]
-        current.removeValue(forKey: id)
-        localUserDataKeyStatesByUserId[userId] = current.nilIfEmpty
-    }
-
-    func removeAllLocalUserDataKeyStates(userId: String) async {
-        localUserDataKeyStatesByUserId.updateValue(nil, forKey: userId)
-    }
-
-    func removeBulkLocalUserDataKeyStates(keys: [String], userId: String) async {
-        var current = (localUserDataKeyStatesByUserId[userId] ?? nil) ?? [:]
-        for key in keys {
-            current.removeValue(forKey: key)
-        }
-        localUserDataKeyStatesByUserId[userId] = current.nilIfEmpty
-    }
-
-    func setLocalUserDataKeyState(id: String, value: UserKeyData, userId: String) async {
-        var current = (localUserDataKeyStatesByUserId[userId] ?? nil) ?? [:]
-        current[id] = value
-        localUserDataKeyStatesByUserId[userId] = current
-    }
-
-    func setBulkLocalUserDataKeyStates(_ values: [String: UserKeyData], userId: String) async {
-        var current = (localUserDataKeyStatesByUserId[userId] ?? nil) ?? [:]
-        for (id, value) in values {
-            current[id] = value
-        }
-        localUserDataKeyStatesByUserId[userId] = current
     }
 
     func setShowWebIcons(_ showWebIcons: Bool) async {

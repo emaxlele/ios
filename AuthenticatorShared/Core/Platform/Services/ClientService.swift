@@ -144,9 +144,6 @@ actor DefaultClientService: ClientService {
     /// The service used by the application to report non-fatal errors.
     private let errorReporter: ErrorReporter
 
-    /// The factory to create SDK repositories.
-    private let sdkRepositoryFactory: SdkRepositoryFactory
-
     /// Basic client behavior settings.
     private let settings: ClientSettings?
 
@@ -164,7 +161,6 @@ actor DefaultClientService: ClientService {
     ///   - clientBuilder: A helper object that builds a Bitwarden SDK `Client`.
     ///   - configService: The service to get server-specified configuration.
     ///   - errorReporter: The service used by the application to report non-fatal errors.
-    ///   - sdkRepositoryFactory: The factory to create SDK repositories.
     ///   - settings: The settings to apply to the client. Defaults to `nil`.
     ///   - stateService: The service used by the application to manage account state.
     ///
@@ -172,14 +168,12 @@ actor DefaultClientService: ClientService {
         clientBuilder: ClientBuilder,
         configService: ConfigService,
         errorReporter: ErrorReporter,
-        sdkRepositoryFactory: SdkRepositoryFactory,
         settings: ClientSettings? = nil,
         stateService: StateService,
     ) {
         self.clientBuilder = clientBuilder
         self.configService = configService
         self.errorReporter = errorReporter
-        self.sdkRepositoryFactory = sdkRepositoryFactory
         self.settings = settings
         self.stateService = stateService
     }
@@ -206,11 +200,7 @@ actor DefaultClientService: ClientService {
         try await client(for: userId).platform()
     }
 
-    func removeClient(for userId: String?) async throws {
-        let activeId = await stateService.getActiveAccountId()
-        let resolvedUserId = userId ?? activeId
-        userClientArray.removeValue(forKey: resolvedUserId)
-    }
+    func removeClient(for userId: String?) async throws {}
 
     func sends(for userId: String?) async throws -> SendClientProtocol {
         try await client(for: userId).sends()
@@ -235,26 +225,7 @@ actor DefaultClientService: ClientService {
     /// - Returns: A user's client.
     ///
     private func client(for userId: String?, isPreAuth: Bool = false) async throws -> BitwardenSdkClient {
-        let activeId = await stateService.getActiveAccountId()
-        let resolvedUserId = userId ?? activeId
-
-        if let cached = userClientArray[resolvedUserId] {
-            return cached
-        }
-
-        let newClient = await createAndMapClient(for: resolvedUserId)
-        await configureNewClient(newClient, for: resolvedUserId)
-        return newClient
-    }
-
-    /// Configures a new SDK client.
-    /// - Parameters:
-    ///   - client: The SDK client to configure.
-    ///   - userId: The user ID the SDK client instance belongs to.
-    func configureNewClient(_ client: BitwardenSdkClient, for userId: String) async {
-        client.platform().state().registerClientManagedRepositories(
-            repositories: sdkRepositoryFactory.makeCipherRepositories(userId: userId),
-        )
+        clientBuilder.buildClient()
     }
 
     /// Creates a new client and maps it to an ID.

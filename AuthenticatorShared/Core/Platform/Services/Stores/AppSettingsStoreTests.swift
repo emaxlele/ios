@@ -259,39 +259,6 @@ struct AppSettingsStoreTests {
         #expect(subject.lastActiveTime(userId: "2") == date2)
     }
 
-    /// `localUserDataKeyStates(userId:)` returns `nil` if there isn't a previously stored value.
-    @Test
-    func localUserDataKeyStates_isInitiallyNil() {
-        #expect(subject.localUserDataKeyStates(userId: "-1") == nil)
-    }
-
-    /// `localUserDataKeyStates(userId:)` returns stored key states for a user.
-    @Test
-    func localUserDataKeyStates_returnsKeysById() {
-        let expected = ["test_key": UserKeyData(wrappedKey: "test_value")]
-        subject.setLocalUserDataKeyStates(expected, userId: "01")
-        #expect(subject.localUserDataKeyStates(userId: "01") == expected)
-    }
-
-    /// `setLocalUserDataKeyStates(_:userId:)` with `nil` clears the stored value.
-    @Test
-    func localUserDataKeyStates_clearsOnNil() {
-        let expected = ["test_key": UserKeyData(wrappedKey: "test_value")]
-
-        subject.setLocalUserDataKeyStates(expected, userId: "01")
-        #expect(subject.localUserDataKeyStates(userId: "01") == expected)
-
-        subject.setLocalUserDataKeyStates(nil, userId: "01")
-        #expect(subject.localUserDataKeyStates(userId: "01") == nil)
-    }
-
-    /// `localUserDataKeyStates` are isolated per user.
-    @Test
-    func localUserDataKeyStates_userIsolation() {
-        subject.setLocalUserDataKeyStates(["k1": UserKeyData(wrappedKey: "wrappedKey1")], userId: "1")
-        #expect(subject.localUserDataKeyStates(userId: "2") == nil)
-    }
-
     /// `migrationVersion` returns `0` if there isn't a previously stored value.
     @Test
     func migrationVersion_isInitiallyZero() {

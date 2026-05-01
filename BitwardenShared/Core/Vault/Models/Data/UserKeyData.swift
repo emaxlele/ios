@@ -8,14 +8,14 @@ public struct UserKeyData: Codable, Equatable {
     /// This `EncString` contains the wrapped key that has been encrypted
     /// by `BitwardenSdk`.
     let wrappedKey: EncString
-    
+
     /// Initializes a new user key data instance with an encrypted wrapped key.
     ///
     /// - Parameter wrappedKey: An `EncString` containing the encrypted user key.
     init(wrappedKey: EncString) {
         self.wrappedKey = wrappedKey
     }
-    
+
     /// Initializes a new instance from a `LocalUserDataKeyState`.
     ///
     /// - Parameter localUserDataKeyState: A `LocalUserDataKeyState` object containing
