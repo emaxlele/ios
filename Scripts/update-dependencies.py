@@ -177,15 +177,17 @@ class ProjectFileUpdater:
         client: GitHub API client for version and commit lookups.
     """
 
-    def __init__(self, path: str, client: GitHubClient) -> None:
+    def __init__(self, path: str, client: GitHubClient, skip: set[str] | None = None) -> None:
         """Initialize an updater for a specific project file.
 
         Args:
             path: Filesystem path to the xcodegen YAML file.
             client: Shared GitHub API client.
+            skip: Optional set of package names to leave untouched.
         """
         self.path = path
         self.client = client
+        self.skip = skip or set()
 
     def process(self) -> list[PackageUpdate]:
         """Update all out-of-date packages in the project file.
@@ -251,6 +253,10 @@ class ProjectFileUpdater:
         Returns:
             A PackageUpdate if the package was changed, or None otherwise.
         """
+        if name in self.skip:
+            print(f"  Skipping package: {name}")
+            return None
+
         print(f"  Processing package: {name}")
 
         url = info.get("url", "")
@@ -386,6 +392,11 @@ class DependencyUpdateRunner:
         "project-pm.yml",
     ]
 
+    # Packages excluded from automatic updates (managed by separate processes).
+    SKIP_PACKAGES: set[str] = {
+        "BitwardenSdk",
+    }
+
     def __init__(self) -> None:
         """Initialize the runner with a fresh GitHub client."""
         self.client = GitHubClient()
@@ -400,7 +411,7 @@ class DependencyUpdateRunner:
         all_updates: list[PackageUpdate] = []
 
         for project_file in self.PROJECT_FILES:
-            updater = ProjectFileUpdater(project_file, self.client)
+            updater = ProjectFileUpdater(project_file, self.client, self.SKIP_PACKAGES)
             all_updates.extend(updater.process())
 
         print("All project files processed.")
