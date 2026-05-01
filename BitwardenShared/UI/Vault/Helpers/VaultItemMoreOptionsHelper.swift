@@ -32,6 +32,7 @@ class DefaultVaultItemMoreOptionsHelper: VaultItemMoreOptionsHelper {
     // MARK: Types
 
     typealias Services = HasAuthRepository
+        & HasBillingRepository
         & HasEnvironmentService
         & HasErrorReporter
         & HasEventService
@@ -130,7 +131,14 @@ class DefaultVaultItemMoreOptionsHelper: VaultItemMoreOptionsHelper {
             coordinator.showAlert(
                 Alert.archiveUnavailable(action: { [weak self] in
                     guard let self else { return }
-                    handleOpenURL(services.environmentService.upgradeToPremiumURL)
+                    Task { [weak self] in
+                        guard let self else { return }
+                        if await self.services.billingRepository.isInAppUpgradeAvailable() {
+                            self.coordinator.navigate(to: .premiumUpgrade)
+                        } else {
+                            handleOpenURL(self.services.environmentService.upgradeToPremiumURL)
+                        }
+                    }
                 }),
             )
             return

@@ -14,6 +14,7 @@ class VaultItemMoreOptionsHelperTests: BitwardenTestCase { // swiftlint:disable:
     // MARK: Properties
 
     var authRepository: MockAuthRepository!
+    var billingRepository: MockBillingRepository!
     var configService: MockConfigService!
     var coordinator: MockCoordinator<VaultRoute, AuthAction>!
     var environmentService: MockEnvironmentService!
@@ -30,6 +31,7 @@ class VaultItemMoreOptionsHelperTests: BitwardenTestCase { // swiftlint:disable:
         super.setUp()
 
         authRepository = MockAuthRepository()
+        billingRepository = MockBillingRepository()
         configService = MockConfigService()
         coordinator = MockCoordinator()
         environmentService = MockEnvironmentService()
@@ -44,6 +46,7 @@ class VaultItemMoreOptionsHelperTests: BitwardenTestCase { // swiftlint:disable:
             masterPasswordRepromptHelper: masterPasswordRepromptHelper,
             services: ServiceContainer.withMocks(
                 authRepository: authRepository,
+                billingRepository: billingRepository,
                 configService: configService,
                 environmentService: environmentService,
                 errorReporter: errorReporter,
@@ -58,6 +61,7 @@ class VaultItemMoreOptionsHelperTests: BitwardenTestCase { // swiftlint:disable:
         super.tearDown()
 
         authRepository = nil
+        billingRepository = nil
         configService = nil
         coordinator = nil
         environmentService = nil
@@ -147,12 +151,14 @@ class VaultItemMoreOptionsHelperTests: BitwardenTestCase { // swiftlint:disable:
     }
 
     /// `showMoreOptionsAlert()` shows archive option and calls `handleMoreOptionsAction` with
-    /// `.archive` when the archive action is tapped but it's unavailable so it displays an alert stating it so.
+    /// `.archive` when the archive action is tapped but it's unavailable so it displays an alert
+    /// and opens the web vault upgrade URL when in-app upgrade is not available.
     @MainActor
-    func test_showMoreOptionsAlert_archiveUnavailable() async throws {
+    func test_showMoreOptionsAlert_archiveUnavailable_opensURL() async throws {
         let account = Account.fixture()
         stateService.activeAccount = account
         vaultRepository.doesActiveAccountHavePremiumResult = false
+        billingRepository.isInAppUpgradeAvailableReturnValue = false
 
         let cipherView = CipherView.loginFixture(archivedDate: nil, deletedDate: nil)
         vaultRepository.fetchCipherResult = .success(cipherView)
@@ -177,11 +183,54 @@ class VaultItemMoreOptionsHelperTests: BitwardenTestCase { // swiftlint:disable:
         let archiveUnavailableAlert = try XCTUnwrap(coordinator.alertShown.last)
 
         try await archiveUnavailableAlert.tapAction(title: Localizations.upgradeToPremium)
+        try await waitForAsync { url != nil }
 
         XCTAssertNil(coordinator.loadingOverlaysShown.last?.title)
         XCTAssertTrue(vaultRepository.archiveCipher.isEmpty)
         XCTAssertNil(toastToDisplay)
         XCTAssertNotNil(url)
+    }
+
+    /// `showMoreOptionsAlert()` shows archive option and calls `handleMoreOptionsAction` with
+    /// `.archive` when the archive action is tapped but it's unavailable so it displays an alert
+    /// and navigates to the premium upgrade screen when in-app upgrade is available.
+    @MainActor
+    func test_showMoreOptionsAlert_archiveUnavailable_navigatesToPremiumUpgrade() async throws {
+        let account = Account.fixture()
+        stateService.activeAccount = account
+        vaultRepository.doesActiveAccountHavePremiumResult = false
+        billingRepository.isInAppUpgradeAvailableReturnValue = true
+
+        let cipherView = CipherView.loginFixture(archivedDate: nil, deletedDate: nil)
+        vaultRepository.fetchCipherResult = .success(cipherView)
+        let item = try XCTUnwrap(VaultListItem(cipherListView: .fixture()))
+
+        var toastToDisplay: Toast?
+        var url: URL?
+        await subject.showMoreOptionsAlert(
+            for: item,
+            handleDisplayToast: { toastToDisplay = $0 },
+            handleOpenURL: { url = $0 },
+        )
+
+        let optionsAlert = try XCTUnwrap(coordinator.alertShown.last)
+
+        XCTAssertTrue(optionsAlert.alertActions.contains(where: { $0.title == Localizations.archive }))
+
+        coordinator.loadingOverlaysShown = []
+        vaultRepository.archiveCipherResult = .success(())
+        try await optionsAlert.tapAction(title: Localizations.archive)
+
+        let archiveUnavailableAlert = try XCTUnwrap(coordinator.alertShown.last)
+
+        try await archiveUnavailableAlert.tapAction(title: Localizations.upgradeToPremium)
+        try await waitForAsync { self.coordinator.routes.last == .premiumUpgrade }
+
+        XCTAssertNil(coordinator.loadingOverlaysShown.last?.title)
+        XCTAssertTrue(vaultRepository.archiveCipher.isEmpty)
+        XCTAssertNil(toastToDisplay)
+        XCTAssertNil(url)
+        XCTAssertEqual(coordinator.routes.last, .premiumUpgrade)
     }
 
     /// `showMoreOptionsAlert()` shows the appropriate more options alert for a card cipher.
