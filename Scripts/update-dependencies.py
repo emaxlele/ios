@@ -177,7 +177,12 @@ class ProjectFileUpdater:
         client: GitHub API client for version and commit lookups.
     """
 
-    def __init__(self, path: str, client: GitHubClient, skip: set[str] | None = None) -> None:
+    def __init__(
+        self,
+        path: str,
+        client: GitHubClient,
+        skip: set[str] | None = None,
+    ) -> None:
         """Initialize an updater for a specific project file.
 
         Args:
@@ -272,6 +277,8 @@ class ProjectFileUpdater:
             return self._convert_version(name, info, url, str(exact_version))
 
         if revision and branch:
+            if self._is_release_pinned(info):
+                return self._update_release_revision(name, info, url, str(revision))
             return self._update_revision(name, info, url, str(revision), str(branch))
 
         print(f"    {name}: No version or revision info found, skipping...")
@@ -336,6 +343,96 @@ class ProjectFileUpdater:
             new_value=target_tag,
             update_kind=update_kind,
         )
+
+    def _update_release_revision(
+        self,
+        name: str,
+        info: object,
+        url: str,
+        current_sha: str,
+    ) -> Optional[PackageUpdate]:
+        """Update a release-tracked ``revision`` package to the latest stable release.
+
+        Used for packages that were originally ``exactVersion`` and have already
+        been converted to ``revision``/``branch`` format. Compares the pinned SHA
+        against the commit SHA of the latest stable release tag; updates if they
+        differ.
+
+        Args:
+            name: Package name (for logging).
+            info: Package CommentedMap; ``revision`` and its inline comment are
+                mutated on update.
+            url: GitHub repository URL.
+            current_sha: The currently pinned revision SHA.
+
+        Returns:
+            A PackageUpdate if a newer release was found and applied, else None.
+        """
+        latest_tag = self.client.get_latest_release(url)
+        if latest_tag is None:
+            print(f"    {name}: Could not fetch latest release, skipping...")
+            return None
+
+        latest_sha = self.client.get_tag_commit_sha(url, latest_tag)
+        if latest_sha is None:
+            print(f"    {name}: Could not resolve SHA for {latest_tag}, skipping...")
+            return None
+
+        current_tag = self._get_revision_comment(info) or current_sha[:8]
+
+        if latest_sha == current_sha:
+            print(f"    {name} is up to date ({current_tag})")
+            return None
+
+        print(f"    Updating {name}: {current_tag} → {latest_tag} ({latest_sha[:8]}…)")
+        info["revision"] = latest_sha
+        info.yaml_add_eol_comment(latest_tag, "revision")
+
+        return PackageUpdate(
+            package_name=name,
+            source_file=self.path,
+            old_value=current_tag,
+            new_value=latest_tag,
+            update_kind="version",
+        )
+
+    def _is_release_pinned(self, info: object) -> bool:
+        """Return True if this revision package is pinned to a stable release.
+
+        Detects packages originally converted from ``exactVersion`` by checking
+        whether the inline comment on ``revision`` parses as a clean, non-prerelease
+        PEP 440 version (e.g. ``"1.3.0"`` or ``"v11.14.0"``). No hardcoded package
+        list is needed — the comment written at conversion time is the signal.
+
+        Args:
+            info: Package CommentedMap to inspect.
+
+        Returns:
+            True if the revision comment is a clean release version tag.
+        """
+        tag = self._get_revision_comment(info)
+        if tag is None:
+            return False
+        try:
+            v = version.parse(tag.lstrip("v"))
+            return not v.is_prerelease and not v.is_devrelease
+        except version.InvalidVersion:
+            return False
+
+    def _get_revision_comment(self, info: object) -> Optional[str]:
+        """Extract the inline comment text from the ``revision`` key.
+
+        Args:
+            info: Package CommentedMap to inspect.
+
+        Returns:
+            The comment text (e.g. ``"1.3.0"``), or None if no comment exists.
+        """
+        comment_items = info.ca.items.get("revision", [None, None, None, None])
+        eol_comment = comment_items[2]
+        if eol_comment:
+            return eol_comment.value.strip().lstrip("#").strip()
+        return None
 
     def _update_revision(
         self,
