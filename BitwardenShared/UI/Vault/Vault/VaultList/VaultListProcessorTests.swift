@@ -2118,11 +2118,11 @@ class VaultListProcessorTests: BitwardenTestCase { // swiftlint:disable:this typ
 
         subject.receive(.itemPressed(item: archiveItem))
 
-        let alert = coordinator.alertShown.last
-        XCTAssertEqual(alert?.title, Localizations.archiveUnavailable)
-        XCTAssertEqual(alert?.message, Localizations.archivingItemsIsAPremiumFeatureDescriptionLong)
+        let alert = try XCTUnwrap(coordinator.alertShown.last)
+        XCTAssertEqual(alert.title, Localizations.archiveUnavailable)
+        XCTAssertEqual(alert.message, Localizations.archivingItemsIsAPremiumFeatureDescriptionLong)
 
-        try? await alert?.tapAction(title: Localizations.upgradeToPremium)
+        try await alert.tapAction(title: Localizations.upgradeToPremium)
         try await waitForAsync { self.coordinator.routes.last == .premiumUpgrade }
 
         XCTAssertEqual(coordinator.routes.last, .premiumUpgrade)
@@ -2134,6 +2134,7 @@ class VaultListProcessorTests: BitwardenTestCase { // swiftlint:disable:this typ
     /// banner has been dismissed, since the archive entry point bypasses the dismissal check.
     @MainActor
     func test_receive_itemPressed_archiveGroup_noPremium_noItems_actionTapped_bannerDismissed() async throws {
+        stateService.isPremiumUpgradeBannerDismissedResult = true
         billingRepository.isInAppUpgradeAvailableReturnValue = true
         let statusSubject = PassthroughSubject<PremiumCheckoutStatus, Never>()
         billingService.premiumCheckoutStatusPublisherReturnValue = statusSubject.eraseToAnyPublisher()
@@ -2143,8 +2144,8 @@ class VaultListProcessorTests: BitwardenTestCase { // swiftlint:disable:this typ
 
         subject.receive(.itemPressed(item: archiveItem))
 
-        let alert = coordinator.alertShown.last
-        try? await alert?.tapAction(title: Localizations.upgradeToPremium)
+        let alert = try XCTUnwrap(coordinator.alertShown.last)
+        try await alert.tapAction(title: Localizations.upgradeToPremium)
         try await waitForAsync { self.coordinator.routes.last == .premiumUpgrade }
 
         XCTAssertEqual(coordinator.routes.last, .premiumUpgrade)
@@ -2162,11 +2163,11 @@ class VaultListProcessorTests: BitwardenTestCase { // swiftlint:disable:this typ
 
         subject.receive(.itemPressed(item: archiveItem))
 
-        let alert = coordinator.alertShown.last
-        XCTAssertEqual(alert?.title, Localizations.archiveUnavailable)
-        XCTAssertEqual(alert?.message, Localizations.archivingItemsIsAPremiumFeatureDescriptionLong)
+        let alert = try XCTUnwrap(coordinator.alertShown.last)
+        XCTAssertEqual(alert.title, Localizations.archiveUnavailable)
+        XCTAssertEqual(alert.message, Localizations.archivingItemsIsAPremiumFeatureDescriptionLong)
 
-        try? await alert?.tapAction(title: Localizations.upgradeToPremium)
+        try await alert.tapAction(title: Localizations.upgradeToPremium)
         try await waitForAsync { self.subject.state.url != nil }
 
         XCTAssertEqual(

@@ -2660,8 +2660,7 @@ class StateServiceTests: BitwardenTestCase { // swiftlint:disable:this type_body
         XCTAssertFalse(shouldDoArchiveOnboarding)
     }
 
-    /// `isPremiumUpgradeEligible()` returns `true` when user is free, account is 7+ days old,
-    /// and banner has not been dismissed.
+    /// `isPremiumUpgradeEligible()` returns `true` when user is free and account is 7+ days old.
     func test_isPremiumUpgradeEligible_true() async {
         let fixedDate = Date(timeIntervalSince1970: 1_000_000_000)
         timeProvider.timeConfig = .mockTime(fixedDate)
@@ -2670,10 +2669,9 @@ class StateServiceTests: BitwardenTestCase { // swiftlint:disable:this type_body
             creationDate: creationDate,
             hasPremiumPersonally: false,
         )))
-        appSettingsStore.premiumUpgradeBannerDismissedByUserId["1"] = false
 
-        let shouldShow = await subject.isPremiumUpgradeEligible()
-        XCTAssertTrue(shouldShow)
+        let isEligible = await subject.isPremiumUpgradeEligible()
+        XCTAssertTrue(isEligible)
     }
 
     /// `isPremiumUpgradeEligible()` returns `false` when user has premium.
