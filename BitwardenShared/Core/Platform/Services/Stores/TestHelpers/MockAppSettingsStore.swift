@@ -6,7 +6,7 @@ import Foundation
 
 // swiftlint:disable file_length
 
-class MockAppSettingsStore: AppSettingsStore { // swiftlint:disable:this type_body_length
+class MockAppSettingsStore: AppSettingsStore, LocalUserDataKeyAppSettingsStore { // swiftlint:disable:this type_body_length line_length
     var accessTokenExpirationDateByUserId = [String: Date]()
     var accountKeys = [String: PrivateKeysResponseModel]()
     var accountSetupAutofill = [String: AccountSetupProgress]()

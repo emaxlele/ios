@@ -58,6 +58,7 @@ class MockStateService: StateService, ActiveAccountStateProvider, AutofillStateS
     var isInitialSyncRequiredByUserId = [String: Bool]()
     var learnGeneratorActionCardStatus: AccountSetupProgress?
     var learnNewLoginActionCardStatus: AccountSetupProgress?
+    var localUserDataKeyStore: LocalUserDataKeyAppSettingsStore? { nil }
     var localUserDataKeyStatesByUserId: [String: [String: UserKeyData]] = [:]
     var loginRequest: LoginRequestNotification?
     var logoutAccountUserInitiated = false
