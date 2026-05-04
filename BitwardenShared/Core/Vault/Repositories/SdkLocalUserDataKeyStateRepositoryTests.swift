@@ -9,20 +9,40 @@ import XCTest
 class SdkLocalUserDataKeyStateRepositoryTests: BitwardenTestCase {
     // MARK: Properties
 
-    var stateService: MockStateService!
+    var stateService: MockLocalUserDataStateService!
     var subject: SdkLocalUserDataKeyStateRepository!
     let userId = "user-1"
+
+    /// In-memory backing store keyed by userId → [keyId: UserKeyData], shared via closures.
+    var storage: [String: [String: UserKeyData]] = [:]
 
     // MARK: Setup & Teardown
 
     override func setUp() {
         super.setUp()
 
-        stateService = MockStateService()
+        stateService = MockLocalUserDataStateService()
         subject = SdkLocalUserDataKeyStateRepository(
             stateService: stateService,
             userId: userId,
         )
+
+        stateService.getLocalUserDataKeyStatesClosure = { [weak self] userId in
+            self?.storage[userId]
+        }
+
+        stateService.setLocalUserDataKeyStateClosure = { [weak self] id, value, userId in
+            self?.storage[userId, default: [:]][id] = value
+        }
+
+        stateService.removeLocalUserDataKeyStateClosure = { [weak self] id, userId in
+            self?.storage[userId]?.removeValue(forKey: id)
+            if self?.storage[userId]?.isEmpty == true { self?.storage[userId] = nil }
+        }
+
+        stateService.removeAllLocalUserDataKeyStatesClosure = { [weak self] userId in
+            self?.storage[userId] = nil
+        }
     }
 
     override func tearDown() {
@@ -30,6 +50,7 @@ class SdkLocalUserDataKeyStateRepositoryTests: BitwardenTestCase {
 
         stateService = nil
         subject = nil
+        storage = [:]
     }
 
     // MARK: Tests
@@ -92,6 +113,13 @@ class SdkLocalUserDataKeyStateRepositoryTests: BitwardenTestCase {
         try await subject.set(id: "k1", value: LocalUserDataKeyState(wrappedKey: "key1"))
         try await subject.set(id: "k2", value: LocalUserDataKeyState(wrappedKey: "key2"))
         try await subject.set(id: "k3", value: LocalUserDataKeyState(wrappedKey: "key3"))
+
+        stateService.removeBulkLocalUserDataKeyStatesClosure = { [weak self] keys, userId in
+            for key in keys {
+                self?.storage[userId]?.removeValue(forKey: key)
+            }
+        }
+
         try await subject.removeBulk(keys: ["k1", "k2"])
         let removed1 = try await subject.get(id: "k1")
         let removed2 = try await subject.get(id: "k2")
@@ -107,12 +135,18 @@ class SdkLocalUserDataKeyStateRepositoryTests: BitwardenTestCase {
         try await subject.set(id: "k2", value: LocalUserDataKeyState(wrappedKey: "key2"))
         try await subject.removeAll()
         let results = try await subject.list()
+        let userDataKeyStates = try await stateService.getLocalUserDataKeyStates(userId: userId)
         XCTAssertTrue(results.isEmpty)
-        XCTAssertTrue(stateService.localUserDataKeyStatesByUserId[userId]?.isEmpty ?? false)
+        XCTAssertNil(userDataKeyStates)
     }
 
     /// `setBulk(values:)` stores multiple values at once.
     func test_setBulk_storesAllValues() async throws {
+        stateService.setBulkLocalUserDataKeyStatesClosure = { [weak self] values, userId in
+            for (id, value) in values {
+                self?.storage[userId, default: [:]][id] = value
+            }
+        }
         try await subject.setBulk(values: [
             "k1": LocalUserDataKeyState(wrappedKey: "key1"),
             "k2": LocalUserDataKeyState(wrappedKey: "key2"),

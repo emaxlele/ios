@@ -39,13 +39,9 @@ extension DefaultKeychainRepository: LocalUserDataKeychainRepository {
                 for: BitwardenKeychainItem.localUserDataKeyStates(userId: userId),
             )
         } else {
-            do {
-                try await keychainServiceFacade.deleteValue(
-                    for: BitwardenKeychainItem.localUserDataKeyStates(userId: userId),
-                )
-            } catch KeychainServiceError.osStatusError(errSecItemNotFound), KeychainServiceError.keyNotFound {
-                // Item not found; nothing to delete.
-            }
+            try? await keychainServiceFacade.deleteValue(
+                for: BitwardenKeychainItem.localUserDataKeyStates(userId: userId),
+            )
         }
     }
 }

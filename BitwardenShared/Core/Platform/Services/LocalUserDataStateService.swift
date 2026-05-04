@@ -1,10 +1,8 @@
 import Foundation
 
 /// A service that provides state management functionality for `UserKeyData`.
+///
 protocol LocalUserDataStateService { // sourcery: AutoMockable
-    /// A service used to store the UserKeyData.
-//    var keychainRepository: LocalUserDataKeychainRepository { get }
-
     /// Gets the local user data keys for the user ID
     ///
     /// - Parameters:
