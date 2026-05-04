@@ -37,11 +37,6 @@ class SdkLocalUserDataKeyStateRepositoryTests: BitwardenTestCase {
 
         stateService.removeLocalUserDataKeyStateClosure = { [weak self] id, userId in
             self?.storage[userId]?.removeValue(forKey: id)
-            if self?.storage[userId]?.isEmpty == true { self?.storage[userId] = nil }
-        }
-
-        stateService.removeAllLocalUserDataKeyStatesClosure = { [weak self] userId in
-            self?.storage[userId] = nil
         }
     }
 
@@ -63,7 +58,7 @@ class SdkLocalUserDataKeyStateRepositoryTests: BitwardenTestCase {
         XCTAssertEqual(result?.wrappedKey, "encryptedKey1")
     }
 
-    /// `get(id:)` returns nil for an unknown id.
+    /// `get(id:)` returns nil for an unknown ID.
     func test_get_missingId_returnsNil() async throws {
         let result = try await subject.get(id: "missing")
         XCTAssertNil(result)
@@ -84,7 +79,7 @@ class SdkLocalUserDataKeyStateRepositoryTests: BitwardenTestCase {
         XCTAssertTrue(result)
     }
 
-    /// `has(id:)` returns false for an unknown id.
+    /// `has(id:)` returns false for an unknown ID.
     func test_has_withoutSet_returnsFalse() async throws {
         let result = try await subject.has(id: "missing")
         XCTAssertFalse(result)
@@ -133,6 +128,11 @@ class SdkLocalUserDataKeyStateRepositoryTests: BitwardenTestCase {
     func test_removeAll_clearsAll() async throws {
         try await subject.set(id: "k1", value: LocalUserDataKeyState(wrappedKey: "key1"))
         try await subject.set(id: "k2", value: LocalUserDataKeyState(wrappedKey: "key2"))
+
+        stateService.removeAllLocalUserDataKeyStatesClosure = { [weak self] userId in
+            self?.storage[userId] = nil
+        }
+
         try await subject.removeAll()
         let results = try await subject.list()
         let userDataKeyStates = try await stateService.getLocalUserDataKeyStates(userId: userId)
@@ -157,7 +157,7 @@ class SdkLocalUserDataKeyStateRepositoryTests: BitwardenTestCase {
         XCTAssertEqual(k2Value?.wrappedKey, "key2")
     }
 
-    /// Values are isolated per user — a different userId does not see this user's data.
+    /// Values are isolated per user — a different user ID does not see this user's data.
     func test_userIsolation() async throws {
         try await subject.set(id: "k1", value: LocalUserDataKeyState(wrappedKey: "key"))
         let other = SdkLocalUserDataKeyStateRepository(
