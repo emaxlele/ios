@@ -133,10 +133,10 @@ class DefaultVaultItemMoreOptionsHelper: VaultItemMoreOptionsHelper {
                     guard let self else { return }
                     Task { [weak self] in
                         guard let self else { return }
-                        if await self.services.billingRepository.isInAppUpgradeAvailable() {
-                            self.coordinator.navigate(to: .premiumUpgrade)
+                        if await services.billingRepository.isInAppUpgradeAvailable() {
+                            coordinator.navigate(to: .premiumUpgrade)
                         } else {
-                            handleOpenURL(self.services.environmentService.upgradeToPremiumURL)
+                            handleOpenURL(services.environmentService.upgradeToPremiumURL)
                         }
                     }
                 }),
