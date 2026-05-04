@@ -1396,7 +1396,7 @@ enum StateServiceError: LocalizedError {
 
 /// A default implementation of `StateService`.
 ///
-actor DefaultStateService: StateService, ActiveAccountStateProvider, ConfigStateService, FlightRecorderStateService, LanguageStateService, LocalUserDataStateService { // swiftlint:disable:this type_body_length line_length
+actor DefaultStateService: StateService, ActiveAccountStateProvider, ConfigStateService, FlightRecorderStateService, LanguageStateService { // swiftlint:disable:this type_body_length line_length
     // MARK: Properties
 
     /// The language option currently selected for the app.
@@ -1419,8 +1419,8 @@ actor DefaultStateService: StateService, ActiveAccountStateProvider, ConfigState
     /// The service that persists app settings.
     let appSettingsStore: AppSettingsStore
 
-    nonisolated var localUserDataKeyStore: LocalUserDataKeyAppSettingsStore? {
-        appSettingsStore as? LocalUserDataKeyAppSettingsStore
+    var localUserDataKeyRepository: LocalUserDataKeychainRepository? {
+        keychainRepository as? LocalUserDataKeychainRepository
     }
 
     /// A subject containing the app theme.
@@ -1857,7 +1857,7 @@ actor DefaultStateService: StateService, ActiveAccountStateProvider, ConfigState
         appSettingsStore.setLastSyncTime(nil, userId: knownUserId)
         appSettingsStore.setMasterPasswordHash(nil, userId: knownUserId)
         appSettingsStore.setPasswordGenerationOptions(nil, userId: knownUserId)
-        localUserDataKeyStore?.setLocalUserDataKeyStates(nil, userId: knownUserId)
+        try? await keychainRepository.setLocalUserDataKeyStates(nil, userId: knownUserId)
 
         try await dataStore.deleteDataForUser(userId: knownUserId)
     }
@@ -2428,6 +2428,66 @@ extension DefaultStateService: UserSessionStateService {
         )
     }
 }
+
+// MARK: LocalUserDataStateService
+
+//extension DefaultStateService: LocalUserDataStateService {
+//    func getLocalUserDataKeyStates(userId: String) async -> [String: UserKeyData]? {
+//        try? await keychainRepository.getLocalUserDataKeyStates(userId: userId)
+//    }
+//
+//    func removeLocalUserDataKeyState(id: String, userId: String) async {
+//        do {
+//            var states = try await keychainRepository.getLocalUserDataKeyStates(userId: userId) ?? [:]
+//            states.removeValue(forKey: id)
+//            try await keychainRepository.setLocalUserDataKeyStates(states.nilIfEmpty, userId: userId)
+//        } catch {
+//            errorReporter.log(error: error)
+//        }
+//    }
+//
+//    func removeAllLocalUserDataKeyStates(userId: String) async {
+//        do {
+//            try await keychainRepository.setLocalUserDataKeyStates(nil, userId: userId)
+//        } catch {
+//            errorReporter.log(error: error)
+//        }
+//    }
+//
+//    func removeBulkLocalUserDataKeyStates(keys: [String], userId: String) async {
+//        do {
+//            var states = try await keychainRepository.getLocalUserDataKeyStates(userId: userId) ?? [:]
+//            for key in keys {
+//                states.removeValue(forKey: key)
+//            }
+//            try await keychainRepository.setLocalUserDataKeyStates(states.nilIfEmpty, userId: userId)
+//        } catch {
+//            errorReporter.log(error: error)
+//        }
+//    }
+//
+//    func setLocalUserDataKeyState(id: String, value: UserKeyData, userId: String) async {
+//        do {
+//            var states = try await keychainRepository.getLocalUserDataKeyStates(userId: userId) ?? [:]
+//            states[id] = value
+//            try await keychainRepository.setLocalUserDataKeyStates(states, userId: userId)
+//        } catch {
+//            errorReporter.log(error: error)
+//        }
+//    }
+//
+//    func setBulkLocalUserDataKeyStates(_ values: [String: UserKeyData], userId: String) async {
+//        do {
+//            var states = try await keychainRepository.getLocalUserDataKeyStates(userId: userId) ?? [:]
+//            for (id, value) in values {
+//                states[id] = value
+//            }
+//            try await keychainRepository.setLocalUserDataKeyStates(states, userId: userId)
+//        } catch {
+//            errorReporter.log(error: error)
+//        }
+//    }
+//}
 
 // MARK: Autofill
 
