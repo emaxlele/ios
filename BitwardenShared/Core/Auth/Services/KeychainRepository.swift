@@ -84,7 +84,6 @@ enum BitwardenKeychainItem: Equatable, KeychainItem {
              .deviceAuthKeyMetadata,
              .deviceKey,
              .lastActiveTime,
-             .localUserDataKeyStates,
              .neverLock,
              .pendingAdminLoginRequest,
              .unsuccessfulUnlockAttempts,
@@ -93,6 +92,7 @@ enum BitwardenKeychainItem: Equatable, KeychainItem {
         case .accessToken,
              .authenticatorVaultKey,
              .clientCertificateIdentity,
+             .localUserDataKeyStates,
              .refreshToken,
              .serverCommunicationConfig:
             kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly

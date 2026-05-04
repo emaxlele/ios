@@ -43,7 +43,7 @@ protocol LocalUserDataStateService { // sourcery: AutoMockable
     ///
     func setLocalUserDataKeyState(id: String, value: UserKeyData, userId: String) async throws
 
-    /// Merges multiple `UserKeyData` states for the user.
+    /// Sets multiple `UserKeyData` states for the user.
     ///
     /// - Parameters:
     ///   - values: A dictionary mapping SDK-assigned key identifiers to `UserKeyData`.
@@ -54,7 +54,7 @@ protocol LocalUserDataStateService { // sourcery: AutoMockable
 
 extension DefaultStateService: LocalUserDataStateService {
     func getLocalUserDataKeyStates(userId: String) async throws -> [String: UserKeyData]? {
-        try? await keychainRepository.getLocalUserDataKeyStates(userId: userId)
+        try await keychainRepository.getLocalUserDataKeyStates(userId: userId)
     }
 
     func removeLocalUserDataKeyState(id: String, userId: String) async throws {
