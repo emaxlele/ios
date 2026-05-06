@@ -1,25 +1,24 @@
 import BitwardenKitMocks
 import TestHelpers
-import XCTest
+import Testing
 
 @testable import BitwardenShared
 @testable import BitwardenSharedMocks
 
-class BillingRepositoryTests: BitwardenTestCase {
+@MainActor
+struct BillingRepositoryTests {
     // MARK: Properties
 
-    var configService: MockConfigService!
-    var errorReporter: MockErrorReporter!
-    var stateService: MockStateService!
-    var storefrontService: MockStorefrontService!
-    var subject: DefaultBillingRepository!
-    var vaultRepository: MockVaultRepository!
+    let configService: MockConfigService
+    let errorReporter: MockErrorReporter
+    let stateService: MockStateService
+    let storefrontService: MockStorefrontService
+    let subject: DefaultBillingRepository
+    let vaultRepository: MockVaultRepository
 
-    // MARK: Setup & Teardown
+    // MARK: Setup
 
-    override func setUp() {
-        super.setUp()
-
+    init() {
         configService = MockConfigService()
         errorReporter = MockErrorReporter()
         stateService = MockStateService()
@@ -35,22 +34,11 @@ class BillingRepositoryTests: BitwardenTestCase {
         )
     }
 
-    override func tearDown() {
-        super.tearDown()
-
-        configService = nil
-        errorReporter = nil
-        stateService = nil
-        storefrontService = nil
-        subject = nil
-        vaultRepository = nil
-    }
-
     // MARK: Tests
 
     /// `isInAppUpgradeAvailable()` returns `true` when all conditions are met.
-    @MainActor
-    func test_isInAppUpgradeAvailable_allConditionsMet() async {
+    @Test
+    func isInAppUpgradeAvailable_allConditionsMet() async {
         configService.featureFlagsBool[.premiumUpgradePath] = true
         storefrontService.isUSStorefrontReturnValue = true
         stateService.isPremiumUpgradeEligibleResult = true
@@ -58,12 +46,12 @@ class BillingRepositoryTests: BitwardenTestCase {
 
         let result = await subject.isInAppUpgradeAvailable()
 
-        XCTAssertTrue(result)
+        #expect(result)
     }
 
     /// `isInAppUpgradeAvailable()` returns `false` when the feature flag is disabled.
-    @MainActor
-    func test_isInAppUpgradeAvailable_featureFlagDisabled() async {
+    @Test
+    func isInAppUpgradeAvailable_featureFlagDisabled() async {
         configService.featureFlagsBool[.premiumUpgradePath] = false
         storefrontService.isUSStorefrontReturnValue = true
         stateService.isPremiumUpgradeEligibleResult = true
@@ -71,12 +59,12 @@ class BillingRepositoryTests: BitwardenTestCase {
 
         let result = await subject.isInAppUpgradeAvailable()
 
-        XCTAssertFalse(result)
+        #expect(!result)
     }
 
     /// `isInAppUpgradeAvailable()` returns `false` when the storefront is not US.
-    @MainActor
-    func test_isInAppUpgradeAvailable_nonUSStorefront() async {
+    @Test
+    func isInAppUpgradeAvailable_nonUSStorefront() async {
         configService.featureFlagsBool[.premiumUpgradePath] = true
         storefrontService.isUSStorefrontReturnValue = false
         stateService.isPremiumUpgradeEligibleResult = true
@@ -84,12 +72,12 @@ class BillingRepositoryTests: BitwardenTestCase {
 
         let result = await subject.isInAppUpgradeAvailable()
 
-        XCTAssertFalse(result)
+        #expect(!result)
     }
 
     /// `isInAppUpgradeAvailable()` returns `false` when the user is not eligible for premium upgrade.
-    @MainActor
-    func test_isInAppUpgradeAvailable_notEligible() async {
+    @Test
+    func isInAppUpgradeAvailable_notEligible() async {
         configService.featureFlagsBool[.premiumUpgradePath] = true
         storefrontService.isUSStorefrontReturnValue = true
         stateService.isPremiumUpgradeEligibleResult = false
@@ -97,12 +85,12 @@ class BillingRepositoryTests: BitwardenTestCase {
 
         let result = await subject.isInAppUpgradeAvailable()
 
-        XCTAssertFalse(result)
+        #expect(!result)
     }
 
     /// `isInAppUpgradeAvailable()` returns `false` when the vault has fewer than the minimum cipher count.
-    @MainActor
-    func test_isInAppUpgradeAvailable_insufficientCipherCount() async {
+    @Test
+    func isInAppUpgradeAvailable_insufficientCipherCount() async {
         configService.featureFlagsBool[.premiumUpgradePath] = true
         storefrontService.isUSStorefrontReturnValue = true
         stateService.isPremiumUpgradeEligibleResult = true
@@ -110,12 +98,12 @@ class BillingRepositoryTests: BitwardenTestCase {
 
         let result = await subject.isInAppUpgradeAvailable()
 
-        XCTAssertFalse(result)
+        #expect(!result)
     }
 
     /// `isInAppUpgradeAvailable()` returns `false` and logs the error when `hasMinimumCipherCount` throws.
-    @MainActor
-    func test_isInAppUpgradeAvailable_cipherCountThrows() async {
+    @Test
+    func isInAppUpgradeAvailable_cipherCountThrows() async {
         configService.featureFlagsBool[.premiumUpgradePath] = true
         storefrontService.isUSStorefrontReturnValue = true
         stateService.isPremiumUpgradeEligibleResult = true
@@ -123,7 +111,7 @@ class BillingRepositoryTests: BitwardenTestCase {
 
         let result = await subject.isInAppUpgradeAvailable()
 
-        XCTAssertFalse(result)
-        XCTAssertEqual(errorReporter.errors as? [BitwardenTestError], [.example])
+        #expect(!result)
+        #expect(errorReporter.errors as? [BitwardenTestError] == [.example])
     }
 }
