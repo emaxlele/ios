@@ -32,7 +32,7 @@ struct PremiumUpgradeCompleteView: View {
         }
         .padding(.top, 12)
         .scrollView()
-        .navigationBar(title: Localizations.upgradedToPremium, titleDisplayMode: .inline)
+        .navigationBar(title: "", titleDisplayMode: .inline)
     }
 
     // MARK: Private Views
