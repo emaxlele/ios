@@ -30,7 +30,7 @@ extension ExternalLinksConstants {
     static let importHelp = URL(string: "https://bitwarden.com/help/import-data/")!
 
     /// A link to Bitwarden's help page for learning more about Premium features.
-    static let learnMoreAboutPremium = URL(string: "https://bitwarden.com/help/about-premium/")!
+    static let learnMoreAboutPremium = URL(string: "https://bitwarden.com/help/password-manager-plans/")!
 
     /// A link to the password options within the passwords section of the settings menu.
     static let passwordOptions = URL(string: "App-prefs:PASSWORDS&path=PASSWORD_OPTIONS")!
