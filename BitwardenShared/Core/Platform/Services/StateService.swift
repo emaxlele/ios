@@ -10,7 +10,7 @@ import Foundation
 
 /// A protocol for a `StateService` which manages the state of the accounts in the app.
 ///
-protocol StateService: AnyObject {
+protocol StateService: AnyObject, BillingStateService {
     /// The language option currently selected for the app.
     var appLanguage: LanguageOption { get set }
 
@@ -393,18 +393,6 @@ protocol StateService: AnyObject {
     /// - Returns: `true` if initial sync is needed, `false` otherwise.
     ///
     func isInitialSyncRequired(userId: String?) async -> Bool
-
-    /// Returns whether the premium upgrade banner has been permanently dismissed by the user.
-    ///
-    /// - Returns: `true` if the user has dismissed the banner.
-    ///
-    func isPremiumUpgradeBannerDismissed() async -> Bool
-
-    /// Returns whether the user meets the eligibility criteria for the premium upgrade.
-    ///
-    /// - Returns: `true` if the user is eligible for the premium upgrade.
-    ///
-    func isPremiumUpgradeEligible() async -> Bool
 
     /// Logs the user out of an account.
     ///
@@ -1402,7 +1390,7 @@ enum StateServiceError: LocalizedError {
 
 /// A default implementation of `StateService`.
 ///
-actor DefaultStateService: StateService, ActiveAccountStateProvider, ConfigStateService, FlightRecorderStateService, LanguageStateService { // swiftlint:disable:this type_body_length line_length
+actor DefaultStateService: StateService, ActiveAccountStateProvider, BillingStateService, ConfigStateService, FlightRecorderStateService, LanguageStateService { // swiftlint:disable:this type_body_length line_length
     // MARK: Properties
 
     /// The language option currently selected for the app.
