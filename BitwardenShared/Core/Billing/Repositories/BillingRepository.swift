@@ -6,7 +6,7 @@ import Foundation
 /// A protocol for a `BillingRepository` which manages access to billing-related data
 /// needed by the UI layer.
 ///
-protocol BillingRepository: AnyObject { // sourcery: AutoMockable
+protocol BillingRepository { // sourcery: AutoMockable
     /// Returns `true` when the in-app premium upgrade path is available for the active user.
     ///
     /// Checks (in order):
@@ -36,7 +36,7 @@ class DefaultBillingRepository: BillingRepository {
     private let errorReporter: ErrorReporter
 
     /// The service used to manage the app's state.
-    private let stateService: StateService
+    private let stateService: BillingStateService
 
     /// The service used to retrieve App Store storefront information.
     private let storefrontService: StorefrontService
@@ -58,7 +58,7 @@ class DefaultBillingRepository: BillingRepository {
     init(
         configService: ConfigService,
         errorReporter: ErrorReporter,
-        stateService: StateService,
+        stateService: BillingStateService,
         storefrontService: StorefrontService,
         vaultRepository: VaultRepository,
     ) {
