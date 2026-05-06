@@ -55,6 +55,7 @@ class VaultListProcessorTests: BitwardenTestCase { // swiftlint:disable:this typ
         authRepository = MockAuthRepository()
         authService = MockAuthService()
         billingRepository = MockBillingRepository()
+        billingRepository.isInAppUpgradeAvailableReturnValue = false
         billingService = MockBillingService()
         errorReporter = MockErrorReporter()
         changeKdfService = MockChangeKdfService()
