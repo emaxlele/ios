@@ -69,7 +69,7 @@ jobs:
       contents: read
       id-token: write
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.build-mode != 'CI' }}
-    uses: bitwarden/ios/.github/workflows/_build-any.yml@main
+    uses: bitwarden/ios/.github/workflows/_build-any.yml@bre-1851_fix-mobile-builds
     with:
       bw-env: ${{ (inputs.build-variant == 'Production') && 'bwpm_prod' || 'bwpm_beta' }}
       build-mode: ${{ inputs.build-mode }}
@@ -87,7 +87,7 @@ jobs:
       contents: read
       id-token: write
     if: ${{ github.event_name == 'push' || inputs.build-mode == 'CI' }}
-    uses: bitwarden/ios/.github/workflows/_build-any.yml@main
+    uses: bitwarden/ios/.github/workflows/_build-any.yml@bre-1851_fix-mobile-builds
     strategy:
       matrix:
         include:
@@ -97,10 +97,10 @@ jobs:
           - bw-env: bwpm_prod
             build-mode: Simulator
             distribute: false
-          - bw-env: bwpm_beta
-            build-mode: Device
-            compiler-flags: DEBUG_MENU
-            distribute: true
+          # - bw-env: bwpm_beta
+          #   build-mode: Device
+          #   compiler-flags: DEBUG_MENU
+          #   distribute: true
     with:
       bw-env: ${{ matrix.bw-env }}
       build-mode: ${{ matrix.build-mode }}
