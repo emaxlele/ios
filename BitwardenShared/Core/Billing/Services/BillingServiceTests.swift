@@ -301,7 +301,7 @@ struct BillingServiceTests {
 
     /// A subscriber connecting after `.pending` is emitted receives the pending status immediately
     /// (CurrentValueSubject replays the last value to new subscribers).
-    @Test
+    @Test(.timeLimit(.seconds(5)))
     func premiumCheckoutStatusPublisher_lateSubscriberReceivesPendingStatus() async throws {
         stateService.doesActiveAccountHavePremiumResult = false
         var earlyStatuses = [PremiumCheckoutStatus]()
