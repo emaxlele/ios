@@ -230,7 +230,11 @@ extension VaultListProcessor {
         state.shouldShowArchiveOnboardingActionCard = await services.stateService.shouldDoArchiveOnboarding()
 
         let isBannerDismissed = await services.stateService.isPremiumUpgradeBannerDismissed()
-        state.shouldShowPremiumUpgradeActionCard = !isBannerDismissed && (await services.billingRepository.isInAppUpgradeAvailable())
+        guard !isBannerDismissed else {
+            state.shouldShowPremiumUpgradeActionCard = false
+            return
+        }
+        state.shouldShowPremiumUpgradeActionCard = await services.billingRepository.isInAppUpgradeAvailable()
     }
 
     /// Checks if the user is eligible for an app review prompt and schedules one if so.
@@ -575,6 +579,9 @@ extension VaultListProcessor {
             for: item,
             handleDisplayToast: { [weak self] toast in
                 self?.state.toast = toast
+            },
+            handleNavigateToPremiumUpgrade: { [weak self] in
+                await self?.navigateToPremiumUpgrade()
             },
             handleOpenURL: { [weak self] url in
                 self?.state.url = url

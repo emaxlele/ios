@@ -120,6 +120,9 @@ final class VaultGroupProcessor: StateProcessor<
                 handleDisplayToast: { [weak self] toast in
                     self?.state.toast = toast
                 },
+                handleNavigateToPremiumUpgrade: { [weak self] in
+                    self?.coordinator.navigate(to: .premiumUpgrade)
+                },
                 handleOpenURL: { [weak self] url in
                     self?.state.url = url
                 },
