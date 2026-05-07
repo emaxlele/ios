@@ -9,12 +9,6 @@ import Foundation
 protocol BillingRepository { // sourcery: AutoMockable
     /// Returns `true` when the in-app premium upgrade path is available for the active user.
     ///
-    /// Checks (in order):
-    /// 1. The `.premiumUpgradePath` feature flag is enabled.
-    /// 2. The App Store storefront is in the United States.
-    /// 3. The user is eligible for a premium upgrade (not already premium and account is 7+ days old).
-    /// 4. The vault contains at least the minimum cipher count.
-    ///
     /// Does **not** check banner dismissal -- callers that need that check must do so separately.
     ///
     /// - Returns: Whether the in-app premium upgrade path is available.
@@ -72,9 +66,10 @@ class DefaultBillingRepository: BillingRepository {
     // MARK: Methods
 
     func isInAppUpgradeAvailable() async -> Bool {
-        guard await configService.getFeatureFlag(.premiumUpgradePath) else { return false }
-        guard await storefrontService.isUSStorefront() else { return false }
-        guard await stateService.isPremiumUpgradeEligible() else { return false }
+        guard await configService.getFeatureFlag(.premiumUpgradePath),
+              await storefrontService.isUSStorefront(),
+              await stateService.isPremiumUpgradeEligible()
+        else { return false }
         do {
             guard try await vaultRepository
                 .hasMinimumCipherCount(Constants.minimumPremiumUpgradeBannerCipherCount)

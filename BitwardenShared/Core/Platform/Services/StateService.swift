@@ -1390,7 +1390,7 @@ enum StateServiceError: LocalizedError {
 
 /// A default implementation of `StateService`.
 ///
-actor DefaultStateService: StateService, ActiveAccountStateProvider, BillingStateService, ConfigStateService, FlightRecorderStateService, LanguageStateService { // swiftlint:disable:this type_body_length line_length
+actor DefaultStateService: StateService, ActiveAccountStateProvider, ConfigStateService, FlightRecorderStateService, LanguageStateService { // swiftlint:disable:this type_body_length line_length
     // MARK: Properties
 
     /// The language option currently selected for the app.
@@ -1423,7 +1423,7 @@ actor DefaultStateService: StateService, ActiveAccountStateProvider, BillingStat
     private let dataStore: DataStore
 
     /// The service used by the application to report non-fatal errors.
-    private let errorReporter: ErrorReporter
+    let errorReporter: ErrorReporter
 
     /// A subject containing the last sync time mapped to user ID.
     private var lastSyncTimeByUserIdSubject = CurrentValueSubject<[String: Date], Never>([:])
@@ -1432,7 +1432,7 @@ actor DefaultStateService: StateService, ActiveAccountStateProvider, BillingStat
     let keychainRepository: KeychainRepository
 
     /// Provides the present time for time-based calculations.
-    private let timeProvider: TimeProvider
+    let timeProvider: TimeProvider
 
     /// A service used to access user session data in the keychain.
     private let userSessionKeychainRepository: UserSessionKeychainRepository
@@ -1821,24 +1821,6 @@ actor DefaultStateService: StateService, ActiveAccountStateProvider, BillingStat
             errorReporter.log(error: error)
             return false
         }
-    }
-
-    func isPremiumUpgradeBannerDismissed() async -> Bool {
-        do {
-            return try await getPremiumUpgradeBannerDismissed()
-        } catch {
-            errorReporter.log(error: error)
-            return false
-        }
-    }
-
-    func isPremiumUpgradeEligible() async -> Bool {
-        guard await !doesActiveAccountHavePremium() else { return false }
-
-        // Check account age >= 7 days
-        guard let account = try? await getActiveAccount(),
-              let creationDate = account.profile.creationDate else { return false }
-        return timeProvider.timeSince(creationDate) >= Constants.premiumUpgradeBannerAccountAge
     }
 
     func logoutAccount(userId: String?, userInitiated: Bool) async throws {
