@@ -14,6 +14,7 @@ final class VaultGroupProcessor: StateProcessor<
     // MARK: Types
 
     typealias Services = HasAuthRepository
+        & HasBillingRepository
         & HasConfigService
         & HasEnvironmentService
         & HasErrorReporter
@@ -121,7 +122,7 @@ final class VaultGroupProcessor: StateProcessor<
                     self?.state.toast = toast
                 },
                 handleNavigateToPremiumUpgrade: { [weak self] in
-                    self?.coordinator.navigate(to: .premiumUpgrade)
+                    await self?.navigateToPremiumUpgrade()
                 },
                 handleOpenURL: { [weak self] url in
                     self?.state.url = url
@@ -219,6 +220,17 @@ final class VaultGroupProcessor: StateProcessor<
     ///     - cipherListView: The cipher list view item for the cipher that will be shown in the view item view.
     ///     - id: The cipher's identifier.
     ///
+    /// Navigates to the premium upgrade flow. Uses the in-app upgrade path when available;
+    /// otherwise opens the web vault upgrade URL as a fallback.
+    ///
+    private func navigateToPremiumUpgrade() async {
+        guard await services.billingRepository.isInAppUpgradeAvailable() else {
+            state.url = services.environmentService.upgradeToPremiumURL
+            return
+        }
+        coordinator.navigate(to: .premiumUpgrade)
+    }
+
     private func navigateToViewItem(cipherListView: CipherListView, id: String) {
         Task {
             await masterPasswordRepromptHelper.repromptForMasterPasswordIfNeeded(cipherListView: cipherListView) {

@@ -13,6 +13,8 @@ class VaultItemSelectionProcessor: StateProcessor<
     // MARK: Types
 
     typealias Services = HasAuthRepository
+        & HasBillingRepository
+        & HasEnvironmentService
         & HasErrorReporter
         & HasEventService
         & HasPasteboardService
@@ -77,7 +79,7 @@ class VaultItemSelectionProcessor: StateProcessor<
                     self?.state.toast = toast
                 },
                 handleNavigateToPremiumUpgrade: { [weak self] in
-                    self?.coordinator.navigate(to: .premiumUpgrade)
+                    await self?.navigateToPremiumUpgrade()
                 },
                 handleOpenURL: { [weak self] url in
                     self?.state.url = url
@@ -139,6 +141,17 @@ class VaultItemSelectionProcessor: StateProcessor<
     }
 
     // MARK: Private Methods
+
+    /// Navigates to the premium upgrade flow. Uses the in-app upgrade path when available;
+    /// otherwise opens the web vault upgrade URL as a fallback.
+    ///
+    private func navigateToPremiumUpgrade() async {
+        guard await services.billingRepository.isInAppUpgradeAvailable() else {
+            state.url = services.environmentService.upgradeToPremiumURL
+            return
+        }
+        coordinator.navigate(to: .premiumUpgrade)
+    }
 
     /// Handles receiving a `ProfileSwitcherAction`.
     ///
