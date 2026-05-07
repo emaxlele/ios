@@ -213,13 +213,6 @@ final class VaultGroupProcessor: StateProcessor<
         state.itemTypesUserCanCreate = await vaultRepository.getItemTypesUserCanCreate()
     }
 
-    /// Navigates to the view item view for the specified cipher. If the cipher requires master
-    /// password reprompt, this will prompt the user before navigation.
-    ///
-    /// - Parameters:
-    ///     - cipherListView: The cipher list view item for the cipher that will be shown in the view item view.
-    ///     - id: The cipher's identifier.
-    ///
     /// Navigates to the premium upgrade flow. Uses the in-app upgrade path when available;
     /// otherwise opens the web vault upgrade URL as a fallback.
     ///
@@ -231,6 +224,13 @@ final class VaultGroupProcessor: StateProcessor<
         coordinator.navigate(to: .premiumUpgrade)
     }
 
+    /// Navigates to the view item view for the specified cipher. If the cipher requires master
+    /// password reprompt, this will prompt the user before navigation.
+    ///
+    /// - Parameters:
+    ///     - cipherListView: The cipher list view item for the cipher that will be shown in the view item view.
+    ///     - id: The cipher's identifier.
+    ///
     private func navigateToViewItem(cipherListView: CipherListView, id: String) {
         Task {
             await masterPasswordRepromptHelper.repromptForMasterPasswordIfNeeded(cipherListView: cipherListView) {
