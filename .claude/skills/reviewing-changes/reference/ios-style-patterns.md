@@ -20,7 +20,7 @@ Bitwarden-specific style rules enforced by tooling. Do not flag issues that Swif
 Source: [contributing.bitwarden.com — Swift style: Alphabetization](https://contributing.bitwarden.com/contributing/code-style/swift#alphabetization).
 
 - [ ] Enum cases are alphabetized — unless the raw type encodes ordering (e.g., `Int` raw values that line up with server error codes or persisted indices). Document the carve-out inline if you take it.
-- [ ] Tests within a test file are alphabetized by function name.
+- [ ] Tests within a test file are alphabetized by function name. Within a group of tests for the same function, error-case tests are commonly placed at the end of the group rather than strictly alphabetized.
 - [ ] Static members and computed properties within a section are alphabetized.
 
 Protocol conformance ordering is **not** an enforced project rule; don't flag it during review even if a reviewer expresses a personal preference.
@@ -35,7 +35,7 @@ Protocol conformance ordering is **not** an enforced project rule; don't flag it
 
 Source: [contributing.bitwarden.com — Swift style: Localization](https://contributing.bitwarden.com/contributing/code-style/swift#localization).
 
-- [ ] Localization keys mirror the English string closely. `BankAccount` for "Bank account", not `TypeBankAccount` or `BankAccountTitle`.
+- [ ] Localization keys mirror the English string closely. `Archive` for "Archive", not `MoveToArchive` or `ArchiveTitle`.
 - [ ] Translator-facing comments (`/* … */` above a key) describe meaning, placement, or constraints that affect translation — not internal phasing or ticket bookkeeping. Translators are the audience.
 
 ## Module Imports

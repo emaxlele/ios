@@ -73,8 +73,8 @@ When the on-wire shape matters (and it usually does for Codable enums), the test
 ```swift
 @Test
 func rawValues_matchServerContract() {
-    #expect(BankAccountType.checking.rawValue == "checking")
-    #expect(BankAccountType.savings.rawValue == "savings")
+    #expect(Status.active.rawValue == "active")
+    #expect(Status.archived.rawValue == "archived")
     // ... one assertion per case
 }
 ```

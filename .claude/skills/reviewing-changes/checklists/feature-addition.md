@@ -52,7 +52,7 @@ Read `reference/ios-architecture-patterns.md` for full patterns and code example
 - `Has*` / `Default*` / `Mock*` naming conventions followed
 - Enum cases and tests are alphabetized (unless raw type encodes order — see `reference/ios-style-patterns.md`)
 - New tests pin project behavior (server contracts, custom encoding, business logic) rather than Swift-synthesized `CaseIterable`/`Codable` for plain raw-value enums — see `testing-ios-code/references/testing-gotchas.md`
-- New localization keys mirror the English string closely (`BankAccount` for "Bank account", not `TypeBankAccount`); translator-facing comments describe meaning, not internal phasing
+- New localization keys mirror the English string closely (`Archive` for "Archive", not `MoveToArchive`); translator-facing comments describe meaning, not internal phasing
 
 ## Prioritizing Findings
 
