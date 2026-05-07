@@ -51,7 +51,7 @@ class PremiumUpgradeCompleteViewTests: BitwardenTestCase {
     /// The description is displayed correctly.
     @MainActor
     func test_description_displayed() throws {
-        let text = try subject.inspect().find(text: Localizations.upgradedToPremiumDescriptionLong)
+        let text = try subject.inspect().find(text: Localizations.youNowHaveAccessToAdvancedSecurityDescriptionLong)
         XCTAssertNotNil(text)
     }
 

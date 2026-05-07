@@ -23,7 +23,7 @@ struct PremiumUpgradeCompleteView: View {
                 image: Asset.Images.Illustrations.premiumSuccess,
                 style: .smallImage,
                 title: Localizations.upgradedToPremium,
-                message: Localizations.upgradedToPremiumDescriptionLong,
+                message: Localizations.youNowHaveAccessToAdvancedSecurityDescriptionLong,
             )
 
             learnMoreButton
