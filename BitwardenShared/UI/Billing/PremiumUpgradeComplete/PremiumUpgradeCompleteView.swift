@@ -18,7 +18,7 @@ struct PremiumUpgradeCompleteView: View {
     // MARK: View
 
     var body: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: 12) {
             IllustratedMessageView(
                 image: Asset.Images.Illustrations.premiumSuccess,
                 style: .smallImage,
@@ -27,6 +27,7 @@ struct PremiumUpgradeCompleteView: View {
             )
 
             learnMoreButton
+                .padding(.top, 12)
 
             closeButton
         }
