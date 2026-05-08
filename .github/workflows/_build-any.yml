@@ -26,7 +26,7 @@ on:
         type: boolean
 env:
   _BW_ENV: ${{ inputs.bw-env || 'bwpm-prod' }}
-  _BUILD_VARIANT: ${{ inputs.bw-env == 'bwpm-prod' && 'Production' || 'Beta' }}
+  _BUILD_VARIANT: ${{ inputs.bw-env == 'bwpm_prod' && 'Production' || 'Beta' }}
   _BUILD_MODE: ${{ inputs.build-mode || 'Device' }}
   _XCODE_VERSION: ${{ inputs.xcode-version }}
   _VERSION_NAME: ${{ inputs.version-name }}
@@ -314,11 +314,12 @@ jobs:
           )
           APPLE_ID="${APPLE_ID_MAP[$_BUNDLE_ID]:-}"
 
-          CHANGELOG="$(git show -s --format=%s)
+          CHANGELOG="$_GITHUB_ACTION_RUN_URL
+          $(git show -s --format=%s)
           $GITHUB_REPOSITORY/$GITHUB_REF_NAME @ $GITHUB_SHA
-          Xcode $_XCODE_VERSION
-          Compiler Flags: $_COMPILER_FLAGS
-          $_GITHUB_ACTION_RUN_URL"
+          Xcode $_XCODE_VERSION"
+          [[ -n "$_COMPILER_FLAGS" ]] && CHANGELOG="$CHANGELOG
+          Compiler Flags: $_COMPILER_FLAGS"
 
           CHANGELOG_B64=$(printf '%s' "$CHANGELOG" | base64 | tr -d '\n')
 
