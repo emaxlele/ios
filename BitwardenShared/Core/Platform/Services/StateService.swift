@@ -1843,7 +1843,6 @@ actor DefaultStateService: StateService, ActiveAccountStateProvider, ConfigState
         }
 
         appSettingsStore.setAccessTokenExpirationDate(nil, userId: knownUserId)
-        appSettingsStore.setBiometricAuthenticationEnabled(nil, for: knownUserId)
         appSettingsStore.setDefaultUriMatchType(nil, userId: knownUserId)
         appSettingsStore.setDisableAutoTotpCopy(nil, userId: knownUserId)
         appSettingsStore.setAccountKeys(nil, userId: knownUserId)

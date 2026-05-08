@@ -52,6 +52,16 @@ public protocol BiometricsRepository: AnyObject { // sourcery: AutoMockable
     ///   - userId: The user ID for the user to set biometric unlock. Defaults to the active user if nil.
     ///
     func setBiometricUnlockKey(authKey: String?, userId: String?) async throws
+
+    /// Restores the biometric unlock key after a trusted vault unlock (e.g., master password unlock),
+    /// without prompting for biometric authentication. If biometrics is no longer available on the device,
+    /// the stored preference is cleared.
+    ///
+    /// - Parameters:
+    ///   - authKey: The user auth key to store in the keychain.
+    ///   - userId: The user ID for the user to restore biometric unlock. Defaults to the active user if nil.
+    ///
+    func restoreBiometricUnlockKey(authKey: String, userId: String?) async throws
 }
 
 public extension BiometricsRepository {
@@ -71,6 +81,14 @@ public extension BiometricsRepository {
     ///
     func setBiometricUnlockKey(authKey: String?) async throws {
         try await setBiometricUnlockKey(authKey: authKey, userId: nil)
+    }
+
+    /// Restores the biometric unlock key for the active user after a trusted vault unlock.
+    ///
+    /// - Parameter authKey: The user auth key to store in the keychain.
+    ///
+    func restoreBiometricUnlockKey(authKey: String) async throws {
+        try await restoreBiometricUnlockKey(authKey: authKey, userId: nil)
     }
 }
 
@@ -126,6 +144,23 @@ public class DefaultBiometricsRepository: BiometricsRepository {
 
         try await setUserBiometricAuthKey(value: authKey, userId: userId)
         try await stateService.setBiometricAuthenticationEnabled(true, userId: userId)
+    }
+
+    public func restoreBiometricUnlockKey(authKey: String, userId: String?) async throws {
+        let userId = try await stateService.userIdOrActive(userId)
+        switch biometricsService.getBiometricAuthStatus() {
+        case .authorized:
+            try await setUserBiometricAuthKey(value: authKey, userId: userId)
+            try await stateService.setBiometricAuthenticationEnabled(true, userId: userId)
+        case .denied,
+             .noBiometrics,
+             .notEnrolled,
+             .unknownError:
+            try await stateService.setBiometricAuthenticationEnabled(false, userId: userId)
+        case .lockedOut,
+             .notDetermined:
+            break
+        }
     }
 
     public func getBiometricUnlockStatus(userId: String?) async throws -> BiometricsUnlockStatus {

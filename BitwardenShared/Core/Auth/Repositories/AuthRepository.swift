@@ -813,7 +813,6 @@ extension DefaultAuthRepository: AuthRepository {
 
         // Clear all user data.
         try await stateService.setSyncToAuthenticator(false, userId: userId)
-        try await biometricsRepository.setBiometricUnlockKey(authKey: nil, userId: userId)
         try await keychainService.deleteItems(for: userId)
         try await clientCertificateService.removeCertificate(userId: userId)
         await vaultTimeoutService.remove(userId: userId)
@@ -1198,6 +1197,7 @@ extension DefaultAuthRepository: AuthRepository {
         } catch {
             errorReporter.log(error: error)
         }
+        await configureBiometricUnlockIfNeeded()
     }
 
     /// Updates the user's KDF settings to the minimums.
@@ -1271,6 +1271,18 @@ extension DefaultAuthRepository: AuthRepository {
     private func userIdOrActive(_ maybeId: String?) async throws -> String {
         if let maybeId { return maybeId }
         return try await stateService.getActiveAccountId()
+    }
+
+    /// Configures biometric unlock if the user requires master password or PIN after an app restart.
+    ///
+    private func configureBiometricUnlockIfNeeded() async {
+        do {
+            guard try await biometricsRepository.getBiometricUnlockStatus().isEnabled else { return }
+            let authKey = try await clientService.crypto().getUserEncryptionKey()
+            try await biometricsRepository.restoreBiometricUnlockKey(authKey: authKey)
+        } catch {
+            errorReporter.log(error: error)
+        }
     }
 
     /// Configures PIN unlock if the user requires master password or biometrics after an app restart.
