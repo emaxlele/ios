@@ -285,16 +285,15 @@ jobs:
           _KEY_ID: ${{ steps.get-kv-secrets.outputs.APP-STORE-CONNECT-AUTH-ID }}
           _ISSUER: ${{ steps.get-kv-secrets.outputs.APP-STORE-CONNECT-TEAM-ISSUER }}
         run: |
-          declare -A APPLE_ID_MAP=(
-            ["com.8bit.bitwarden"]="1137397744"
-            ["com.8bit.bitwarden.beta"]="6477551146"
-            ["com.bitwarden.authenticator"]="6497335175"
-          )
-          APPLE_ID="${APPLE_ID_MAP[$_BUNDLE_ID]:-}"
-          if [ -z "$APPLE_ID" ]; then
-            echo "::error::No Apple ID mapping for bundle ID: $_BUNDLE_ID"
-            exit 1
-          fi
+          case "$_BUNDLE_ID" in
+            "com.8bit.bitwarden")          APPLE_ID="1137397744" ;;
+            "com.8bit.bitwarden.beta")     APPLE_ID="6477551146" ;;
+            "com.bitwarden.authenticator") APPLE_ID="6497335175" ;;
+            *)
+              echo "::error::No Apple ID mapping for bundle ID: $_BUNDLE_ID"
+              exit 1
+              ;;
+          esac
 
           xcrun altool --upload-app \
             --type ios \
@@ -307,12 +306,12 @@ jobs:
         id: build-trigger-data
         if: ${{ inputs.distribute && env._BUILD_MODE == 'Device' }}
         run: |
-          declare -A APPLE_ID_MAP=(
-            ["com.8bit.bitwarden"]="1137397744"
-            ["com.8bit.bitwarden.beta"]="6477551146"
-            ["com.bitwarden.authenticator"]="6497335175"
-          )
-          APPLE_ID="${APPLE_ID_MAP[$_BUNDLE_ID]:-}"
+          case "$_BUNDLE_ID" in
+            "com.8bit.bitwarden")          APPLE_ID="1137397744" ;;
+            "com.8bit.bitwarden.beta")     APPLE_ID="6477551146" ;;
+            "com.bitwarden.authenticator") APPLE_ID="6497335175" ;;
+            *)                             APPLE_ID="" ;;
+          esac
 
           CHANGELOG="$_GITHUB_ACTION_RUN_URL
           $(git show -s --format=%s)
