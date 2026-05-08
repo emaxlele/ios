@@ -295,12 +295,17 @@ jobs:
               ;;
           esac
 
-          xcrun altool --upload-app \
+          ALTOOL_OUTPUT=$(xcrun altool --upload-app \
             --type ios \
             --file "$_EXPORT_FILEPATH" \
             --apiKey "$_KEY_ID" \
             --apiIssuer "$_ISSUER" \
-            --apple-id "$APPLE_ID"
+            --apple-id "$APPLE_ID" 2>&1)
+          echo "$ALTOOL_OUTPUT"
+          if echo "$ALTOOL_OUTPUT" | grep -q "ERROR:"; then
+            echo "::error::xcrun altool reported errors — upload failed"
+            exit 1
+          fi
 
       - name: Build TestFlight trigger data
         id: build-trigger-data
