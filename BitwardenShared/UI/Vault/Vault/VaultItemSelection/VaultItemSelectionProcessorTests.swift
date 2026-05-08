@@ -185,7 +185,7 @@ class VaultItemSelectionProcessorTests: BitwardenTestCase { // swiftlint:disable
 
         await subject.perform(.morePressed(.fixture()))
 
-        let navigate = try XCTUnwrap(vaultItemMoreOptionsHelper.showMoreOptionsAlertHandleNavigateToPremiumUpgrade)
+        let navigate = try XCTUnwrap(vaultItemMoreOptionsHelper.showMoreOptionsAlertHandlePremiumUpgrade)
         await navigate()
         try await waitForAsync { self.coordinator.routes.last == .premiumUpgrade }
 
@@ -202,7 +202,7 @@ class VaultItemSelectionProcessorTests: BitwardenTestCase { // swiftlint:disable
 
         await subject.perform(.morePressed(.fixture()))
 
-        let navigate = try XCTUnwrap(vaultItemMoreOptionsHelper.showMoreOptionsAlertHandleNavigateToPremiumUpgrade)
+        let navigate = try XCTUnwrap(vaultItemMoreOptionsHelper.showMoreOptionsAlertHandlePremiumUpgrade)
         await navigate()
         try await waitForAsync { self.subject.state.url != nil }
 

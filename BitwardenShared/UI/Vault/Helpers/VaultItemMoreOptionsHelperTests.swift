@@ -87,7 +87,7 @@ class VaultItemMoreOptionsHelperTests: BitwardenTestCase { // swiftlint:disable:
         await subject.showMoreOptionsAlert(
             for: item,
             handleDisplayToast: { toastToDisplay = $0 },
-            handleNavigateToPremiumUpgrade: { },
+            handleNavigateToPremiumUpgrade: {},
             handleOpenURL: { _ in },
         )
 
@@ -121,7 +121,7 @@ class VaultItemMoreOptionsHelperTests: BitwardenTestCase { // swiftlint:disable:
         await subject.showMoreOptionsAlert(
             for: item,
             handleDisplayToast: { toastToDisplay = $0 },
-            handleNavigateToPremiumUpgrade: { },
+            handleNavigateToPremiumUpgrade: {},
             handleOpenURL: { _ in },
         )
 
@@ -203,7 +203,7 @@ class VaultItemMoreOptionsHelperTests: BitwardenTestCase { // swiftlint:disable:
         await subject.showMoreOptionsAlert(
             for: item,
             handleDisplayToast: { _ in },
-            handleNavigateToPremiumUpgrade: { },
+            handleNavigateToPremiumUpgrade: {},
             handleOpenURL: { _ in },
         )
 
@@ -226,7 +226,7 @@ class VaultItemMoreOptionsHelperTests: BitwardenTestCase { // swiftlint:disable:
         await subject.showMoreOptionsAlert(
             for: item,
             handleDisplayToast: { _ in },
-            handleNavigateToPremiumUpgrade: { },
+            handleNavigateToPremiumUpgrade: {},
             handleOpenURL: { _ in },
         )
 
@@ -285,7 +285,7 @@ class VaultItemMoreOptionsHelperTests: BitwardenTestCase { // swiftlint:disable:
         await subject.showMoreOptionsAlert(
             for: item,
             handleDisplayToast: { _ in },
-            handleNavigateToPremiumUpgrade: { },
+            handleNavigateToPremiumUpgrade: {},
             handleOpenURL: { _ in },
         )
 
@@ -341,7 +341,7 @@ class VaultItemMoreOptionsHelperTests: BitwardenTestCase { // swiftlint:disable:
         await subject.showMoreOptionsAlert(
             for: item,
             handleDisplayToast: { toastToDisplay = $0 },
-            handleNavigateToPremiumUpgrade: { },
+            handleNavigateToPremiumUpgrade: {},
             handleOpenURL: { _ in },
         )
 
@@ -386,7 +386,7 @@ class VaultItemMoreOptionsHelperTests: BitwardenTestCase { // swiftlint:disable:
         await subject.showMoreOptionsAlert(
             for: item,
             handleDisplayToast: { toastToDisplay = $0 },
-            handleNavigateToPremiumUpgrade: { },
+            handleNavigateToPremiumUpgrade: {},
             handleOpenURL: { _ in },
         )
 
@@ -416,7 +416,7 @@ class VaultItemMoreOptionsHelperTests: BitwardenTestCase { // swiftlint:disable:
         await subject.showMoreOptionsAlert(
             for: item,
             handleDisplayToast: { _ in },
-            handleNavigateToPremiumUpgrade: { },
+            handleNavigateToPremiumUpgrade: {},
             handleOpenURL: { _ in },
         )
 
@@ -440,7 +440,7 @@ class VaultItemMoreOptionsHelperTests: BitwardenTestCase { // swiftlint:disable:
         await subject.showMoreOptionsAlert(
             for: item,
             handleDisplayToast: { _ in },
-            handleNavigateToPremiumUpgrade: { },
+            handleNavigateToPremiumUpgrade: {},
             handleOpenURL: { _ in },
         )
 
@@ -465,7 +465,7 @@ class VaultItemMoreOptionsHelperTests: BitwardenTestCase { // swiftlint:disable:
         await subject.showMoreOptionsAlert(
             for: item,
             handleDisplayToast: { _ in },
-            handleNavigateToPremiumUpgrade: { },
+            handleNavigateToPremiumUpgrade: {},
             handleOpenURL: { _ in },
         )
 
@@ -498,7 +498,7 @@ class VaultItemMoreOptionsHelperTests: BitwardenTestCase { // swiftlint:disable:
         await subject.showMoreOptionsAlert(
             for: item,
             handleDisplayToast: { _ in },
-            handleNavigateToPremiumUpgrade: { },
+            handleNavigateToPremiumUpgrade: {},
             handleOpenURL: { _ in },
         )
 
@@ -536,7 +536,7 @@ class VaultItemMoreOptionsHelperTests: BitwardenTestCase { // swiftlint:disable:
         await subject.showMoreOptionsAlert(
             for: item,
             handleDisplayToast: { _ in },
-            handleNavigateToPremiumUpgrade: { },
+            handleNavigateToPremiumUpgrade: {},
             handleOpenURL: { _ in },
         )
 
@@ -562,7 +562,7 @@ class VaultItemMoreOptionsHelperTests: BitwardenTestCase { // swiftlint:disable:
         await subject.showMoreOptionsAlert(
             for: item,
             handleDisplayToast: { _ in },
-            handleNavigateToPremiumUpgrade: { },
+            handleNavigateToPremiumUpgrade: {},
             handleOpenURL: { _ in },
         )
 
@@ -602,7 +602,7 @@ class VaultItemMoreOptionsHelperTests: BitwardenTestCase { // swiftlint:disable:
         await subject.showMoreOptionsAlert(
             for: item,
             handleDisplayToast: { _ in },
-            handleNavigateToPremiumUpgrade: { },
+            handleNavigateToPremiumUpgrade: {},
             handleOpenURL: { urlToOpen = $0 },
         )
 
@@ -666,7 +666,7 @@ class VaultItemMoreOptionsHelperTests: BitwardenTestCase { // swiftlint:disable:
         await subject.showMoreOptionsAlert(
             for: item,
             handleDisplayToast: { _ in },
-            handleNavigateToPremiumUpgrade: { },
+            handleNavigateToPremiumUpgrade: {},
             handleOpenURL: { _ in },
         )
 
@@ -699,7 +699,7 @@ class VaultItemMoreOptionsHelperTests: BitwardenTestCase { // swiftlint:disable:
         await subject.showMoreOptionsAlert(
             for: item,
             handleDisplayToast: { _ in },
-            handleNavigateToPremiumUpgrade: { },
+            handleNavigateToPremiumUpgrade: {},
             handleOpenURL: { _ in },
         )
 
@@ -719,7 +719,7 @@ class VaultItemMoreOptionsHelperTests: BitwardenTestCase { // swiftlint:disable:
         await subject.showMoreOptionsAlert(
             for: item,
             handleDisplayToast: { _ in },
-            handleNavigateToPremiumUpgrade: { },
+            handleNavigateToPremiumUpgrade: {},
             handleOpenURL: { _ in },
         )
 
@@ -759,7 +759,7 @@ class VaultItemMoreOptionsHelperTests: BitwardenTestCase { // swiftlint:disable:
         await subject.showMoreOptionsAlert(
             for: item,
             handleDisplayToast: { _ in },
-            handleNavigateToPremiumUpgrade: { },
+            handleNavigateToPremiumUpgrade: {},
             handleOpenURL: { _ in },
         )
 
@@ -775,7 +775,7 @@ class VaultItemMoreOptionsHelperTests: BitwardenTestCase { // swiftlint:disable:
         await subject.showMoreOptionsAlert(
             for: item,
             handleDisplayToast: { _ in },
-            handleNavigateToPremiumUpgrade: { },
+            handleNavigateToPremiumUpgrade: {},
             handleOpenURL: { _ in },
         )
 
@@ -799,7 +799,7 @@ class VaultItemMoreOptionsHelperTests: BitwardenTestCase { // swiftlint:disable:
         await subject.showMoreOptionsAlert(
             for: item,
             handleDisplayToast: { toastToDisplay = $0 },
-            handleNavigateToPremiumUpgrade: { },
+            handleNavigateToPremiumUpgrade: {},
             handleOpenURL: { _ in },
         )
 
@@ -832,7 +832,7 @@ class VaultItemMoreOptionsHelperTests: BitwardenTestCase { // swiftlint:disable:
         await subject.showMoreOptionsAlert(
             for: item,
             handleDisplayToast: { toastToDisplay = $0 },
-            handleNavigateToPremiumUpgrade: { },
+            handleNavigateToPremiumUpgrade: {},
             handleOpenURL: { _ in },
         )
 
@@ -863,7 +863,7 @@ class VaultItemMoreOptionsHelperTests: BitwardenTestCase { // swiftlint:disable:
 class MockVaultItemMoreOptionsHelper: VaultItemMoreOptionsHelper {
     var showMoreOptionsAlertCalled = false
     var showMoreOptionsAlertHandleDisplayToast: ((Toast) -> Void)?
-    var showMoreOptionsAlertHandleNavigateToPremiumUpgrade: (() async -> Void)?
+    var showMoreOptionsAlertHandlePremiumUpgrade: (() async -> Void)?
     var showMoreOptionsAlertHandleOpenURL: ((URL) -> Void)?
 
     func showMoreOptionsAlert(
@@ -874,7 +874,7 @@ class MockVaultItemMoreOptionsHelper: VaultItemMoreOptionsHelper {
     ) async {
         showMoreOptionsAlertCalled = true
         showMoreOptionsAlertHandleDisplayToast = handleDisplayToast
-        showMoreOptionsAlertHandleNavigateToPremiumUpgrade = handleNavigateToPremiumUpgrade
+        showMoreOptionsAlertHandlePremiumUpgrade = handleNavigateToPremiumUpgrade
         showMoreOptionsAlertHandleOpenURL = handleOpenURL
     }
 }

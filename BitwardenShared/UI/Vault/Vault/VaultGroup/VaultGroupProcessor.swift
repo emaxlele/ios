@@ -7,7 +7,7 @@ import Foundation
 // MARK: - VaultGroupProcessor
 
 /// A `Processor` that can process `VaultGroupAction`s and `VaultGroupEffect`s.
-final class VaultGroupProcessor: StateProcessor<
+final class VaultGroupProcessor: StateProcessor< // swiftlint:disable:this type_body_length
     VaultGroupState,
     VaultGroupAction,
     VaultGroupEffect,
@@ -431,4 +431,4 @@ extension VaultGroupProcessor: CipherItemOperationDelegate {
             await perform(.refresh)
         }
     }
-}
+} // swiftlint:disable:this file_length
