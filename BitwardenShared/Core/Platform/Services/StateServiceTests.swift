@@ -1385,7 +1385,9 @@ class StateServiceTests: BitwardenTestCase { // swiftlint:disable:this type_body
     func test_isAuthenticated() async throws {
         await subject.addAccount(.fixture())
 
-        keychainRepository.getAccessTokenThrowableError = KeychainServiceError.keyNotFound(BitwardenKeychainItem.accessToken(userId: "1"))
+        keychainRepository.getAccessTokenThrowableError = KeychainServiceError.keyNotFound(
+            BitwardenKeychainItem.accessToken(userId: "1"),
+        )
         var authenticationState = try await subject.isAuthenticated()
         XCTAssertFalse(authenticationState)
 
