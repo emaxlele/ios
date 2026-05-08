@@ -2,6 +2,7 @@ import BitwardenKit
 import BitwardenKitMocks
 import BitwardenResources
 import BitwardenSdk
+import Combine
 import InlineSnapshotTesting
 import TestHelpers
 import XCTest
@@ -15,6 +16,8 @@ class VaultItemSelectionProcessorTests: BitwardenTestCase { // swiftlint:disable
     // MARK: Properties
 
     var authRepository: MockAuthRepository!
+    var billingRepository: MockBillingRepository!
+    var billingService: MockBillingService!
     var coordinator: MockCoordinator<VaultRoute, AuthAction>!
     var errorReporter: MockErrorReporter!
     var pasteboardService: MockPasteboardService!
@@ -32,6 +35,9 @@ class VaultItemSelectionProcessorTests: BitwardenTestCase { // swiftlint:disable
         super.setUp()
 
         authRepository = MockAuthRepository()
+        billingRepository = MockBillingRepository()
+        billingRepository.isInAppUpgradeAvailableReturnValue = false
+        billingService = MockBillingService()
         coordinator = MockCoordinator()
         errorReporter = MockErrorReporter()
         pasteboardService = MockPasteboardService()
@@ -49,6 +55,8 @@ class VaultItemSelectionProcessorTests: BitwardenTestCase { // swiftlint:disable
             coordinator: coordinator.asAnyCoordinator(),
             services: ServiceContainer.withMocks(
                 authRepository: authRepository,
+                billingRepository: billingRepository,
+                billingService: billingService,
                 errorReporter: errorReporter,
                 pasteboardService: pasteboardService,
                 searchProcessorMediatorFactory: searchProcessorMediatorFactory,
@@ -68,6 +76,8 @@ class VaultItemSelectionProcessorTests: BitwardenTestCase { // swiftlint:disable
         super.tearDown()
 
         authRepository = nil
+        billingRepository = nil
+        billingService = nil
         coordinator = nil
         errorReporter = nil
         pasteboardService = nil
@@ -163,6 +173,44 @@ class VaultItemSelectionProcessorTests: BitwardenTestCase { // swiftlint:disable
         let url = URL.example
         vaultItemMoreOptionsHelper.showMoreOptionsAlertHandleOpenURL?(url)
         XCTAssertEqual(subject.state.url, url)
+    }
+
+    /// `perform(_:)` with `.morePressed` navigates to the premium upgrade screen via in-app flow
+    /// when `isInAppUpgradeAvailable` returns `true`.
+    @MainActor
+    func test_perform_morePressed_navigateToPremiumUpgrade_inAppUpgradeAvailable() async throws {
+        billingRepository.isInAppUpgradeAvailableReturnValue = true
+        let statusSubject = PassthroughSubject<PremiumCheckoutStatus, Never>()
+        billingService.premiumCheckoutStatusPublisherReturnValue = statusSubject.eraseToAnyPublisher()
+
+        await subject.perform(.morePressed(.fixture()))
+
+        let navigate = try XCTUnwrap(vaultItemMoreOptionsHelper.showMoreOptionsAlertHandleNavigateToPremiumUpgrade)
+        await navigate()
+        try await waitForAsync { self.coordinator.routes.last == .premiumUpgrade }
+
+        XCTAssertEqual(coordinator.routes.last, .premiumUpgrade)
+        XCTAssertNil(subject.state.url)
+        XCTAssertTrue(billingService.premiumCheckoutStatusPublisherCalled)
+    }
+
+    /// `perform(_:)` with `.morePressed` opens the web upgrade URL when `isInAppUpgradeAvailable`
+    /// returns `false`.
+    @MainActor
+    func test_perform_morePressed_navigateToPremiumUpgrade_inAppUpgradeNotAvailable() async throws {
+        billingRepository.isInAppUpgradeAvailableReturnValue = false
+
+        await subject.perform(.morePressed(.fixture()))
+
+        let navigate = try XCTUnwrap(vaultItemMoreOptionsHelper.showMoreOptionsAlertHandleNavigateToPremiumUpgrade)
+        await navigate()
+        try await waitForAsync { self.subject.state.url != nil }
+
+        XCTAssertEqual(
+            subject.state.url,
+            URL(string: "https://example.com/#/settings/subscription/premium?callToAction=upgradeToPremium"),
+        )
+        XCTAssertNotEqual(coordinator.routes.last, .premiumUpgrade)
     }
 
     /// `perform(_:)` with `.profileSwitcher(.accountPressed)` updates the profile switcher's

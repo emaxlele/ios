@@ -2,62 +2,44 @@
 
 import BitwardenKit
 import BitwardenKitMocks
-import XCTest
+import Testing
 
 @testable import BitwardenShared
 @testable import BitwardenSharedMocks
 
 // MARK: - StateServiceBillingStateServiceTests
 
-class StateServiceBillingStateServiceTests: BitwardenTestCase {
+@MainActor
+struct StateServiceBillingStateServiceTests {
     // MARK: Properties
 
-    var appSettingsStore: MockAppSettingsStore!
-    var dataStore: DataStore!
-    var errorReporter: MockErrorReporter!
-    var keychainRepository: MockKeychainRepository!
-    var timeProvider: MockTimeProvider!
-    var userSessionKeychainRepository: MockUserSessionKeychainRepository!
-    var subject: DefaultStateService!
+    let appSettingsStore: MockAppSettingsStore
+    let errorReporter: MockErrorReporter
+    let timeProvider: MockTimeProvider
+    let subject: DefaultStateService
 
-    // MARK: Setup & Teardown
+    // MARK: Setup
 
-    override func setUp() {
-        super.setUp()
-
+    init() {
         appSettingsStore = MockAppSettingsStore()
-        dataStore = DataStore(errorReporter: MockErrorReporter(), storeType: .memory)
         errorReporter = MockErrorReporter()
-        keychainRepository = MockKeychainRepository()
         timeProvider = MockTimeProvider(.currentTime)
-        userSessionKeychainRepository = MockUserSessionKeychainRepository()
 
         subject = DefaultStateService(
             appSettingsStore: appSettingsStore,
-            dataStore: dataStore,
+            dataStore: DataStore(errorReporter: MockErrorReporter(), storeType: .memory),
             errorReporter: errorReporter,
-            keychainRepository: keychainRepository,
+            keychainRepository: MockKeychainRepository(),
             timeProvider: timeProvider,
-            userSessionKeychainRepository: userSessionKeychainRepository,
+            userSessionKeychainRepository: MockUserSessionKeychainRepository(),
         )
-    }
-
-    override func tearDown() {
-        super.tearDown()
-
-        appSettingsStore = nil
-        dataStore = nil
-        errorReporter = nil
-        keychainRepository = nil
-        subject = nil
-        timeProvider = nil
-        userSessionKeychainRepository = nil
     }
 
     // MARK: Tests
 
     /// `isPremiumUpgradeEligible()` returns `true` when user is free and account is 7+ days old.
-    func test_isPremiumUpgradeEligible_true() async {
+    @Test
+    func isPremiumUpgradeEligible_true() async {
         let fixedDate = Date(timeIntervalSince1970: 1_000_000_000)
         timeProvider.timeConfig = .mockTime(fixedDate)
         let creationDate = fixedDate.addingTimeInterval(-Constants.premiumUpgradeBannerAccountAge - 1)
@@ -67,11 +49,12 @@ class StateServiceBillingStateServiceTests: BitwardenTestCase {
         )))
 
         let isEligible = await subject.isPremiumUpgradeEligible()
-        XCTAssertTrue(isEligible)
+        #expect(isEligible)
     }
 
     /// `isPremiumUpgradeEligible()` returns `false` when user has premium.
-    func test_isPremiumUpgradeEligible_hasPremium() async {
+    @Test
+    func isPremiumUpgradeEligible_hasPremium() async {
         let fixedDate = Date(timeIntervalSince1970: 1_000_000_000)
         timeProvider.timeConfig = .mockTime(fixedDate)
         let creationDate = fixedDate.addingTimeInterval(-Constants.premiumUpgradeBannerAccountAge - 1)
@@ -79,15 +62,15 @@ class StateServiceBillingStateServiceTests: BitwardenTestCase {
             creationDate: creationDate,
             hasPremiumPersonally: true,
         )))
-        appSettingsStore.premiumUpgradeBannerDismissedByUserId["1"] = false
 
-        let shouldShow = await subject.isPremiumUpgradeEligible()
-        XCTAssertFalse(shouldShow)
+        let isEligible = await subject.isPremiumUpgradeEligible()
+        #expect(!isEligible)
     }
 
     /// `isPremiumUpgradeEligible()` returns `true` even when the banner has been dismissed,
     /// since dismissal is a separate concern checked via `isPremiumUpgradeBannerDismissed()`.
-    func test_isPremiumUpgradeEligible_bannerDismissedDoesNotAffectEligibility() async {
+    @Test
+    func isPremiumUpgradeEligible_bannerDismissedDoesNotAffectEligibility() async {
         let fixedDate = Date(timeIntervalSince1970: 1_000_000_000)
         timeProvider.timeConfig = .mockTime(fixedDate)
         let creationDate = fixedDate.addingTimeInterval(-Constants.premiumUpgradeBannerAccountAge - 1)
@@ -98,29 +81,32 @@ class StateServiceBillingStateServiceTests: BitwardenTestCase {
         appSettingsStore.premiumUpgradeBannerDismissedByUserId["1"] = true
 
         let isEligible = await subject.isPremiumUpgradeEligible()
-        XCTAssertTrue(isEligible)
+        #expect(isEligible)
     }
 
     /// `isPremiumUpgradeBannerDismissed()` returns `true` when the banner has been dismissed.
-    func test_isPremiumUpgradeBannerDismissed_true() async {
+    @Test
+    func isPremiumUpgradeBannerDismissed_true() async {
         await subject.addAccount(.fixture())
         appSettingsStore.premiumUpgradeBannerDismissedByUserId["1"] = true
 
         let isDismissed = await subject.isPremiumUpgradeBannerDismissed()
-        XCTAssertTrue(isDismissed)
+        #expect(isDismissed)
     }
 
     /// `isPremiumUpgradeBannerDismissed()` returns `false` when the banner has not been dismissed.
-    func test_isPremiumUpgradeBannerDismissed_false() async {
+    @Test
+    func isPremiumUpgradeBannerDismissed_false() async {
         await subject.addAccount(.fixture())
         appSettingsStore.premiumUpgradeBannerDismissedByUserId["1"] = false
 
         let isDismissed = await subject.isPremiumUpgradeBannerDismissed()
-        XCTAssertFalse(isDismissed)
+        #expect(!isDismissed)
     }
 
     /// `isPremiumUpgradeEligible()` returns `false` when account is less than 7 days old.
-    func test_isPremiumUpgradeEligible_accountTooNew() async {
+    @Test
+    func isPremiumUpgradeEligible_accountTooNew() async {
         let fixedDate = Date(timeIntervalSince1970: 1_000_000_000)
         timeProvider.timeConfig = .mockTime(fixedDate)
         let creationDate = fixedDate.addingTimeInterval(-Constants.premiumUpgradeBannerAccountAge + 1)
@@ -128,21 +114,20 @@ class StateServiceBillingStateServiceTests: BitwardenTestCase {
             creationDate: creationDate,
             hasPremiumPersonally: false,
         )))
-        appSettingsStore.premiumUpgradeBannerDismissedByUserId["1"] = false
 
-        let shouldShow = await subject.isPremiumUpgradeEligible()
-        XCTAssertFalse(shouldShow)
+        let isEligible = await subject.isPremiumUpgradeEligible()
+        #expect(!isEligible)
     }
 
     /// `isPremiumUpgradeEligible()` returns `false` when account has no creation date.
-    func test_isPremiumUpgradeEligible_noCreationDate() async {
+    @Test
+    func isPremiumUpgradeEligible_noCreationDate() async {
         await subject.addAccount(.fixture(profile: .fixture(
             creationDate: nil,
             hasPremiumPersonally: false,
         )))
-        appSettingsStore.premiumUpgradeBannerDismissedByUserId["1"] = false
 
-        let shouldShow = await subject.isPremiumUpgradeEligible()
-        XCTAssertFalse(shouldShow)
+        let isEligible = await subject.isPremiumUpgradeEligible()
+        #expect(!isEligible)
     }
 }
