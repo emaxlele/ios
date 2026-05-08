@@ -123,6 +123,7 @@ class VaultItemMoreOptionsHelperTests: BitwardenTestCase { // swiftlint:disable:
         await subject.showMoreOptionsAlert(
             for: item,
             handleDisplayToast: { toastToDisplay = $0 },
+            handleNavigateToPremiumUpgrade: {},
             handleOpenURL: { _ in },
         )
 
