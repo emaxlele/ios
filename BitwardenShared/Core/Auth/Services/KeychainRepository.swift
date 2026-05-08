@@ -30,6 +30,9 @@ enum BitwardenKeychainItem: Equatable, KeychainItem {
     /// The keychain item for a user's last active time.
     case lastActiveTime(userId: String)
 
+    /// The keychain item for local user data key states.
+    case localUserDataKeyStates(userId: String)
+
     /// The keychain item for the neverLock user auth key.
     case neverLock(userId: String)
 
@@ -59,6 +62,7 @@ enum BitwardenKeychainItem: Equatable, KeychainItem {
              .deviceAuthKeyMetadata,
              .deviceKey,
              .lastActiveTime,
+             .localUserDataKeyStates,
              .neverLock,
              .pendingAdminLoginRequest,
              .refreshToken,
@@ -88,6 +92,7 @@ enum BitwardenKeychainItem: Equatable, KeychainItem {
         case .accessToken,
              .authenticatorVaultKey,
              .clientCertificateIdentity,
+             .localUserDataKeyStates,
              .refreshToken,
              .serverCommunicationConfig:
             kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
@@ -114,6 +119,8 @@ enum BitwardenKeychainItem: Equatable, KeychainItem {
             "deviceAuthKeyMetadata_" + id
         case let .lastActiveTime(userId):
             "lastActiveTime_\(userId)"
+        case let .localUserDataKeyStates(userId):
+            "localUserDataKeyStates_\(userId)"
         case let .neverLock(userId: id):
             "userKeyAutoUnlock_" + id
         case let .pendingAdminLoginRequest(userId):
@@ -132,7 +139,8 @@ enum BitwardenKeychainItem: Equatable, KeychainItem {
 
 // MARK: - KeychainRepository
 
-protocol KeychainRepository: AnyObject, ServerCommunicationConfigKeychainRepository { // sourcery: AutoMockable
+// swiftlint:disable:next line_length
+protocol KeychainRepository: AnyObject, ServerCommunicationConfigKeychainRepository, LocalUserDataKeychainRepository { // sourcery: AutoMockable
     /// Deletes all items stored in the keychain.
     ///
     func deleteAllItems() async throws
@@ -290,6 +298,10 @@ class DefaultKeychainRepository: KeychainRepository {
     /// The keychain service facade used by the repository.
     ///
     let keychainServiceFacade: KeychainServiceFacade
+
+    /// Serializes concurrent mutations to local user data key states per user ID.
+    ///
+    let localUserDataKeyStateMutationSerializer = SerialWorker()
 
     // MARK: Initialization
 

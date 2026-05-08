@@ -151,7 +151,7 @@ class MakeCredentialRequestTests: BitwardenTestCase {
             ExcludeList: [BitwardenSdk.PublicKeyCredentialDescriptor(ty: \"public-key\", id: 32 bytes, transports: Optional([\"transport\"]))]
             Options -> RK: true
             Options -> UV: preferred
-            Extensions: Optional(BitwardenSdk.PrfInputValues(first: 32 bytes, second: nil))
+            Extensions: MakeCredentialExtensionsInput(prf: Optional(BitwardenSdk.MakeCredentialPrfInput(eval: Optional(BitwardenSdk.PrfInputValues(first: 32 bytes, second: nil)))))
             """
         // swiftlint:enable line_length
 
