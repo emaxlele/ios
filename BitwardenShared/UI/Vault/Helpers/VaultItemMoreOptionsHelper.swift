@@ -183,7 +183,7 @@ class DefaultVaultItemMoreOptionsHelper: VaultItemMoreOptionsHelper {
     ///   - handleDisplayToast: A closure to display a toast.
     ///   - handleOpenURL: A closure to open an URL.
     ///   - hasPremium: Whether the user has premium account.
-    private func handleMoreOptionsAction( // swiftlint:disable:this function_body_length
+    private func handleMoreOptionsAction( // swiftlint:disable:this function_body_length function_parameter_count
         _ action: MoreOptionsAction,
         cipherView: CipherView,
         handleDisplayToast: @escaping (Toast) -> Void,

@@ -407,4 +407,4 @@ extension VaultItemSelectionProcessor: ProfileSwitcherHandler {
     func showProfileSwitcher() {
         coordinator.navigate(to: .viewProfileSwitcher, context: self)
     }
-}
+} // swiftlint:disable:this file_length
