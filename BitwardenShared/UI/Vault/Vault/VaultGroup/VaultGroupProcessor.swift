@@ -1,6 +1,7 @@
 import BitwardenKit
 import BitwardenResources
 import BitwardenSdk
+import Combine
 import Foundation
 
 // MARK: - VaultGroupProcessor
@@ -15,6 +16,7 @@ final class VaultGroupProcessor: StateProcessor<
 
     typealias Services = HasAuthRepository
         & HasBillingRepository
+        & HasBillingService
         & HasConfigService
         & HasEnvironmentService
         & HasErrorReporter
@@ -35,6 +37,9 @@ final class VaultGroupProcessor: StateProcessor<
 
     /// The helper to handle master password reprompts.
     private let masterPasswordRepromptHelper: MasterPasswordRepromptHelper
+
+    /// A cancellable for the premium checkout status subscription.
+    private var premiumStatusChangedCancellable: AnyCancellable?
 
     /// The services for this processor.
     private var services: Services
@@ -221,7 +226,52 @@ final class VaultGroupProcessor: StateProcessor<
             state.url = services.environmentService.upgradeToPremiumURL
             return
         }
+        subscribeToPremiumCheckoutStatus()
         coordinator.navigate(to: .premiumUpgrade)
+    }
+
+    /// Subscribes to premium checkout status updates. On `.confirmed`, reloads the vault group
+    /// to update the premium state. On `.pending`, shows an upgrade pending alert.
+    ///
+    private func subscribeToPremiumCheckoutStatus() {
+        premiumStatusChangedCancellable = services.billingService
+            .premiumCheckoutStatusPublisher()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] status in
+                guard let self else { return }
+                switch status {
+                case .canceled:
+                    break
+                case .confirmed:
+                    premiumStatusChangedCancellable = nil
+                    coordinator.navigate(
+                        to: .dismiss(DismissAction { [weak self] in
+                            guard let self else { return }
+                            coordinator.hideLoadingOverlay()
+                            Task { await self.refreshVaultGroup() }
+                        }),
+                    )
+                case .pending:
+                    coordinator.navigate(
+                        to: .dismiss(DismissAction { [weak self] in
+                            guard let self else { return }
+                            coordinator.hideLoadingOverlay()
+                            coordinator.showAlert(.upgradePending {
+                                await self.services.billingService.premiumStatusChanged()
+                            })
+                        }),
+                    )
+                case .syncing:
+                    coordinator.navigate(
+                        to: .dismiss(DismissAction { [weak self] in
+                            guard let self else { return }
+                            coordinator.showLoadingOverlay(
+                                LoadingOverlayState(title: Localizations.confirmingYourUpgrade),
+                            )
+                        }),
+                    )
+                }
+            }
     }
 
     /// Navigates to the view item view for the specified cipher. If the cipher requires master
